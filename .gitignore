@@ -31,14 +31,16 @@ wheels/
 # Data files
 data/raw/*
 data/processed/*
-data/interim/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
-!data/interim/.gitkeep
 
 # Model files
-results/models/*
-!results/models/.gitkeep
+models/*
+!models/.gitkeep
+
+# Output files
+output/figures/*
+!output/figures/.gitkeep
 
 # Environment
 .env
@@ -48,3 +50,7 @@ ENV/
 
 # Mac
 .DS_Store
+
+# Utility scripts
+check_structure.py
+download_nltk.py
