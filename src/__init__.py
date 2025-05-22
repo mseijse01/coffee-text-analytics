@@ -1,0 +1,3 @@
+"""
+Coffee Text Analytics project.
+"""
