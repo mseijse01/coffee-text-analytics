@@ -3,11 +3,11 @@
 Coffee Text Analytics - Main entry point
 
 This script serves as the main entry point for the coffee text analytics project,
-orchestrating the complete workflow:
+orchestrating the complete workflow using modern data processing with Polars:
 
-1. Data preprocessing
-2. Feature extraction
-3. Model training
+1. Data preprocessing (Polars-based)
+2. Feature extraction (Polars-based with thesis methodology)
+3. Model training (Pandas conversion for sklearn compatibility)
 4. Results visualization
 
 Run this script to execute the complete pipeline or specify which steps to run.
@@ -18,6 +18,7 @@ import sys
 import argparse
 import logging
 from pathlib import Path
+import polars as pl
 
 # Configure logging
 logging.basicConfig(
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # Default paths
 DEFAULT_PATHS = {
-    "raw_data": "data/raw/coffee_reviews.csv",
+    "raw_data": "data/raw/coffee_clean.csv",
     "processed_data": "data/processed/coffee_processed.csv",
     "features_data": "data/processed/coffee_features.csv",
     "models_dir": "models",
@@ -59,7 +60,7 @@ def parse_args():
     Parse command-line arguments.
     """
     parser = argparse.ArgumentParser(
-        description="Run the Coffee Text Analytics pipeline"
+        description="Run the Coffee Text Analytics pipeline with Polars"
     )
     parser.add_argument(
         "--steps",
@@ -77,8 +78,8 @@ def parse_args():
     parser.add_argument(
         "--text_columns",
         nargs="+",
-        default=["description", "notes"],
-        help="Text columns to analyze (default: description notes)",
+        default=["desc_1", "desc_2", "desc_3"],
+        help="Text columns to analyze (default: desc_1 desc_2 desc_3)",
     )
     parser.add_argument(
         "--target_column",
@@ -103,7 +104,7 @@ def parse_args():
 
 def preprocess_data(args):
     """
-    Preprocess raw coffee review data.
+    Preprocess raw coffee review data using Polars-compatible preprocessing.
 
     Args:
         args: Command-line arguments
@@ -113,7 +114,7 @@ def preprocess_data(args):
     """
     from src.data.preprocessing import process_raw_data
 
-    logger.info("Starting data preprocessing step")
+    logger.info("Starting data preprocessing step with Polars integration")
 
     try:
         process_raw_data(
@@ -129,7 +130,7 @@ def preprocess_data(args):
 
 def extract_features(args):
     """
-    Extract features from preprocessed data.
+    Extract features from preprocessed data using Polars-based feature extraction.
 
     Args:
         args: Command-line arguments
@@ -139,7 +140,7 @@ def extract_features(args):
     """
     from src.features.feature_extraction import extract_features_from_data
 
-    logger.info("Starting feature extraction step")
+    logger.info("Starting feature extraction step with Polars")
 
     try:
         extract_features_from_data(
@@ -155,7 +156,7 @@ def extract_features(args):
 
 def train_models(args):
     """
-    Train predictive models.
+    Train predictive models (converts Polars to Pandas for sklearn compatibility).
 
     Args:
         args: Command-line arguments
@@ -165,15 +166,35 @@ def train_models(args):
     """
     from src.models.model_training import train_and_evaluate_models
 
-    logger.info("Starting model training step")
+    logger.info(
+        "Starting model training step (Polars -> Pandas conversion for sklearn)"
+    )
 
     try:
+        # Load features using Polars
+        logger.info("Loading features with Polars...")
+        df_polars = pl.read_csv(DEFAULT_PATHS["features_data"])
+
+        # Convert to Pandas for sklearn compatibility
+        logger.info(
+            "Converting Polars DataFrame to Pandas for sklearn compatibility..."
+        )
+        df_pandas = df_polars.to_pandas()
+
+        # Save temporary pandas file for model training
+        temp_pandas_file = DEFAULT_PATHS["features_data"].replace(".csv", "_pandas.csv")
+        df_pandas.to_csv(temp_pandas_file, index=False)
+
         train_and_evaluate_models(
-            input_file=DEFAULT_PATHS["features_data"],
+            input_file=temp_pandas_file,
             target_column=args.target_column,
             models_to_train=args.models,
             models_dir=DEFAULT_PATHS["models_dir"],
         )
+
+        # Clean up temporary file
+        os.remove(temp_pandas_file)
+
         return True
     except Exception as e:
         logger.error(f"Model training failed: {e}")
@@ -208,12 +229,17 @@ def visualize_results(args):
 
 def main():
     """
-    Main pipeline orchestration function.
+    Main pipeline orchestration function using Polars for modern data processing.
     """
     args = parse_args()
 
     # Set up project directories
     setup_project()
+
+    # Log the data processing approach
+    logger.info(
+        "Using Polars for efficient data processing with Pandas compatibility for sklearn"
+    )
 
     # Determine which steps to run
     run_all = "all" in args.steps
@@ -250,7 +276,9 @@ def main():
             return 1
 
     if success:
-        logger.info("Pipeline completed successfully!")
+        logger.info(
+            "Pipeline completed successfully using Polars + Pandas hybrid approach!"
+        )
 
     return 0 if success else 1
 
