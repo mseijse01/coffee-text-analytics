@@ -27,9 +27,10 @@ from data.preprocessing import (
     extract_country_info,
     standardize_prices,
 )
-from data.loader import analyze_data_quality
+
+# Import consolidated data quality functions
+from utils.data_quality import analyze_data_quality
 from utils.utils import (
-    analyze_data_quality as utils_analyze_data_quality,
     convert_pandas_to_polars,
     convert_polars_to_pandas,
 )
@@ -288,19 +289,12 @@ class TestDataQualityAnalysis(unittest.TestCase):
             [self.df_with_issues, self.df_with_issues.slice(0, 1)]
         )
 
-    def test_analyze_data_quality_loader(self):
-        """Test data quality analysis from loader module."""
+    def test_analyze_data_quality_consolidated(self):
+        """Test consolidated data quality analysis function."""
         try:
             analyze_data_quality(self.df_with_issues)
         except Exception as e:
-            self.fail(f"analyze_data_quality (loader) raised {e} unexpectedly")
-
-    def test_analyze_data_quality_utils(self):
-        """Test data quality analysis from utils module."""
-        try:
-            utils_analyze_data_quality(self.df_with_issues)
-        except Exception as e:
-            self.fail(f"analyze_data_quality (utils) raised {e} unexpectedly")
+            self.fail(f"analyze_data_quality raised {e} unexpectedly")
 
 
 class TestDataIntegrity(unittest.TestCase):
