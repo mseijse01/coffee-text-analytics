@@ -18,14 +18,12 @@ from pathlib import Path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from data.preprocessing import load_csv_for_preprocessing, preprocess_text, clean_text
-from features.feature_extraction import CoffeeFeatureExtractor
-from models.model_training import (
+from features import CoffeeFeatureManager
+from models import (
     MultinomialInverseRegression,
-    train_linear_regression,
-    train_random_forest,
-    train_mnir,
-    evaluate_model,
-    prepare_features,
+    CoffeeLinearRegression,
+    CoffeeRandomForest,
+    CoffeeModelEvaluator,
 )
 from utils.cleaning import clean_dataset as clean_coffee_data
 from utils.utils import convert_pandas_to_polars, convert_polars_to_pandas

@@ -22,15 +22,7 @@ except ImportError:
     PATHS = {"raw": Path("data/raw"), "processed": Path("data/processed")}
 
 # Import consolidated data quality functions
-try:
-    from utils.data_quality import analyze_data_quality, get_data_overview
-except ImportError:
-    # Fallback - define simple versions
-    def analyze_data_quality(df):
-        print("Data quality analysis not available")
-
-    def get_data_overview(df):
-        print(f"Dataset shape: {df.shape}")
+from ..utils.data_quality import analyze_data_quality, get_data_overview
 
 
 def load_main_dataset() -> pl.DataFrame:
