@@ -41,12 +41,13 @@ This implementation follows the exact methodology described in the thesis:
 - **XGBoost**: Primary model (best performance in thesis)
 - **Random Forest**: Ensemble method for comparison
 - **Linear Regression**: Baseline model
-- **MNIR**: Multinomial Inverse Regression (thesis-specific)
+- **MNIR**: Multinomial Inverse Regression (Lasso feature selection + regression for sensory attribute prediction)
 
 #### 3. **Model Interpretation**
 - **SHAP Values**: Feature importance analysis
 - **Topic Visualization**: LDA topic interpretation
 - **Performance Metrics**: Comprehensive evaluation
+- **MNIR Analysis**: Text-sensory relationship quantification with R² = 0.95 (acidity), R² = 0.94 (body)
 
 ## 📊 Key Thesis Findings
 
@@ -56,11 +57,13 @@ From the thesis research:
 
 > "XGBoost emerged as the best-performing model with the highest accuracy in predicting coffee ratings."
 
-**Performance Hierarchy:**
+**Performance Hierarchy (Rating Prediction):**
 1. **XGBoost** - Best overall performance
 2. **Random Forest** - Strong ensemble performance  
 3. **Linear Regression** - Baseline comparison
-4. **MNIR** - Specialized for categorical outcomes
+
+**Additional Analysis:**
+- **MNIR** - Text-sensory relationship quantification (R² = 0.95 for acidity, R² = 0.94 for body)
 
 ### Feature Importance Insights
 
@@ -197,7 +200,7 @@ Implements the complete feature extraction pipeline:
 
 #### 3. **Model Training** (XGBoost + MNIR)
 ```bash
-python main.py --steps train
+python main.py --models xgboost random_forest mnir --steps train
 ```
 - Trains all models from thesis (XGBoost, Random Forest, Linear Regression, MNIR)
 - Performs hyperparameter optimization
@@ -228,7 +231,7 @@ python main.py --n_topics 15 --steps features
 
 #### Train Specific Models
 ```bash
-python main.py --models xgboost random_forest --steps train
+python main.py --models xgboost random_forest mnir --steps train
 ```
 
 ## 📈 Data Schema

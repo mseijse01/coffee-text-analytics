@@ -96,8 +96,8 @@ def parse_args():
     parser.add_argument(
         "--models",
         nargs="+",
-        default=["linear", "random_forest", "xgboost"],
-        help="Models to train (default: linear random_forest xgboost)",
+        default=["linear", "random_forest", "xgboost", "mnir"],
+        help="Models to train (default: linear random_forest xgboost mnir)",
     )
     return parser.parse_args()
 
