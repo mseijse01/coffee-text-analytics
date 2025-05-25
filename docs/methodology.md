@@ -323,9 +323,68 @@ Based on the thesis findings, four models were selected for comparison:
 - Fast training and inference
 - Statistical significance testing
 
-#### 4. **Multinomial Inverse Regression (MNIR)** (Thesis-Specific)
-**Implementation**: Custom implementation for categorical rating prediction
-**Rationale**: Specialized approach for ordinal rating outcomes
+#### 4. **Multinomial Inverse Regression (MNIR)** (Thesis-Specific EDA)
+**Implementation**: Custom implementation for exploratory data analysis
+**Purpose**: Understanding relationships between coffee descriptors and sensory attributes
+
+**MNIR as EDA Tool**:
+
+**Purpose**: MNIR quantifies the relationship between text-based features and sensory attributes following the exact thesis methodology.
+
+**Methodology** (following thesis):
+1. **Lasso Feature Selection**: 5-fold cross-validation to identify most relevant text predictors
+2. **Regression Modeling**: Linear regression on selected features to predict sensory attributes  
+3. **Performance Evaluation**: MSE and R² metrics for each sensory attribute
+4. **SHAP Analysis**: Feature interpretability and contribution analysis
+
+**From Thesis**: *"This approach was implemented following Lasso regression feature selection, which helped identify the most relevant predictors from the high-dimensional text data. The text features included a variety of representations such as TF-IDF vectors, embeddings (BERT and GloVe), and topics derived from LDA."*
+
+**Key Research Questions MNIR Addresses**:
+- Which coffee descriptors are associated with higher acidity scores?
+- What language patterns correlate with better body ratings?
+- How do flavor terms relate to aroma perceptions?
+- Which text features predict specific sensory characteristics?
+
+**Implementation Details**:
+```python
+from src.models.model_training import MultinomialInverseRegression
+
+# Initialize MNIR following thesis methodology
+mnir = MultinomialInverseRegression(
+    lasso_cv=5,  # 5-fold cross-validation as per thesis
+    lasso_max_iter=1000,
+    random_state=42
+)
+
+# Fit model using text features and sensory data
+mnir.fit(X_text_features, sensory_data, feature_names=feature_names)
+
+# Get performance summary
+performance = mnir.get_performance_summary()
+print(performance)
+
+# Get feature importance for specific attribute
+importance = mnir.get_feature_importance('acid', top_n=10)
+
+# Generate comprehensive insights report
+insights = mnir.generate_insights_report()
+```
+
+**Expected Performance** (from thesis):
+- Acidity: R² ≈ 0.95
+- Body: R² ≈ 0.94  
+- Other attributes: Strong predictive power with varying R² scores
+
+**Key Features**:
+- **Lasso Feature Selection**: Automatically selects most relevant text features
+- **Multi-attribute Modeling**: Simultaneous analysis of all 5 sensory attributes
+- **SHAP Integration**: Interpretable feature contributions when SHAP is available
+- **Thesis Alignment**: Exact methodology replication for reproducible results
+
+**Use Cases**:
+- Understanding which text descriptors predict specific sensory experiences
+- Identifying most influential language patterns for each sensory attribute
+- Validating text-sensory relationships found in the thesis research
 
 ### Model Training Pipeline
 
