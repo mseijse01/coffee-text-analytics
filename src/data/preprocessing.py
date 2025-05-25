@@ -42,15 +42,22 @@ def ensure_nltk_data():
         logger.warning(f"Issue with NLTK data: {e}")
 
 
-def clean_text(text):
+def clean_text(text: str, remove_punctuation: bool = True) -> str:
     """
-    Clean text by removing HTML tags, URLs, and special characters.
+    Clean text by removing HTML tags, URLs, and optionally punctuation.
 
     Args:
         text (str): Input text
+        remove_punctuation (bool): Whether to remove punctuation marks (default: True)
 
     Returns:
         str: Cleaned text
+
+    Examples:
+        >>> clean_text("Great coffee! Very smooth.")
+        "Great coffee Very smooth"
+        >>> clean_text("Great coffee! Very smooth.", remove_punctuation=False)
+        "Great coffee! Very smooth."
     """
     if not isinstance(text, str):
         return ""
@@ -59,9 +66,14 @@ def clean_text(text):
     text = re.sub(
         r"http\S+|www\S+|https\S+", "", text, flags=re.MULTILINE
     )  # Remove URLs
-    text = re.sub(
-        r"[^a-zA-Z0-9\s,.!?;]", "", text
-    )  # Remove special characters except punctuation
+
+    if remove_punctuation:
+        text = re.sub(
+            r"[^a-zA-Z0-9\s]", "", text
+        )  # Remove all special characters and punctuation
+    else:
+        text = re.sub(r"[^\w\s,.!?;]", "", text)  # Keep basic punctuation
+
     return text
 
 
@@ -158,15 +170,25 @@ def preprocess_text(text, remove_stop=True):
     return " ".join(tokens)
 
 
-def extract_country_info(location):
+def extract_country_info(location: str) -> str:
     """
     Extract country name from location string.
 
+    Prioritizes known coffee-producing countries that appear at string start.
+
     Args:
-        location (str): Location string that may contain country information
+        location (str): Location string (e.g., "Ethiopia Yirgacheffe")
 
     Returns:
-        str: Extracted country name or None
+        str: Extracted country name (e.g., "Ethiopia")
+
+    Examples:
+        >>> extract_country_info("Ethiopia Yirgacheffe")
+        "Ethiopia"
+        >>> extract_country_info("Colombia Huila")
+        "Colombia"
+        >>> extract_country_info("Jamaica Blue Mountain")
+        "Jamaica"
     """
     if pd.isna(location) or not isinstance(location, str):
         return None
@@ -189,11 +211,48 @@ def extract_country_info(location):
     if location in country_mapping:
         return country_mapping[location]
 
-    # Extract words that look like country names using regex
+    # Known countries that appear first in coffee origin strings
+    known_countries = [
+        "Ethiopia",
+        "Colombia",
+        "Kenya",
+        "Jamaica",
+        "Guatemala",
+        "Brazil",
+        "Costa Rica",
+        "Panama",
+        "Yemen",
+        "Peru",
+        "Indonesia",
+        "Mexico",
+        "Nicaragua",
+        "Honduras",
+        "El Salvador",
+        "Ecuador",
+        "Bolivia",
+        "Venezuela",
+        "Rwanda",
+        "Burundi",
+        "Tanzania",
+        "Uganda",
+        "Malawi",
+        "Zimbabwe",
+        "India",
+        "China",
+        "Thailand",
+        "Vietnam",
+        "Philippines",
+    ]
+
+    # Check if any known country appears at the start of the location
+    for country in known_countries:
+        if location.startswith(country):
+            return country
+
+    # Extract first capitalized word as potential country
     words = re.findall(r"\b[A-Z][a-z]{2,}\b", location)
     if words:
-        # Return the last capitalized word as the potential country
-        return words[-1]
+        return words[0]
 
     return location
 
@@ -281,15 +340,22 @@ def merge_text_columns(df, columns, output_col="merged_text"):
     return result
 
 
-def load_coffee_data(file_path):
+def load_csv_for_preprocessing(file_path: str) -> pd.DataFrame:
     """
-    Load coffee review data from CSV file.
+    Load CSV data for text preprocessing operations.
+
+    This function loads CSV data specifically for text preprocessing operations.
+    Uses pandas for easier text manipulation and sklearn compatibility.
 
     Args:
         file_path (str): Path to CSV file
 
     Returns:
-        pd.DataFrame: Loaded data
+        pd.DataFrame: Data optimized for text preprocessing operations
+
+    Note:
+        Returns pandas DataFrame (not Polars) for easier text processing.
+        Use convert_pandas_to_polars() if you need Polars format afterward.
     """
     try:
         logger.info(f"Loading data from {file_path}")
@@ -315,7 +381,7 @@ def process_raw_data(input_file, output_file, text_columns=None):
     os.makedirs(output_dir, exist_ok=True)
 
     # Load data
-    df = load_coffee_data(input_file)
+    df = load_csv_for_preprocessing(input_file)
     if df.empty:
         raise ValueError(f"Failed to load data from {input_file}")
 

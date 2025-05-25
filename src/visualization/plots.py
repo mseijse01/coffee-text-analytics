@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import polars as pl
 
-from src.config.settings import PATHS
+from config.settings import PATHS
 
 
 def save_figure(

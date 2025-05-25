@@ -136,13 +136,17 @@ class CoffeeFeatureExtractor:
             return pl.DataFrame(), TfidfVectorizer()
 
         try:
+            # Adjust parameters for small datasets and identical texts
+            min_df = 1 if len(texts) < 10 else 2
+            max_df = 1.0 if len(texts) < 20 else 0.95
+
             # Use sklearn for TF-IDF computation (industry standard)
             vectorizer = TfidfVectorizer(
                 max_features=max_features,
                 ngram_range=ngram_range,
                 stop_words="english",  # Remove common stopwords
-                min_df=2,  # Ignore terms that appear in less than 2 documents
-                max_df=0.95,  # Ignore terms that appear in more than 95% of documents
+                min_df=min_df,  # Adjust for small datasets
+                max_df=max_df,  # Adjust for small datasets
             )
 
             tfidf_matrix = vectorizer.fit_transform(texts)

@@ -377,7 +377,7 @@ def check_column_consistency(*dfs: pl.DataFrame) -> None:
         print("All datasets have the same columns.")
     else:
         for idx, cols in enumerate(column_sets):
-            print(f"Columns in DataFrame {idx+1}: {cols}")
+            print(f"Columns in DataFrame {idx + 1}: {cols}")
 
 
 def check_missing_values(df: pl.DataFrame, name: str) -> None:
@@ -482,7 +482,9 @@ def check_target_variable(df: pl.DataFrame, target_col: str) -> None:
     # Missing values
     n_missing = df[target_col].null_count()
     if n_missing > 0:
-        print(f"Warning: Found {n_missing:,} missing values ({n_missing/len(df):.1%})")
+        print(
+            f"Warning: Found {n_missing:,} missing values ({n_missing / len(df):.1%})"
+        )
     else:
         print("No missing values found in the target column.")
 
@@ -638,10 +640,10 @@ def analyze_roast_standardization(df: pl.DataFrame) -> None:
 
 def drop_irrelevant_columns(df: pl.DataFrame) -> pl.DataFrame:
     """
-    Drop columns that are not needed for analysis.
+    Drop columns that are not useful for analysis.
 
     Args:
-        df: Input DataFrame
+        df: DataFrame to clean
 
     Returns:
         DataFrame with irrelevant columns removed
@@ -657,7 +659,13 @@ def drop_irrelevant_columns(df: pl.DataFrame) -> pl.DataFrame:
         "with_milk",  # Too many missing values
     ]
 
-    return df.drop(columns_to_drop)
+    # Only drop columns that actually exist in the DataFrame
+    existing_columns_to_drop = [col for col in columns_to_drop if col in df.columns]
+
+    if existing_columns_to_drop:
+        return df.drop(existing_columns_to_drop)
+    else:
+        return df
 
 
 def summarize_column_changes(
@@ -744,12 +752,24 @@ def clean_dataset(
     """
     Clean dataset by handling missing values and outliers.
 
+    This function performs comprehensive data cleaning including:
+    - Removing rows with missing critical values
+    - Filtering by minimum rating threshold
+    - Standardizing country information
+    - Dropping irrelevant columns
+
     Args:
-        df: DataFrame to clean
-        min_rating: Minimum rating threshold
+        df (pl.DataFrame): Input Polars DataFrame
+        min_rating (float): Minimum rating threshold (default: 80.0)
 
     Returns:
-        Tuple of (cleaned DataFrame, cleaning statistics)
+        tuple[pl.DataFrame, dict]: (cleaned_data, cleaning_statistics)
+            - cleaned_data: Filtered and cleaned DataFrame
+            - cleaning_statistics: Dict with removal counts and percentages
+
+    Example:
+        >>> cleaned_df, stats = clean_dataset(raw_df, min_rating=85.0)
+        >>> print(f"Removed {stats['rows_removed']} rows")
     """
     initial_rows = len(df)
 
