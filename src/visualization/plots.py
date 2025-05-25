@@ -30,8 +30,11 @@ def save_figure(
 def plot_boxplots(data: pl.DataFrame, columns: List[str]) -> None:
     """Generate box plots for specified columns."""
     for col in columns:
+        # Convert only the needed column to pandas
+        column_data = data.select(col).to_pandas()
+
         fig = px.box(
-            data.to_pandas(),
+            column_data,
             x=col,
             title=f"Distribution of {col}",
             height=300,
@@ -44,8 +47,11 @@ def plot_boxplots(data: pl.DataFrame, columns: List[str]) -> None:
 def plot_kde(data: pl.DataFrame, columns: List[str]) -> None:
     """Generate KDE plots for specified columns."""
     for col in columns:
+        # Convert only the needed column to pandas
+        column_data = data.select(col).to_pandas()
+
         fig = px.histogram(
-            data.to_pandas(),
+            column_data,
             x=col,
             title=f"Distribution of {col}",
             height=300,
@@ -58,10 +64,17 @@ def plot_kde(data: pl.DataFrame, columns: List[str]) -> None:
 def plot_categorical_distributions(data: pl.DataFrame, columns: List[str]) -> None:
     """Plot distributions for categorical columns."""
     for col in columns:
-        value_counts = data.select(pl.col(col)).to_pandas()[col].value_counts()
+        # Use Polars native value_counts for efficiency
+        value_counts_df = (
+            data.select(pl.col(col))
+            .group_by(col)
+            .count()
+            .sort("count", descending=True)
+        )
+
         fig = px.bar(
-            x=value_counts.index,
-            y=value_counts.values,
+            x=value_counts_df[col].to_list(),
+            y=value_counts_df["count"].to_list(),
             title=f"Distribution of {col}",
             labels={"x": col, "y": "Count"},
         )
