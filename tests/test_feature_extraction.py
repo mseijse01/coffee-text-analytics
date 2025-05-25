@@ -1,0 +1,462 @@
+#!/usr/bin/env python3
+"""
+Test suite for feature extraction components.
+
+Tests TF-IDF, BERT, GloVe, topic modeling, and sentiment analysis functionality.
+"""
+
+import unittest
+import sys
+import os
+import numpy as np
+import polars as pl
+from unittest.mock import patch, MagicMock
+
+# Conditional import for torch
+try:
+    import torch
+
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+from features.feature_extraction import CoffeeFeatureExtractor
+
+
+class TestCoffeeFeatureExtractor(unittest.TestCase):
+    """Test the main feature extraction class."""
+
+    def setUp(self):
+        """Set up test data and extractor."""
+        self.sample_texts = [
+            "Great coffee with fruity notes and bright acidity",
+            "Excellent balance with smooth finish and rich texture",
+            "Good body with complex flavor profile",
+            "Outstanding coffee with exceptional aroma",
+            "Nice coffee with clean taste and good value",
+        ]
+
+        self.extractor = CoffeeFeatureExtractor()
+
+    def test_extractor_initialization(self):
+        """Test that extractor initializes correctly."""
+        self.assertIsInstance(self.extractor, CoffeeFeatureExtractor)
+        self.assertTrue(hasattr(self.extractor, "models_dir"))
+
+    def test_tfidf_extraction_basic(self):
+        """Test basic TF-IDF feature extraction."""
+        tfidf_df, vectorizer = self.extractor.extract_tfidf_features(
+            self.sample_texts, max_features=50
+        )
+
+        # Check output types
+        self.assertIsInstance(tfidf_df, pl.DataFrame)
+        self.assertIsNotNone(vectorizer)
+
+        # Check dimensions
+        self.assertEqual(tfidf_df.shape[0], len(self.sample_texts))
+        self.assertLessEqual(tfidf_df.shape[1], 50)
+
+        # Check that features are numeric
+        for col in tfidf_df.columns:
+            self.assertTrue(tfidf_df[col].dtype in [pl.Float64, pl.Float32])
+
+    def test_tfidf_extraction_empty_input(self):
+        """Test TF-IDF extraction with empty input."""
+        empty_texts = []
+        tfidf_df, vectorizer = self.extractor.extract_tfidf_features(empty_texts)
+
+        # Should return empty DataFrame
+        self.assertIsInstance(tfidf_df, pl.DataFrame)
+        self.assertTrue(tfidf_df.is_empty())
+
+    def test_tfidf_extraction_invalid_input(self):
+        """Test TF-IDF extraction with invalid input."""
+        invalid_texts = [None, "", "   ", 123]
+        tfidf_df, vectorizer = self.extractor.extract_tfidf_features(invalid_texts)
+
+        # Should handle gracefully
+        self.assertIsInstance(tfidf_df, pl.DataFrame)
+
+    @patch("features.feature_extraction.TRANSFORMERS_AVAILABLE", False)
+    def test_bert_extraction_unavailable(self):
+        """Test BERT extraction when transformers not available."""
+        extractor = CoffeeFeatureExtractor()
+        bert_df = extractor.extract_bert_embeddings(self.sample_texts)
+
+        # Should return empty DataFrame
+        self.assertIsInstance(bert_df, pl.DataFrame)
+        self.assertTrue(bert_df.is_empty())
+
+    @patch("features.feature_extraction.TRANSFORMERS_AVAILABLE", True)
+    @patch("features.feature_extraction.DistilBertTokenizer", create=True)
+    @patch("features.feature_extraction.DistilBertModel", create=True)
+    @patch(
+        "features.feature_extraction.DistilBertForSequenceClassification", create=True
+    )
+    def test_bert_extraction_mocked(
+        self, mock_sentiment_class, mock_model_class, mock_tokenizer_class
+    ):
+        """Test BERT extraction with mocked transformers."""
+        # Mock tokenizer
+        mock_tokenizer = MagicMock()
+        mock_tokenizer_class.from_pretrained.return_value = mock_tokenizer
+
+        # Mock model
+        mock_model = MagicMock()
+        mock_model_class.from_pretrained.return_value = mock_model
+
+        # Mock sentiment model
+        mock_sentiment = MagicMock()
+        mock_sentiment_class.from_pretrained.return_value = mock_sentiment
+
+        if TORCH_AVAILABLE:
+            mock_tokenizer.return_value = {
+                "input_ids": torch.tensor([[1, 2, 3]]),
+                "attention_mask": torch.tensor([[1, 1, 1]]),
+            }
+        else:
+            # Mock torch tensors when torch is not available
+            mock_tensor = MagicMock()
+            mock_tokenizer.return_value = {
+                "input_ids": mock_tensor,
+                "attention_mask": mock_tensor,
+            }
+
+        # Mock model output
+        mock_output = MagicMock()
+        if TORCH_AVAILABLE:
+            mock_output.last_hidden_state = torch.randn(1, 3, 768)
+        else:
+            # Mock the tensor operations
+            mock_hidden_state = MagicMock()
+            mock_hidden_state.mean.return_value.squeeze.return_value.numpy.return_value = np.random.randn(
+                768
+            )
+            mock_output.last_hidden_state = mock_hidden_state
+        mock_model.return_value = mock_output
+
+        # Create extractor (this will use mocked components)
+        extractor = CoffeeFeatureExtractor()
+        bert_df = extractor.extract_bert_embeddings(self.sample_texts[:2])
+
+        # Check output
+        self.assertIsInstance(bert_df, pl.DataFrame)
+        if not bert_df.is_empty():
+            self.assertEqual(bert_df.shape[0], 2)
+            self.assertEqual(bert_df.shape[1], 768)
+
+    @patch("features.feature_extraction.GENSIM_AVAILABLE", False)
+    def test_glove_extraction_unavailable(self):
+        """Test GloVe extraction when gensim not available."""
+        extractor = CoffeeFeatureExtractor()
+        glove_df = extractor.extract_glove_embeddings(self.sample_texts)
+
+        # Should return empty DataFrame
+        self.assertIsInstance(glove_df, pl.DataFrame)
+        self.assertTrue(glove_df.is_empty())
+
+    @patch("features.feature_extraction.GENSIM_AVAILABLE", True)
+    def test_glove_extraction_mocked(self):
+        """Test GloVe extraction with mocked model."""
+        # Mock GloVe model
+        mock_glove = MagicMock()
+        mock_glove.__contains__ = lambda self, word: word in [
+            "coffee",
+            "great",
+            "excellent",
+        ]
+        mock_glove.__getitem__ = lambda self, word: np.random.randn(300)
+
+        extractor = CoffeeFeatureExtractor()
+        extractor.glove_model = mock_glove
+
+        glove_df = extractor.extract_glove_embeddings(self.sample_texts[:2])
+
+        # Check output
+        self.assertIsInstance(glove_df, pl.DataFrame)
+        if not glove_df.is_empty():
+            self.assertEqual(glove_df.shape[0], 2)
+            self.assertEqual(glove_df.shape[1], 300)
+
+    def test_topic_extraction_basic(self):
+        """Test basic topic modeling extraction."""
+        lda_df, nmf_df = self.extractor.extract_topic_features(
+            self.sample_texts, n_topics=3
+        )
+
+        # Check output types
+        self.assertIsInstance(lda_df, pl.DataFrame)
+        self.assertIsInstance(nmf_df, pl.DataFrame)
+
+        # Check dimensions
+        if not lda_df.is_empty():
+            self.assertEqual(lda_df.shape[0], len(self.sample_texts))
+            self.assertEqual(lda_df.shape[1], 3)  # n_topics
+
+        if not nmf_df.is_empty():
+            self.assertEqual(nmf_df.shape[0], len(self.sample_texts))
+            self.assertEqual(nmf_df.shape[1], 3)  # n_topics
+
+    def test_topic_extraction_insufficient_data(self):
+        """Test topic extraction with insufficient data."""
+        small_texts = ["coffee"]
+        lda_df, nmf_df = self.extractor.extract_topic_features(small_texts, n_topics=5)
+
+        # Should handle gracefully
+        self.assertIsInstance(lda_df, pl.DataFrame)
+        self.assertIsInstance(nmf_df, pl.DataFrame)
+
+    @patch("features.feature_extraction.TRANSFORMERS_AVAILABLE", False)
+    def test_sentiment_extraction_unavailable(self):
+        """Test sentiment extraction when transformers not available."""
+        extractor = CoffeeFeatureExtractor()
+        sentiment_df = extractor.extract_sentiment_features(self.sample_texts)
+
+        # Should return empty DataFrame
+        self.assertIsInstance(sentiment_df, pl.DataFrame)
+        self.assertTrue(sentiment_df.is_empty())
+
+    @patch("features.feature_extraction.TRANSFORMERS_AVAILABLE", True)
+    @patch("features.feature_extraction.DistilBertTokenizer", create=True)
+    @patch("features.feature_extraction.DistilBertModel", create=True)
+    @patch(
+        "features.feature_extraction.DistilBertForSequenceClassification", create=True
+    )
+    @patch("features.feature_extraction.pipeline", create=True)
+    def test_sentiment_extraction_mocked(
+        self,
+        mock_pipeline_func,
+        mock_sentiment_class,
+        mock_model_class,
+        mock_tokenizer_class,
+    ):
+        """Test sentiment extraction with mocked pipeline."""
+        # Mock all the required classes for initialization
+        mock_tokenizer = MagicMock()
+        mock_tokenizer_class.from_pretrained.return_value = mock_tokenizer
+
+        mock_model = MagicMock()
+        mock_model_class.from_pretrained.return_value = mock_model
+
+        mock_sentiment = MagicMock()
+        mock_sentiment_class.from_pretrained.return_value = mock_sentiment
+
+        # Mock sentiment pipeline
+        mock_pipeline_instance = MagicMock()
+        mock_pipeline_func.return_value = mock_pipeline_instance
+
+        # Mock sentiment results
+        mock_results = [
+            [{"label": "POSITIVE", "score": 0.8}, {"label": "NEGATIVE", "score": 0.2}],
+            [{"label": "POSITIVE", "score": 0.9}, {"label": "NEGATIVE", "score": 0.1}],
+        ]
+        mock_pipeline_instance.return_value = mock_results
+
+        extractor = CoffeeFeatureExtractor()
+        sentiment_df = extractor.extract_sentiment_features(self.sample_texts[:2])
+
+        # Check output
+        self.assertIsInstance(sentiment_df, pl.DataFrame)
+        if not sentiment_df.is_empty():
+            self.assertEqual(sentiment_df.shape[0], 2)
+            self.assertEqual(sentiment_df.shape[1], 2)  # positive, negative
+
+    def test_extract_all_features_basic(self):
+        """Test complete feature extraction pipeline."""
+        # Create sample DataFrame
+        df = pl.DataFrame(
+            {
+                "desc_1": self.sample_texts,
+                "desc_2": self.sample_texts,
+                "rating": [85, 90, 88, 92, 87],
+            }
+        )
+
+        # Extract features (with limited scope for testing)
+        features_df = self.extractor.extract_all_features(
+            df, text_columns=["desc_1"], n_topics=2
+        )
+
+        # Check output
+        self.assertIsInstance(features_df, pl.DataFrame)
+        self.assertEqual(features_df.shape[0], len(self.sample_texts))
+
+        # Should have some features
+        self.assertGreater(features_df.shape[1], 0)
+
+    def test_extract_all_features_missing_columns(self):
+        """Test feature extraction with missing text columns."""
+        df = pl.DataFrame({"rating": [85, 90, 88], "other_col": ["a", "b", "c"]})
+
+        features_df = self.extractor.extract_all_features(
+            df, text_columns=["desc_1", "desc_2"], n_topics=2
+        )
+
+        # Should handle gracefully
+        self.assertIsInstance(features_df, pl.DataFrame)
+
+    def test_extract_all_features_empty_dataframe(self):
+        """Test feature extraction with empty DataFrame."""
+        df = pl.DataFrame()
+
+        features_df = self.extractor.extract_all_features(df)
+
+        # Should handle gracefully
+        self.assertIsInstance(features_df, pl.DataFrame)
+
+
+class TestFeatureExtractionUtilities(unittest.TestCase):
+    """Test utility functions for feature extraction."""
+
+    def test_feature_naming_consistency(self):
+        """Test that feature names are consistent and unique."""
+        extractor = CoffeeFeatureExtractor()
+
+        # Test TF-IDF naming
+        tfidf_df, _ = extractor.extract_tfidf_features(["test text"], max_features=10)
+
+        if not tfidf_df.is_empty():
+            # All column names should start with 'tfidf_'
+            for col in tfidf_df.columns:
+                self.assertTrue(col.startswith("tfidf_"))
+
+            # All column names should be unique
+            self.assertEqual(len(tfidf_df.columns), len(set(tfidf_df.columns)))
+
+    def test_feature_value_ranges(self):
+        """Test that feature values are in expected ranges."""
+        extractor = CoffeeFeatureExtractor()
+        texts = ["great coffee", "excellent flavor", "good aroma"]
+
+        # TF-IDF values should be non-negative
+        tfidf_df, _ = extractor.extract_tfidf_features(texts, max_features=10)
+
+        if not tfidf_df.is_empty():
+            for col in tfidf_df.columns:
+                values = tfidf_df[col].to_numpy()
+                self.assertTrue(
+                    np.all(values >= 0),
+                    f"TF-IDF values should be non-negative in {col}",
+                )
+
+    def test_feature_extraction_reproducibility(self):
+        """Test that feature extraction is reproducible."""
+        extractor1 = CoffeeFeatureExtractor()
+        extractor2 = CoffeeFeatureExtractor()
+
+        texts = ["great coffee with fruity notes", "excellent balance"]
+
+        # Extract features twice
+        tfidf_df1, _ = extractor1.extract_tfidf_features(texts, max_features=20)
+        tfidf_df2, _ = extractor2.extract_tfidf_features(texts, max_features=20)
+
+        if not tfidf_df1.is_empty() and not tfidf_df2.is_empty():
+            # Should have same shape
+            self.assertEqual(tfidf_df1.shape, tfidf_df2.shape)
+
+            # Should have same column names
+            self.assertEqual(list(tfidf_df1.columns), list(tfidf_df2.columns))
+
+
+class TestFeatureExtractionIntegration(unittest.TestCase):
+    """Test integration between different feature extraction methods."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.sample_df = pl.DataFrame(
+            {
+                "desc_1": [
+                    "Great coffee with fruity notes",
+                    "Excellent balance and smooth finish",
+                    "Good body with complex flavor",
+                ],
+                "desc_2": ["Bright acidity", "Rich texture", "Clean taste"],
+                "rating": [85, 90, 88],
+            }
+        )
+
+        self.extractor = CoffeeFeatureExtractor()
+
+    def test_multi_column_feature_extraction(self):
+        """Test feature extraction across multiple text columns."""
+        features_df = self.extractor.extract_all_features(
+            self.sample_df, text_columns=["desc_1", "desc_2"], n_topics=2
+        )
+
+        # Should have features from both columns
+        self.assertIsInstance(features_df, pl.DataFrame)
+
+        if not features_df.is_empty():
+            # Check for column-specific features
+            desc1_features = [col for col in features_df.columns if "desc_1" in col]
+            desc2_features = [col for col in features_df.columns if "desc_2" in col]
+
+            self.assertGreater(len(desc1_features), 0, "Should have desc_1 features")
+            self.assertGreater(len(desc2_features), 0, "Should have desc_2 features")
+
+    def test_feature_combination_consistency(self):
+        """Test that feature combination maintains data integrity."""
+        features_df = self.extractor.extract_all_features(
+            self.sample_df, text_columns=["desc_1"], n_topics=2
+        )
+
+        if not features_df.is_empty():
+            # Number of rows should match input
+            self.assertEqual(features_df.shape[0], self.sample_df.shape[0])
+
+            # Only extracted features should be numeric (not original text columns)
+            original_columns = set(self.sample_df.columns)
+            for col in features_df.columns:
+                if col not in original_columns:  # This is an extracted feature
+                    dtype = features_df[col].dtype
+                    self.assertTrue(
+                        dtype in [pl.Float64, pl.Float32, pl.Int64, pl.Int32],
+                        f"Feature {col} should be numeric, got {dtype}",
+                    )
+
+    def test_feature_extraction_performance(self):
+        """Test that feature extraction completes in reasonable time."""
+        import time
+
+        # Create larger dataset for performance test
+        large_texts = ["Great coffee with excellent flavor"] * 50
+        large_df = pl.DataFrame({"desc_1": large_texts, "rating": list(range(50))})
+
+        start_time = time.time()
+        features_df = self.extractor.extract_all_features(
+            large_df, text_columns=["desc_1"], n_topics=3
+        )
+        end_time = time.time()
+
+        # Should complete within reasonable time (adjust threshold as needed)
+        self.assertLess(end_time - start_time, 30, "Feature extraction took too long")
+
+        # Should produce output
+        self.assertIsInstance(features_df, pl.DataFrame)
+
+
+if __name__ == "__main__":
+    # Create test suite
+    test_suite = unittest.TestSuite()
+
+    # Add test classes
+    test_classes = [
+        TestCoffeeFeatureExtractor,
+        TestFeatureExtractionUtilities,
+        TestFeatureExtractionIntegration,
+    ]
+
+    for test_class in test_classes:
+        tests = unittest.TestLoader().loadTestsFromTestCase(test_class)
+        test_suite.addTests(tests)
+
+    # Run tests
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(test_suite)
+
+    # Exit with error code if tests failed
+    sys.exit(0 if result.wasSuccessful() else 1)
