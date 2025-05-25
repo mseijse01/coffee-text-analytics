@@ -319,29 +319,38 @@ def process_raw_data(input_file, output_file, text_columns=None):
     if df.empty:
         raise ValueError(f"Failed to load data from {input_file}")
 
-    # Set default text columns if not provided
+    # Set default text columns for coffee review data
     if text_columns is None:
-        text_columns = ["description", "notes"]
+        text_columns = ["desc_1", "desc_2", "desc_3"]
 
-    # Standardize prices if available
-    if "price" in df.columns:
-        df = standardize_prices(df, "price")
-        logger.info("Standardized price information")
-
-    # Extract country information if location is available
-    if "location" in df.columns:
-        df["country_of_origin"] = df["location"].apply(extract_country_info)
+    # Extract country information from origin if available
+    if "origin" in df.columns:
+        df["country_of_origin"] = df["origin"].apply(extract_country_info)
         logger.info("Extracted country of origin information")
 
-    # Merge and preprocess text columns
-    df = merge_text_columns(df, text_columns, output_col="merged_text")
-    logger.info(f"Merged text columns: {text_columns}")
+    # Standardize prices if available
+    if "est_price" in df.columns:
+        df = standardize_prices(df, "est_price")
+        logger.info("Standardized price information")
 
-    # Apply text preprocessing
-    df["processed_text"] = df["merged_text"].apply(
-        lambda x: preprocess_text(x, remove_stop=True)
-    )
-    logger.info("Applied text preprocessing")
+    # Process each text column individually
+    for col in text_columns:
+        if col in df.columns:
+            logger.info(f"Preprocessing text column: {col}")
+            df[f"processed_{col}"] = (
+                df[col].fillna("").apply(lambda x: preprocess_text(x, remove_stop=True))
+            )
+        else:
+            logger.warning(f"Text column '{col}' not found in data")
+
+    # Create a merged text column for compatibility
+    existing_text_cols = [col for col in text_columns if col in df.columns]
+    if existing_text_cols:
+        df = merge_text_columns(df, existing_text_cols, output_col="merged_text")
+        df["processed_text"] = df["merged_text"].apply(
+            lambda x: preprocess_text(x, remove_stop=True)
+        )
+        logger.info(f"Merged and processed text columns: {existing_text_cols}")
 
     # Save processed data
     df.to_csv(output_file, index=False)
