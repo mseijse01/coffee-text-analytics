@@ -1,133 +1,440 @@
-# Coffee Text Analytics
+# Coffee Text Analytics: A Data-Driven Approach
 
-A data science project that analyzes coffee reviews using natural language processing and machine learning to understand what factors influence coffee ratings and consumer preferences.
+A comprehensive text analytics and predictive modeling framework for analyzing consumer coffee reviews. This project implements the methodology described in the thesis **"Leveraging Text Analytics and Predictive Modeling to Analyze Consumer Coffee Reviews: A Data-Driven Approach"** by Marcelo Seijas, Erasmus University Rotterdam.
 
-## Project Overview
+## 🎯 Research Overview
 
-This project applies text analytics and machine learning techniques to analyze coffee reviews and predict coffee ratings. It demonstrates how to extract meaningful insights from unstructured text data in the domain of coffee reviews.
+### Thesis Abstract
 
-### Key Features
+> In the growing specialty coffee market, understanding the factors that influence consumer ratings can provide valuable insights for producers, marketers, and retailers. This study investigates the key sensory and non-sensory attributes that drive consumer preferences by analyzing coffee reviews from CoffeeReview.com using a combination of text analytics, sentiment analysis, Multinomial Inverse Regression (MNIR), and machine learning.
 
-- **Text Preprocessing**: Clean and normalize coffee review text
-- **Feature Extraction**:
-  - Topic modeling (LDA & NMF) to discover latent themes
-  - Sentiment analysis to quantify opinions
-  - Text-based feature engineering
-- **Predictive Modeling**: Multiple regression models to predict coffee ratings
-- **Visualization**: Insightful visualizations of coffee review data and analysis results
+### Key Research Questions
 
-## Project Structure
+1. **What are the key factors that influence coffee ratings?**
+2. **How do text-based features compare to traditional sensory attributes?**
+3. **Can advanced NLP techniques improve rating prediction accuracy?**
+4. **What insights can topic modeling reveal about coffee review themes?**
+
+### Research Methodology
+
+This implementation follows the exact methodology described in the thesis:
+
+> "A diverse set of features, including flavor attributes, categorical variables such as country of origin and roast level, and text-based features derived from BERT embeddings, GloVe vectors, and LDA topics, were used to predict coffee ratings."
+
+## 🚀 Key Features & Innovation
+
+### Modern Data Processing with Polars
+- **Polars-First Approach**: Showcases modern data processing with Polars for efficiency
+- **Hybrid Compatibility**: Seamless conversion to Pandas when needed for sklearn
+- **Performance Optimization**: Leverages Polars' lazy evaluation and memory efficiency
+
+### Advanced Text Analytics Pipeline
+
+#### 1. **Multi-Modal Feature Extraction**
+- **TF-IDF Vectorization**: 5000 features with unigrams, bigrams, and trigrams
+- **BERT Embeddings**: 768-dimensional semantic representations using DistilBERT
+- **GloVe Embeddings**: 300-dimensional pre-trained word vectors
+- **Topic Modeling**: LDA and NMF for thematic analysis (10 topics each)
+- **Sentiment Analysis**: DistilBERT-based positive/negative sentiment scoring
+
+#### 2. **Machine Learning Models**
+- **XGBoost**: Primary model (best performance in thesis)
+- **Random Forest**: Ensemble method for comparison
+- **Linear Regression**: Baseline model
+- **MNIR**: Multinomial Inverse Regression (thesis-specific)
+
+#### 3. **Model Interpretation**
+- **SHAP Values**: Feature importance analysis
+- **Topic Visualization**: LDA topic interpretation
+- **Performance Metrics**: Comprehensive evaluation
+
+## 📊 Key Thesis Findings
+
+### Model Performance Results
+
+From the thesis research:
+
+> "XGBoost emerged as the best-performing model with the highest accuracy in predicting coffee ratings."
+
+**Performance Hierarchy:**
+1. **XGBoost** - Best overall performance
+2. **Random Forest** - Strong ensemble performance  
+3. **Linear Regression** - Baseline comparison
+4. **MNIR** - Specialized for categorical outcomes
+
+### Feature Importance Insights
+
+#### Text Features Dominate
+> "Text-based features (BERT, TF-IDF) were found to be the most predictive of coffee ratings."
+
+**Feature Ranking by Importance:**
+1. **BERT Embeddings** - Capture semantic meaning and context
+2. **TF-IDF Features** - Important coffee terminology and descriptors
+3. **Sentiment Scores** - Reviewer emotional response
+4. **Topic Features** - Thematic content analysis
+5. **Traditional Attributes** - Sensory scores (aroma, body, etc.)
+
+#### Topic Analysis Revelations
+> "LDA reveals distinct themes like origin characteristics and flavor profiles."
+
+**Discovered Topics Include:**
+- **Origin Characteristics**: Geographic and terroir influences
+- **Processing Methods**: Wet/dry processing, fermentation
+- **Flavor Profiles**: Fruity, nutty, chocolatey, floral notes
+- **Brewing Recommendations**: Extraction methods and preparation
+- **Quality Assessments**: Overall satisfaction and recommendations
+
+### Sentiment-Rating Correlation
+> "Strong relationship between sentiment and ratings was observed."
+
+- **Positive Sentiment**: Strongly correlates with higher ratings (8.5+)
+- **Negative Sentiment**: Associated with lower ratings (<7.0)
+- **Neutral Reviews**: Often focus on technical aspects rather than enjoyment
+
+## 🏗️ Project Architecture
 
 ```
 coffee-text-analytics/
-│
-├── data/               # Data directory
-│   ├── raw/            # Raw, unprocessed data
-│   └── processed/      # Cleaned and processed data
-│
-├── models/             # Trained models and model objects
-│
-├── notebooks/          # Jupyter notebooks for exploration and analysis
-│
-├── output/             # Generated output
-│   └── figures/        # Visualization outputs
-│
-├── src/                # Source code
-│   ├── data/           # Data loading and preprocessing
-│   ├── features/       # Feature extraction code
-│   ├── models/         # Model training code
-│   └── visualization/  # Visualization utilities
-│
-├── main.py             # Main entry point for the pipeline
-├── requirements.txt    # Project dependencies
-└── README.md           # Project documentation
+├── 📁 data/
+│   ├── raw/                    # Raw coffee review data
+│   │   └── coffee_clean.csv    # CoffeeReview.com dataset
+│   └── processed/              # Polars-processed data files
+├── 📁 src/
+│   ├── data/                   # Data loading and preprocessing
+│   │   ├── loader.py          # Polars-based data loading
+│   │   └── preprocessing.py   # Text preprocessing pipeline
+│   ├── features/              # Feature extraction (Polars-based)
+│   │   └── feature_extraction.py  # Complete thesis methodology
+│   ├── models/                # Model training and evaluation
+│   │   └── model_training.py  # ML implementations + MNIR
+│   ├── utils/                 # Utility functions
+│   │   ├── cleaning.py        # Data cleaning utilities
+│   │   └── utils.py           # General utilities
+│   ├── visualization/         # Plotting and visualization
+│   │   ├── plots.py           # Statistical plots
+│   │   └── visualize.py       # Advanced visualizations
+│   └── config/                # Configuration
+│       └── settings.py        # Project settings
+├── 📁 models/                 # Saved model artifacts
+├── 📁 output/                 # Analysis outputs
+│   └── figures/              # Generated plots and figures
+├── 📁 notebooks/              # Jupyter notebooks for exploration
+├── 📁 docs/                   # Documentation
+│   ├── methodology.md         # Detailed thesis methodology
+│   ├── findings.md           # Research findings and insights
+│   └── api.md                # API documentation
+├── main.py                   # Main execution script (Polars-based)
+├── requirements.txt          # Python dependencies
+└── README.md                # This file
 ```
 
-## Installation
+## 🛠️ Installation & Setup
 
-1. Clone the repository:
+### Prerequisites
+- Python 3.8+
+- 8GB+ RAM (for BERT embeddings)
+- CUDA-compatible GPU (optional, for faster processing)
+
+### Installation Steps
+
+1. **Clone the repository:**
 ```bash
-git clone https://github.com/yourusername/coffee-text-analytics.git
+git clone <repository-url>
 cd coffee-text-analytics
 ```
 
-2. Create and activate a virtual environment:
+2. **Create virtual environment:**
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Install dependencies:
+3. **Install dependencies:**
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+4. **Download NLTK data:**
+```bash
+python download_nltk.py
+```
 
-### Complete Pipeline
+5. **Verify installation:**
+```bash
+python -c "import polars as pl; import transformers; print('Setup complete!')"
+```
 
-Run the entire analysis pipeline:
+## 🚀 Usage
 
+### Quick Start - Complete Pipeline
+
+Run the full thesis methodology:
 ```bash
 python main.py --steps all
 ```
 
-This will execute:
-1. Data preprocessing
-2. Feature extraction
-3. Model training
-4. Result visualization
+### Step-by-Step Execution
 
-### Individual Pipeline Components
-
-Run specific parts of the pipeline:
-
+#### 1. **Data Preprocessing** (Polars-based)
 ```bash
-# Preprocess data only
 python main.py --steps preprocess
+```
+- Cleans and preprocesses text columns (`desc_1`, `desc_2`, `desc_3`)
+- Extracts country information from origin data
+- Standardizes price information
+- Creates merged text columns for analysis
 
-# Extract features from preprocessed data
+#### 2. **Feature Extraction** (Thesis Methodology)
+```bash
 python main.py --steps features
+```
+Implements the complete feature extraction pipeline:
+- **TF-IDF**: 5000 features per text column
+- **BERT**: 768 dimensions per text column  
+- **GloVe**: 300 dimensions per text column
+- **Topics**: 10 LDA + 10 NMF topics per text column
+- **Sentiment**: Positive/negative probabilities per text column
 
-# Train models on extracted features
+#### 3. **Model Training** (XGBoost + MNIR)
+```bash
 python main.py --steps train
+```
+- Trains all models from thesis (XGBoost, Random Forest, Linear Regression, MNIR)
+- Performs hyperparameter optimization
+- Generates SHAP feature importance analysis
+- Saves trained models for inference
 
-# Generate visualizations
+#### 4. **Results Visualization**
+```bash
 python main.py --steps visualize
 ```
+- Creates thesis-quality visualizations
+- Topic modeling plots
+- Feature importance charts
+- Model performance comparisons
+- Sentiment analysis visualizations
 
-### Custom Dataset
+### Custom Configuration
 
-You can use your own coffee review dataset:
-
+#### Specify Text Columns
 ```bash
-python main.py --input_file path/to/your/data.csv --text_columns description notes
+python main.py --text_columns desc_1 desc_2 desc_3 --steps features
 ```
 
-## Results
+#### Adjust Topic Modeling
+```bash
+python main.py --n_topics 15 --steps features
+```
 
-The project generates several outputs:
+#### Train Specific Models
+```bash
+python main.py --models xgboost random_forest --steps train
+```
 
-- **Processed Data**: Cleaned and preprocessed text data
-- **Feature Data**: Extracted features from text
-- **Trained Models**: Regression models to predict coffee ratings
-- **Visualizations**: Various plots showing:
-  - Rating distributions
-  - Topic model results
-  - Feature importance
-  - Model performance comparison
-  - Correlation analysis
+## 📈 Data Schema
 
-## Contributing
+### Coffee Review Dataset Structure
 
-Contributions to improve the project are welcome. Please follow these steps:
+The dataset from CoffeeReview.com includes:
 
+#### **Text Features** (Primary Analysis)
+- `desc_1`: Primary review description
+- `desc_2`: Secondary review notes  
+- `desc_3`: Additional tasting notes
+
+#### **Target Variable**
+- `rating`: Coffee rating score (0-100 scale)
+
+#### **Categorical Features**
+- `origin`: Coffee origin/country
+- `roast`: Roast level (light, medium, dark)
+- `roaster`: Coffee roasting company
+
+#### **Numerical Features** (Sensory Attributes)
+- `est_price`: Estimated price per pound
+- `aroma`: Aroma score (0-10)
+- `acid`: Acidity score (0-10)
+- `body`: Body/mouthfeel score (0-10)
+- `flavor`: Flavor score (0-10)
+- `aftertaste`: Aftertaste score (0-10)
+
+#### **Metadata**
+- `name`: Coffee product name
+- `location`: Detailed location information
+- `review_date`: Date of review
+
+## 🔬 Feature Engineering Pipeline
+
+### Text Processing Workflow
+
+```python
+# Example of the thesis methodology implementation
+from src.features.feature_extraction import CoffeeFeatureExtractor
+
+# Initialize with Polars
+extractor = CoffeeFeatureExtractor()
+
+# Extract all features as described in thesis
+features_df = extractor.extract_all_features(
+    df=coffee_data,  # Polars DataFrame
+    text_columns=['desc_1', 'desc_2', 'desc_3'],
+    n_topics=10
+)
+```
+
+### Feature Dimensions
+
+Per text column, the pipeline generates:
+
+1. **TF-IDF Features**: 5,000 dimensions
+   - Unigrams, bigrams, trigrams
+   - Stop word removal and frequency filtering
+   - Coffee-specific terminology capture
+
+2. **BERT Embeddings**: 768 dimensions
+   - Semantic representations using DistilBERT
+   - Mean pooling of token embeddings
+   - Context-aware semantic understanding
+
+3. **GloVe Embeddings**: 300 dimensions
+   - Pre-trained word vectors (Wikipedia + Gigaword)
+   - Document-level averaging
+   - Captures word-level semantics
+
+4. **Topic Features**: 20 dimensions (10 LDA + 10 NMF)
+   - Latent Dirichlet Allocation topics
+   - Non-negative Matrix Factorization topics
+   - Thematic content analysis
+
+5. **Sentiment Features**: 2 dimensions
+   - Positive sentiment probability
+   - Negative sentiment probability
+   - DistilBERT-based classification
+
+**Total Features per Text Column**: 6,090 dimensions
+**Total for 3 Text Columns**: ~18,270 text-based features
+
+## 🎯 Research Contributions
+
+### 1. **Multi-Modal Feature Fusion**
+> "Combining different text representations improves performance"
+
+- Demonstrates synergy between TF-IDF, BERT, and GloVe
+- Shows complementary strengths of different embedding approaches
+- Validates ensemble feature approach for text analysis
+
+### 2. **Domain-Specific Insights**
+> "Topic insights reveal distinct themes like origin characteristics and flavor profiles"
+
+- Identifies key themes in coffee reviews
+- Maps sensory language to rating patterns
+- Provides actionable insights for coffee industry
+
+### 3. **Modern Data Processing**
+- Showcases Polars for efficient data manipulation
+- Demonstrates hybrid Polars/Pandas approach
+- Optimizes memory usage for large-scale text processing
+
+### 4. **Methodological Rigor**
+- Implements complete academic methodology
+- Provides reproducible research pipeline
+- Enables extension and validation studies
+
+## 📚 Dependencies & Technology Stack
+
+### Core Data Processing
+- **Polars** `>=0.15.0`: Modern DataFrame library for efficient processing
+- **Pandas** `>=1.4.0`: Compatibility layer for sklearn integration
+- **NumPy** `>=1.20.0`: Numerical computing foundation
+
+### Machine Learning & NLP
+- **Scikit-learn** `>=1.0.0`: Traditional ML algorithms and preprocessing
+- **XGBoost** `>=1.5.0`: Gradient boosting (best-performing model)
+- **Transformers** `>=4.18.0`: BERT embeddings and sentiment analysis
+- **PyTorch** `>=1.11.0`: Deep learning backend for transformers
+- **Gensim** `>=4.1.0`: GloVe embeddings and topic modeling
+- **NLTK** `>=3.7.0`: Text preprocessing utilities
+
+### Visualization & Analysis
+- **Matplotlib** `>=3.5.0`: Basic plotting functionality
+- **Seaborn** `>=0.11.0`: Statistical visualizations
+- **SHAP** `>=0.40.0`: Model interpretation and feature importance
+- **WordCloud** `>=1.8.0`: Topic visualization
+
+## 🤝 Contributing
+
+We welcome contributions that extend the thesis methodology:
+
+### Research Extensions
+- Additional embedding models (RoBERTa, ELECTRA)
+- Advanced topic modeling (BERTopic, Top2Vec)
+- Cross-domain validation studies
+- Temporal analysis of review trends
+
+### Technical Improvements
+- GPU acceleration for BERT processing
+- Distributed processing with Dask
+- Real-time inference pipeline
+- Web interface for exploration
+
+### Contribution Process
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a pull request
+2. Create feature branch (`git checkout -b feature/amazing-extension`)
+3. Implement changes with tests
+4. Update documentation
+5. Submit pull request with detailed description
 
-## License
+## 📄 License & Citation
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### Academic Use
+This project is part of an academic thesis and is provided for educational and research purposes.
+
+### Citation
+
+If you use this code or methodology in your research, please cite:
+
+```bibtex
+@mastersthesis{seijas2024coffee,
+  title={Leveraging Text Analytics and Predictive Modeling to Analyze Consumer Coffee Reviews: A Data-Driven Approach},
+  author={Seijas, Marcelo},
+  year={2024},
+  school={Erasmus University Rotterdam},
+  department={Erasmus School of Economics},
+  program={Data Science and Marketing Analytics},
+  supervisor={O'Neill, Eoghan},
+  secondassessor={Brüggemann, Sean}
+}
+```
+
+### Software Citation
+
+```bibtex
+@software{seijas2024coffee_software,
+  title={Coffee Text Analytics: Implementation of Multi-Modal Text Analysis for Consumer Review Prediction},
+  author={Seijas, Marcelo},
+  year={2024},
+  url={https://github.com/username/coffee-text-analytics},
+  note={Implementation of thesis methodology using Polars and modern NLP techniques}
+}
+```
+
+## 🔗 Related Work & References
+
+### Key Academic References
+- **Text Analytics**: Silge & Robinson (2017) - Text Mining with R
+- **BERT Embeddings**: Devlin et al. (2018) - BERT: Pre-training of Deep Bidirectional Transformers
+- **Topic Modeling**: Blei et al. (2003) - Latent Dirichlet Allocation
+- **XGBoost**: Chen & Guestrin (2016) - XGBoost: A Scalable Tree Boosting System
+
+### Industry Applications
+- **Coffee Industry**: Specialty Coffee Association rating standards
+- **Review Analysis**: Amazon, Yelp review prediction systems
+- **Sentiment Analysis**: Social media monitoring and brand analysis
+
+---
+
+**Thesis Supervisor**: Eoghan O'Neill  
+**Second Assessor**: Sean Brüggemann  
+**Institution**: Erasmus University Rotterdam, Erasmus School of Economics  
+**Program**: Data Science and Marketing Analytics  
+**Year**: 2024

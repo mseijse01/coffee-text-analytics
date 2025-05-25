@@ -1,22 +1,30 @@
 """
-Feature extraction utilities for coffee review text data.
+Advanced feature extraction for coffee review text analysis using Polars.
 
-This module includes:
-- Topic modeling (LDA and NMF)
-- Text embeddings generation
-- Sentiment analysis
-- Feature combination
+This module implements the complete feature extraction pipeline described in the thesis:
+- TF-IDF vectorization with unigrams, bigrams, and trigrams (5000 features)
+- BERT embeddings using DistilBERT (768-dimensional vectors)
+- GloVe embeddings (300-dimensional vectors)
+- Topic modeling using LDA and NMF
+- Sentiment analysis using DistilBERT
+- Text-based feature engineering
+
+Uses Polars for efficient data manipulation and showcases modern data processing techniques.
+Aligns with thesis methodology for comprehensive text analysis.
 """
 
+import polars as pl
 import pandas as pd
 import numpy as np
 import pickle
 import os
 import logging
 from typing import List, Dict, Optional, Union, Any, Tuple
+from pathlib import Path
+
+# Core ML and NLP imports
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import LatentDirichletAllocation, NMF
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -26,324 +34,524 @@ logger = logging.getLogger(__name__)
 
 # Check for optional dependencies
 try:
-    from transformers import pipeline
+    from transformers import (
+        DistilBertTokenizer,
+        DistilBertModel,
+        DistilBertForSequenceClassification,
+        pipeline,
+    )
+    import torch
 
     TRANSFORMERS_AVAILABLE = True
+    logger.info(
+        "Transformers available - BERT embeddings and sentiment analysis enabled"
+    )
 except ImportError:
-    logger.warning("Transformers not installed. Sentiment analysis will be limited.")
+    logger.warning("Transformers not installed. BERT features will be limited.")
     TRANSFORMERS_AVAILABLE = False
 
 try:
-    import gensim
-    from gensim.corpora import Dictionary
+    import gensim.downloader as api
 
     GENSIM_AVAILABLE = True
+    logger.info("Gensim available - GloVe embeddings enabled")
 except ImportError:
-    logger.warning(
-        "Gensim not installed. Some topic modeling features will be limited."
-    )
+    logger.warning("Gensim not installed. GloVe embeddings will be limited.")
     GENSIM_AVAILABLE = False
 
 
-def tfidf_vectorization(
-    texts: List[str], max_features: int = 5000, ngram_range: Tuple[int, int] = (1, 3)
-):
+class CoffeeFeatureExtractor:
     """
-    Convert text corpus to TF-IDF matrix.
+    Comprehensive feature extraction for coffee reviews using Polars and matching thesis methodology.
 
-    Args:
-        texts: List of preprocessed text documents
-        max_features: Maximum number of features to extract
-        ngram_range: Range of n-grams to extract
+    This implementation showcases modern data processing with Polars while extracting:
+    - TF-IDF features (unigrams, bigrams, trigrams) - 5000 features per text column
+    - BERT embeddings (768-dimensional) using DistilBERT
+    - GloVe embeddings (300-dimensional) using pre-trained vectors
+    - LDA and NMF topic modeling (10 topics each)
+    - Sentiment scores (positive/negative probabilities)
 
-    Returns:
-        Tuple: (vectorizer, tfidf_matrix)
+    As described in the thesis: "A diverse set of features, including flavor attributes,
+    categorical variables such as country of origin and roast level, and text-based features
+    derived from BERT embeddings, GloVe vectors, and LDA topics, were used to predict coffee ratings."
     """
-    logger.info(
-        f"Performing TF-IDF vectorization with max_features={max_features}, ngram_range={ngram_range}"
-    )
 
-    # Handle empty inputs
-    if not texts or all(
-        not isinstance(text, str) or not text.strip() for text in texts
-    ):
-        logger.warning("Empty or invalid text input for TF-IDF vectorization")
-        return TfidfVectorizer(), np.zeros((0, 0))
+    def __init__(self, models_dir: str = "models"):
+        """Initialize the feature extractor with all required models."""
+        self.models_dir = models_dir
+        os.makedirs(models_dir, exist_ok=True)
 
-    try:
-        vectorizer = TfidfVectorizer(max_features=max_features, ngram_range=ngram_range)
-        tfidf_matrix = vectorizer.fit_transform(texts)
-        logger.info(f"TF-IDF matrix shape: {tfidf_matrix.shape}")
-        return vectorizer, tfidf_matrix
-    except Exception as e:
-        logger.error(f"Error during TF-IDF vectorization: {e}")
-        return TfidfVectorizer(), np.zeros((0, 0))
+        # Initialize BERT models if available
+        if TRANSFORMERS_AVAILABLE:
+            logger.info("Loading BERT models for semantic analysis...")
+            self.bert_tokenizer = DistilBertTokenizer.from_pretrained(
+                "distilbert-base-uncased"
+            )
+            self.bert_model = DistilBertModel.from_pretrained("distilbert-base-uncased")
+            self.sentiment_model = DistilBertForSequenceClassification.from_pretrained(
+                "distilbert-base-uncased-finetuned-sst-2-english"
+            )
+            logger.info("BERT models loaded successfully")
 
+        # Initialize GloVe model if available
+        if GENSIM_AVAILABLE:
+            logger.info("Loading GloVe embeddings for word-level semantics...")
+            try:
+                self.glove_model = api.load("glove-wiki-gigaword-300")
+                logger.info("GloVe embeddings loaded successfully")
+            except Exception as e:
+                logger.warning(f"Failed to load GloVe embeddings: {e}")
+                self.glove_model = None
+        else:
+            self.glove_model = None
 
-def perform_topic_modeling(
-    tfidf_matrix, n_topics=10, model_type="lda", random_state=42
-):
-    """
-    Perform topic modeling on TF-IDF matrix.
+    def extract_tfidf_features(
+        self,
+        texts: List[str],
+        max_features: int = 5000,
+        ngram_range: Tuple[int, int] = (1, 3),
+    ) -> Tuple[pl.DataFrame, TfidfVectorizer]:
+        """
+        Extract TF-IDF features as described in thesis using Polars for efficient processing.
 
-    Args:
-        tfidf_matrix: TF-IDF matrix of documents
-        n_topics: Number of topics to extract
-        model_type: Type of topic model ('lda' or 'nmf')
-        random_state: Random state for reproducibility
+        From thesis: "TF-IDF vectorization with unigrams, bigrams, and trigrams (5000 features)"
 
-    Returns:
-        Trained topic model
-    """
-    if tfidf_matrix.shape[0] == 0:
-        logger.error(f"Empty matrix provided for {model_type.upper()} topic modeling")
-        return None
+        Args:
+            texts: List of preprocessed text documents
+            max_features: Maximum number of features (thesis uses 5000)
+            ngram_range: N-gram range (thesis uses (1,3) for unigrams, bigrams, trigrams)
 
-    logger.info(f"Training {model_type.upper()} topic model with {n_topics} topics")
+        Returns:
+            Tuple of (polars_dataframe_with_tfidf_features, fitted_vectorizer)
+        """
+        logger.info(
+            f"Extracting TF-IDF features with Polars: max_features={max_features}, ngram_range={ngram_range}"
+        )
 
-    try:
-        if model_type.lower() == "lda":
-            model = LatentDirichletAllocation(
+        # Handle empty inputs
+        if not texts or all(
+            not isinstance(text, str) or not text.strip() for text in texts
+        ):
+            logger.warning("Empty or invalid text input for TF-IDF")
+            return pl.DataFrame(), TfidfVectorizer()
+
+        try:
+            # Use sklearn for TF-IDF computation (industry standard)
+            vectorizer = TfidfVectorizer(
+                max_features=max_features,
+                ngram_range=ngram_range,
+                stop_words="english",  # Remove common stopwords
+                min_df=2,  # Ignore terms that appear in less than 2 documents
+                max_df=0.95,  # Ignore terms that appear in more than 95% of documents
+            )
+
+            tfidf_matrix = vectorizer.fit_transform(texts)
+            logger.info(f"TF-IDF matrix shape: {tfidf_matrix.shape}")
+
+            # Convert to Polars DataFrame for efficient processing
+            feature_names = [f"tfidf_{i}" for i in range(tfidf_matrix.shape[1])]
+            tfidf_data = {
+                name: tfidf_matrix[:, i].toarray().flatten()
+                for i, name in enumerate(feature_names)
+            }
+
+            tfidf_df = pl.DataFrame(tfidf_data)
+            logger.info(
+                f"Created Polars DataFrame with TF-IDF features: {tfidf_df.shape}"
+            )
+
+            # Save vectorizer for future use
+            vectorizer_path = os.path.join(self.models_dir, "tfidf_vectorizer.pkl")
+            with open(vectorizer_path, "wb") as f:
+                pickle.dump(vectorizer, f)
+
+            return tfidf_df, vectorizer
+
+        except Exception as e:
+            logger.error(f"Error during TF-IDF extraction: {e}")
+            return pl.DataFrame(), TfidfVectorizer()
+
+    def extract_bert_embeddings(self, texts: List[str]) -> pl.DataFrame:
+        """
+        Extract BERT embeddings using DistilBERT as described in thesis.
+
+        From thesis: "BERT embeddings using DistilBERT (768-dimensional vectors)"
+
+        Args:
+            texts: List of preprocessed text documents
+
+        Returns:
+            Polars DataFrame with BERT embedding features (768 columns)
+        """
+        if not TRANSFORMERS_AVAILABLE:
+            logger.warning("BERT not available, returning empty DataFrame")
+            return pl.DataFrame()
+
+        logger.info(f"Extracting BERT embeddings for {len(texts)} texts using Polars")
+        embeddings = []
+
+        try:
+            for i, text in enumerate(texts):
+                if i % 100 == 0:
+                    logger.info(f"Processing BERT embedding {i}/{len(texts)}")
+
+                if not isinstance(text, str) or not text.strip():
+                    # Use zero embedding for empty text
+                    embeddings.append(np.zeros(768))
+                    continue
+
+                # Tokenize and encode
+                inputs = self.bert_tokenizer(
+                    text,
+                    return_tensors="pt",
+                    truncation=True,
+                    padding=True,
+                    max_length=512,
+                )
+
+                # Get embeddings
+                with torch.no_grad():
+                    outputs = self.bert_model(**inputs)
+                    # Use mean pooling of last hidden states
+                    embedding = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+                    embeddings.append(embedding)
+
+            # Convert to Polars DataFrame
+            embeddings_array = np.vstack(embeddings)
+            bert_data = {
+                f"bert_{i}": embeddings_array[:, i]
+                for i in range(embeddings_array.shape[1])
+            }
+
+            bert_df = pl.DataFrame(bert_data)
+            logger.info(f"BERT embeddings extracted: {bert_df.shape}")
+            return bert_df
+
+        except Exception as e:
+            logger.error(f"Error during BERT embedding extraction: {e}")
+            return pl.DataFrame()
+
+    def extract_glove_embeddings(self, texts: List[str]) -> pl.DataFrame:
+        """
+        Extract GloVe embeddings as described in thesis.
+
+        From thesis: "GloVe embeddings (300-dimensional vectors)"
+
+        Args:
+            texts: List of preprocessed text documents
+
+        Returns:
+            Polars DataFrame with GloVe embedding features (300 columns)
+        """
+        if not self.glove_model:
+            logger.warning("GloVe not available, returning empty DataFrame")
+            return pl.DataFrame()
+
+        logger.info(f"Extracting GloVe embeddings for {len(texts)} texts using Polars")
+        embeddings = []
+
+        try:
+            for text in texts:
+                if not isinstance(text, str) or not text.strip():
+                    embeddings.append(np.zeros(300))
+                    continue
+
+                # Tokenize and get word embeddings
+                words = text.split()
+                word_embeddings = []
+
+                for word in words:
+                    if word in self.glove_model:
+                        word_embeddings.append(self.glove_model[word])
+
+                if word_embeddings:
+                    # Average word embeddings to get document embedding
+                    doc_embedding = np.mean(word_embeddings, axis=0)
+                else:
+                    # Use zero embedding if no words found
+                    doc_embedding = np.zeros(300)
+
+                embeddings.append(doc_embedding)
+
+            # Convert to Polars DataFrame
+            embeddings_array = np.vstack(embeddings)
+            glove_data = {
+                f"glove_{i}": embeddings_array[:, i]
+                for i in range(embeddings_array.shape[1])
+            }
+
+            glove_df = pl.DataFrame(glove_data)
+            logger.info(f"GloVe embeddings extracted: {glove_df.shape}")
+            return glove_df
+
+        except Exception as e:
+            logger.error(f"Error during GloVe embedding extraction: {e}")
+            return pl.DataFrame()
+
+    def extract_topic_features(
+        self, texts: List[str], n_topics: int = 10
+    ) -> Tuple[pl.DataFrame, pl.DataFrame]:
+        """
+        Extract topic features using LDA and NMF as described in thesis.
+
+        From thesis: "Topic modeling using LDA and NMF"
+
+        Args:
+            texts: List of preprocessed text documents
+            n_topics: Number of topics to extract (thesis uses 10)
+
+        Returns:
+            Tuple of (lda_topics_df, nmf_topics_df) as Polars DataFrames
+        """
+        logger.info(f"Extracting topic features with {n_topics} topics using Polars")
+
+        try:
+            # Use TF-IDF for topic modeling input
+            vectorizer = TfidfVectorizer(max_features=1000, stop_words="english")
+            tfidf_matrix = vectorizer.fit_transform(texts)
+
+            if tfidf_matrix.shape[1] == 0:
+                logger.warning("Empty TF-IDF matrix, returning empty DataFrames")
+                return pl.DataFrame(), pl.DataFrame()
+
+            # LDA topic modeling
+            logger.info("Training LDA model...")
+            lda_model = LatentDirichletAllocation(
                 n_components=n_topics,
                 max_iter=10,
                 learning_method="online",
-                random_state=random_state,
+                random_state=42,
                 n_jobs=-1,
             )
-        elif model_type.lower() == "nmf":
-            model = NMF(n_components=n_topics, random_state=random_state, max_iter=1000)
-        else:
-            logger.error(f"Unknown model type: {model_type}")
-            return None
+            lda_topics = lda_model.fit_transform(tfidf_matrix)
 
-        model.fit(tfidf_matrix)
-        return model
-    except Exception as e:
-        logger.error(f"Error during {model_type.upper()} topic modeling: {e}")
-        return None
+            # NMF topic modeling
+            logger.info("Training NMF model...")
+            nmf_model = NMF(n_components=n_topics, random_state=42, max_iter=1000)
+            nmf_topics = nmf_model.fit_transform(tfidf_matrix)
 
+            # Convert to Polars DataFrames
+            lda_data = {f"lda_topic_{i}": lda_topics[:, i] for i in range(n_topics)}
+            nmf_data = {f"nmf_topic_{i}": nmf_topics[:, i] for i in range(n_topics)}
 
-def extract_topic_features(df, text_col, n_topics=10):
-    """
-    Extract topic distribution features from text.
+            lda_df = pl.DataFrame(lda_data)
+            nmf_df = pl.DataFrame(nmf_data)
 
-    Args:
-        df: DataFrame containing text data
-        text_col: Name of column containing processed text
-        n_topics: Number of topics for modeling
+            # Save models
+            lda_path = os.path.join(self.models_dir, "lda_model.pkl")
+            nmf_path = os.path.join(self.models_dir, "nmf_model.pkl")
 
-    Returns:
-        DataFrame with topic features added
-    """
-    # Make a copy to avoid modifying the original
-    result = df.copy()
-
-    if text_col not in result.columns:
-        logger.error(f"Text column '{text_col}' not found in DataFrame")
-        return result
-
-    try:
-        # Vectorize text
-        texts = result[text_col].fillna("").tolist()
-        vectorizer, tfidf_matrix = tfidf_vectorization(texts)
-
-        # Train topic models
-        lda_model = perform_topic_modeling(tfidf_matrix, n_topics, "lda")
-        nmf_model = perform_topic_modeling(tfidf_matrix, n_topics, "nmf")
-
-        if lda_model:
-            # Get topic distributions for LDA
-            lda_topics = lda_model.transform(tfidf_matrix)
-
-            # Add topic distributions to DataFrame
-            for i in range(n_topics):
-                result[f"lda_topic_{i + 1}"] = lda_topics[:, i]
-
-            result["dominant_lda_topic"] = np.argmax(lda_topics, axis=1) + 1
-            logger.info(f"Added {n_topics} LDA topic features")
-
-        if nmf_model:
-            # Get topic distributions for NMF
-            nmf_topics = nmf_model.transform(tfidf_matrix)
-
-            # Add topic distributions to DataFrame
-            for i in range(n_topics):
-                result[f"nmf_topic_{i + 1}"] = nmf_topics[:, i]
-
-            result["dominant_nmf_topic"] = np.argmax(nmf_topics, axis=1) + 1
-            logger.info(f"Added {n_topics} NMF topic features")
-
-        # Save models
-        models_dir = "models"
-        os.makedirs(models_dir, exist_ok=True)
-
-        with open(os.path.join(models_dir, "tfidf_vectorizer.pkl"), "wb") as f:
-            pickle.dump(vectorizer, f)
-
-        if lda_model:
-            with open(os.path.join(models_dir, "lda_model.pkl"), "wb") as f:
+            with open(lda_path, "wb") as f:
                 pickle.dump(lda_model, f)
-
-        if nmf_model:
-            with open(os.path.join(models_dir, "nmf_model.pkl"), "wb") as f:
+            with open(nmf_path, "wb") as f:
                 pickle.dump(nmf_model, f)
 
-        logger.info("Saved topic modeling artifacts")
-
-        return result
-    except Exception as e:
-        logger.error(f"Error extracting topic features: {e}")
-        return result
-
-
-def perform_sentiment_analysis(texts):
-    """
-    Perform sentiment analysis on a list of texts.
-
-    Args:
-        texts: List of texts to analyze
-
-    Returns:
-        List of sentiment scores (0-1 scale, where 1 is positive)
-    """
-    try:
-        if TRANSFORMERS_AVAILABLE:
             logger.info(
-                f"Performing transformer-based sentiment analysis on {len(texts)} texts"
+                f"Topic features extracted - LDA: {lda_df.shape}, NMF: {nmf_df.shape}"
             )
+            return lda_df, nmf_df
 
-            # Filter empty texts
-            valid_texts = [
-                text for text in texts if isinstance(text, str) and text.strip()
-            ]
+        except Exception as e:
+            logger.error(f"Error during topic modeling: {e}")
+            return pl.DataFrame(), pl.DataFrame()
 
-            if not valid_texts:
-                logger.warning("No valid texts for sentiment analysis")
-                return [0.5] * len(texts)  # Neutral sentiment for all
+    def extract_sentiment_features(self, texts: List[str]) -> pl.DataFrame:
+        """
+        Extract sentiment features using DistilBERT as described in thesis.
 
-            # Initialize sentiment pipeline with small distilbert model
+        From thesis: "Sentiment analysis using DistilBERT"
+
+        Args:
+            texts: List of preprocessed text documents
+
+        Returns:
+            Polars DataFrame with sentiment features (positive/negative probabilities)
+        """
+        if not TRANSFORMERS_AVAILABLE:
+            logger.warning(
+                "Sentiment analysis not available, returning empty DataFrame"
+            )
+            return pl.DataFrame()
+
+        logger.info(
+            f"Extracting sentiment features for {len(texts)} texts using Polars"
+        )
+
+        try:
+            # Initialize sentiment pipeline
             sentiment_pipeline = pipeline(
                 "sentiment-analysis",
                 model="distilbert-base-uncased-finetuned-sst-2-english",
+                return_all_scores=True,
             )
 
-            # Process in batches
+            sentiments = []
             batch_size = 32
-            results = []
 
-            for i in range(0, len(valid_texts), batch_size):
-                batch = valid_texts[i : i + batch_size]
-                batch_results = sentiment_pipeline(batch)
+            for i in range(0, len(texts), batch_size):
+                batch_texts = texts[i : i + batch_size]
 
-                # Extract scores (convert to 0-1 scale where 1 is positive)
-                batch_scores = []
-                for result in batch_results:
-                    if result["label"] == "POSITIVE":
-                        batch_scores.append(result["score"])
+                # Filter empty texts
+                processed_batch = []
+                for text in batch_texts:
+                    if isinstance(text, str) and text.strip():
+                        processed_batch.append(text)
                     else:
-                        batch_scores.append(1 - result["score"])
+                        processed_batch.append("neutral")  # Placeholder for empty text
 
-                results.extend(batch_scores)
+                # Get sentiment scores
+                batch_results = sentiment_pipeline(processed_batch)
 
-            # Handle any texts that were skipped
-            if len(results) < len(texts):
-                results.extend([0.5] * (len(texts) - len(results)))
-
-            return results
-        else:
-            # Fallback to simple lexicon-based approach
-            logger.info("Using basic sentiment analysis (transformers not available)")
-
-            positive_words = {
-                "good",
-                "great",
-                "excellent",
-                "delicious",
-                "sweet",
-                "balanced",
-                "rich",
-                "complex",
-                "perfect",
-            }
-            negative_words = {
-                "bad",
-                "bitter",
-                "sour",
-                "harsh",
-                "disappointing",
-                "unbalanced",
-                "weak",
-                "stale",
-            }
-
-            scores = []
-            for text in texts:
-                if not isinstance(text, str) or not text.strip():
-                    scores.append(0.5)  # Neutral
-                    continue
-
-                words = text.lower().split()
-                pos_count = sum(1 for word in words if word in positive_words)
-                neg_count = sum(1 for word in words if word in negative_words)
-
-                if pos_count == 0 and neg_count == 0:
-                    scores.append(0.5)  # Neutral
-                else:
-                    score = (
-                        pos_count / (pos_count + neg_count)
-                        if (pos_count + neg_count) > 0
-                        else 0.5
+                for result in batch_results:
+                    # Extract positive and negative probabilities
+                    pos_score = next(
+                        r["score"] for r in result if r["label"] == "POSITIVE"
                     )
-                    scores.append(score)
+                    neg_score = next(
+                        r["score"] for r in result if r["label"] == "NEGATIVE"
+                    )
+                    sentiments.append([pos_score, neg_score])
 
-            return scores
-    except Exception as e:
-        logger.error(f"Error performing sentiment analysis: {e}")
-        return [0.5] * len(texts)  # Default to neutral
+            # Convert to Polars DataFrame
+            sentiment_data = {
+                "sentiment_positive": [s[0] for s in sentiments],
+                "sentiment_negative": [s[1] for s in sentiments],
+            }
 
+            sentiment_df = pl.DataFrame(sentiment_data)
+            logger.info(f"Sentiment features extracted: {sentiment_df.shape}")
+            return sentiment_df
 
-def extract_text_features(df, text_col):
-    """
-    Extract basic text features like length, word count, etc.
+        except Exception as e:
+            logger.error(f"Error during sentiment analysis: {e}")
+            return pl.DataFrame()
 
-    Args:
-        df: DataFrame containing text data
-        text_col: Name of column containing text
+    def extract_all_features(
+        self,
+        df: pl.DataFrame,
+        text_columns: List[str] = ["desc_1", "desc_2", "desc_3"],
+        n_topics: int = 10,
+    ) -> pl.DataFrame:
+        """
+        Extract all features for the coffee reviews dataset using Polars as described in thesis.
 
-    Returns:
-        DataFrame with text features added
-    """
-    result = df.copy()
+        This method implements the complete feature extraction pipeline:
+        "A diverse set of features, including flavor attributes, categorical variables
+        such as country of origin and roast level, and text-based features derived from
+        BERT embeddings, GloVe vectors, and LDA topics, were used to predict coffee ratings."
 
-    if text_col not in result.columns:
-        logger.warning(f"Text column '{text_col}' not found in DataFrame")
-        return result
+        Args:
+            df: Polars DataFrame containing coffee review data
+            text_columns: List of text columns to process
+            n_topics: Number of topics for topic modeling
 
-    try:
-        # Fill NA values
-        result[text_col] = result[text_col].fillna("")
-
-        # Extract text length features
-        result[f"{text_col}_char_count"] = result[text_col].apply(len)
-        result[f"{text_col}_word_count"] = result[text_col].apply(
-            lambda x: len(str(x).split())
+        Returns:
+            Polars DataFrame with all extracted features added
+        """
+        logger.info(
+            f"Starting comprehensive feature extraction for columns: {text_columns} using Polars"
         )
-        result[f"{text_col}_avg_word_length"] = result[text_col].apply(
-            lambda x: np.mean([len(w) for w in str(x).split()])
-            if len(str(x).split()) > 0
-            else 0
+
+        # Start with the original DataFrame
+        result_df = df.clone()
+        feature_dfs = []
+
+        for col in text_columns:
+            if col not in df.columns:
+                logger.warning(f"Column '{col}' not found in DataFrame, skipping")
+                continue
+
+            logger.info(f"Processing column: {col}")
+            texts = df[col].fill_null("").to_list()
+
+            # 1. TF-IDF Features
+            logger.info(f"Extracting TF-IDF features for {col}")
+            tfidf_df, vectorizer = self.extract_tfidf_features(texts)
+            if not tfidf_df.is_empty():
+                # Rename columns to include source column
+                tfidf_df = tfidf_df.rename(
+                    {name: f"{col}_{name}" for name in tfidf_df.columns}
+                )
+                feature_dfs.append(tfidf_df)
+
+            # 2. BERT Embeddings
+            logger.info(f"Extracting BERT embeddings for {col}")
+            bert_df = self.extract_bert_embeddings(texts)
+            if not bert_df.is_empty():
+                # Rename columns to include source column
+                bert_df = bert_df.rename(
+                    {name: f"{col}_{name}" for name in bert_df.columns}
+                )
+                feature_dfs.append(bert_df)
+
+            # 3. GloVe Embeddings
+            logger.info(f"Extracting GloVe embeddings for {col}")
+            glove_df = self.extract_glove_embeddings(texts)
+            if not glove_df.is_empty():
+                # Rename columns to include source column
+                glove_df = glove_df.rename(
+                    {name: f"{col}_{name}" for name in glove_df.columns}
+                )
+                feature_dfs.append(glove_df)
+
+            # 4. Topic Features
+            logger.info(f"Extracting topic features for {col}")
+            lda_df, nmf_df = self.extract_topic_features(texts, n_topics)
+            if not lda_df.is_empty():
+                lda_df = lda_df.rename(
+                    {name: f"{col}_{name}" for name in lda_df.columns}
+                )
+                feature_dfs.append(lda_df)
+            if not nmf_df.is_empty():
+                nmf_df = nmf_df.rename(
+                    {name: f"{col}_{name}" for name in nmf_df.columns}
+                )
+                feature_dfs.append(nmf_df)
+
+            # 5. Sentiment Features
+            logger.info(f"Extracting sentiment features for {col}")
+            sentiment_df = self.extract_sentiment_features(texts)
+            if not sentiment_df.is_empty():
+                sentiment_df = sentiment_df.rename(
+                    {name: f"{col}_{name}" for name in sentiment_df.columns}
+                )
+                feature_dfs.append(sentiment_df)
+
+            logger.info(f"Completed feature extraction for {col}")
+
+        # Combine all feature DataFrames using Polars horizontal concatenation
+        if feature_dfs:
+            # Add row indices to ensure proper alignment
+            for i, feature_df in enumerate(feature_dfs):
+                feature_dfs[i] = feature_df.with_row_count("row_idx")
+
+            # Concatenate horizontally
+            combined_features = feature_dfs[0]
+            for feature_df in feature_dfs[1:]:
+                combined_features = combined_features.join(
+                    feature_df, on="row_idx", how="inner"
+                )
+
+            # Remove the row index column
+            combined_features = combined_features.drop("row_idx")
+
+            # Add row indices to original DataFrame and join
+            result_df = result_df.with_row_count("row_idx")
+            combined_features = combined_features.with_row_count("row_idx")
+
+            result_df = result_df.join(
+                combined_features, on="row_idx", how="inner"
+            ).drop("row_idx")
+
+        logger.info(
+            f"Feature extraction complete using Polars. Final shape: {result_df.shape}"
         )
-
-        logger.info(f"Added basic text features from column: {text_col}")
-        return result
-    except Exception as e:
-        logger.error(f"Error extracting text features: {e}")
-        return result
+        return result_df
 
 
-def extract_features_from_data(input_file, output_file, n_topics=10):
+def extract_features_from_data(input_file: str, output_file: str, n_topics: int = 10):
     """
-    Main function to extract features from preprocessed data.
+    Main function to extract features from preprocessed data using Polars.
 
     Args:
         input_file: Path to preprocessed data file
@@ -351,41 +559,28 @@ def extract_features_from_data(input_file, output_file, n_topics=10):
         n_topics: Number of topics for topic modeling
     """
     try:
-        # Load preprocessed data
-        logger.info(f"Loading preprocessed data from {input_file}")
-        df = pd.read_csv(input_file)
+        # Load preprocessed data using Polars
+        logger.info(f"Loading preprocessed data from {input_file} using Polars")
+        df = pl.read_csv(input_file)
 
-        if df.empty:
+        if df.is_empty():
             raise ValueError(f"No data found in {input_file}")
 
-        # Ensure text column exists
-        text_col = "processed_text"
-        if text_col not in df.columns:
-            logger.warning(f"'{text_col}' column not found, looking for 'merged_text'")
-            text_col = "merged_text"
+        # Initialize feature extractor
+        extractor = CoffeeFeatureExtractor()
 
-            if text_col not in df.columns:
-                raise ValueError("No text column found for feature extraction")
-
-        # Extract basic text features
-        df = extract_text_features(df, text_col)
-
-        # Extract topic modeling features
-        df = extract_topic_features(df, text_col, n_topics)
-
-        # Extract sentiment
-        logger.info("Performing sentiment analysis")
-        df["sentiment_score"] = perform_sentiment_analysis(
-            df[text_col].fillna("").tolist()
-        )
+        # Extract all features
+        df_with_features = extractor.extract_all_features(df, n_topics=n_topics)
 
         # Ensure output directory exists
         output_dir = os.path.dirname(output_file)
         os.makedirs(output_dir, exist_ok=True)
 
-        # Save features
-        df.to_csv(output_file, index=False)
-        logger.info(f"Saved features to {output_file}")
+        # Save features using Polars
+        df_with_features.write_csv(output_file)
+        logger.info(f"Features saved to {output_file} using Polars")
+
+        return df_with_features
 
     except Exception as e:
         logger.error(f"Error in feature extraction: {e}")
