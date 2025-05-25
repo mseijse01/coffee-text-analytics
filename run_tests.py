@@ -16,9 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 # Import test modules
 from tests.test_data_processing import *
-from tests.test_feature_extraction import *
-from tests.test_model_training import *
-from tests.test_integration import *
+from tests.test_integration_new import *
 
 
 class ColoredTextTestResult(unittest.TextTestResult):
@@ -305,31 +303,9 @@ def main():
             ],
         },
         {
-            "name": "Feature Extraction",
+            "name": "New Architecture Integration",
             "classes": [
-                TestCoffeeFeatureExtractor,
-                TestFeatureExtractionUtilities,
-                TestFeatureExtractionIntegration,
-            ],
-        },
-        {
-            "name": "Model Training",
-            "classes": [
-                TestMultinomialInverseRegression,
-                TestTraditionalModels,
-                TestModelEvaluation,
-                TestFeatureImportance,
-                TestPrepareFeatures,
-                TestTrainMNIR,
-            ],
-        },
-        {
-            "name": "Integration",
-            "classes": [
-                TestEndToEndPipeline,
-                TestComponentIntegration,
-                TestErrorHandlingIntegration,
-                TestPerformanceIntegration,
+                TestNewArchitectureIntegration,
             ],
         },
     ]

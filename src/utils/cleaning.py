@@ -20,6 +20,19 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 
+# Import text preprocessing from the centralized location
+try:
+    import sys
+    import os
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+    from data.preprocessing import preprocess_text
+except ImportError:
+    # Fallback if import fails
+    def preprocess_text(text, remove_stop=True):
+        """Fallback text preprocessing function."""
+        return str(text).lower() if isinstance(text, str) else ""
+
 
 # Price cleaning utilities
 def clean_price(price_str: str) -> Optional[float]:
@@ -87,10 +100,13 @@ def standardize_prices(df: pl.DataFrame) -> pl.DataFrame:
     if "est_price" not in df.columns:
         raise ValueError("DataFrame must contain 'est_price' column")
 
-    # Apply price cleaning to the est_price column
-    price_per_kg = df["est_price"].to_pandas().apply(clean_price)
+    # Import optimization utility
+    from .polars_utils import efficient_pandas_apply
 
-    return df.with_columns(pl.Series("price_per_kg", price_per_kg))
+    # Apply price cleaning efficiently
+    return efficient_pandas_apply(df, "est_price", clean_price).rename(
+        {"est_price": "price_per_kg"}
+    )
 
 
 # Country extraction utilities
@@ -227,92 +243,7 @@ def analyze_country_distribution(df: pl.DataFrame) -> pl.DataFrame:
 
 
 # Text preprocessing utilities
-def remove_urls(text: str) -> str:
-    """Remove URLs from text."""
-    return re.sub(r"http\S+|www\S+", "", text) if isinstance(text, str) else text
-
-
-def clean_text(text: str) -> str:
-    """Clean and standardize text."""
-    if isinstance(text, str):
-        text = text.lower()
-        text = re.sub(r"\[.*?\]", "", text)  # remove content in square brackets
-        text = re.sub(r"\w*\d\w*", "", text)  # remove words with numbers
-    return text
-
-
-def remove_punctuation(text: str) -> str:
-    """Remove all punctuation from text."""
-    return re.sub(r"[^\w\s]", "", text) if isinstance(text, str) else text
-
-
-def handle_negations(text: str) -> str:
-    """Handle common negations in text."""
-    negations = {
-        "isn't": "is not",
-        "aren't": "are not",
-        "wasn't": "was not",
-        "weren't": "were not",
-        "hasn't": "has not",
-        "haven't": "have not",
-        "hadn't": "had not",
-        "doesn't": "does not",
-        "don't": "do not",
-        "didn't": "did not",
-        "won't": "will not",
-        "wouldn't": "would not",
-        "shan't": "shall not",
-        "shouldn't": "should not",
-        "can't": "cannot",
-        "couldn't": "could not",
-        "mustn't": "must not",
-        "mightn't": "might not",
-        "needn't": "need not",
-    }
-    if isinstance(text, str):
-        for neg in negations:
-            text = re.sub(r"\b{}\b".format(neg), negations[neg], text)
-    return text
-
-
-def remove_stopwords(text: str) -> str:
-    """Remove common English stopwords."""
-    stop_words = set(stopwords.words("english"))
-    word_tokens = word_tokenize(text)
-    filtered_text = [word for word in word_tokens if word not in stop_words]
-    return " ".join(filtered_text)
-
-
-def lemmatize_text(text: str) -> str:
-    """Lemmatize text to reduce words to their base form."""
-    lemmatizer = WordNetLemmatizer()
-    word_tokens = word_tokenize(text)
-    lemmatized_text = [lemmatizer.lemmatize(word) for word in word_tokens]
-    return " ".join(lemmatized_text)
-
-
-def preprocess_text(
-    text: str, remove_sw: bool = True, with_punctuation: bool = True
-) -> str:
-    """
-    Preprocess text with configurable options.
-
-    Args:
-        text: Input text to preprocess
-        remove_sw: Whether to remove stopwords
-        with_punctuation: Whether to keep punctuation
-
-    Returns:
-        str: Preprocessed text
-    """
-    text = clean_text(text)
-    text = handle_negations(text)
-    text = lemmatize_text(text)
-    if not with_punctuation:
-        text = remove_punctuation(text)
-    if remove_sw:
-        text = remove_stopwords(text)
-    return text
+# Text preprocessing functions moved to src/data/preprocessing.py to avoid duplication
 
 
 def apply_text_preprocessing(
@@ -331,24 +262,22 @@ def apply_text_preprocessing(
     """
     print("Applying text preprocessing...")
 
+    # Import optimization utility
+    from .polars_utils import efficient_pandas_apply
+
     for column in text_columns:
-        with_punctuation = for_embeddings
         remove_sw = for_embeddings
 
-        df = df.with_columns(
-            pl.Series(
-                f"processed_{column}",
-                df[column]
-                .to_pandas()
-                .map(
-                    lambda text: preprocess_text(
-                        text, remove_sw=remove_sw, with_punctuation=with_punctuation
-                    )
-                    if isinstance(text, str)
-                    else ""
-                ),
+        # Define preprocessing function
+        def preprocess_func(text):
+            return (
+                preprocess_text(text, remove_stop=remove_sw)
+                if isinstance(text, str)
+                else ""
             )
-        )
+
+        # Apply preprocessing efficiently
+        df = efficient_pandas_apply(df, column, preprocess_func, f"processed_{column}")
 
     print("Text preprocessing complete.")
     return df
@@ -821,11 +750,7 @@ def process_and_analyze_text(
         processed_column = (
             df_processed[f"processed_{col}"]
             .to_pandas()
-            .map(
-                lambda text: preprocess_text(
-                    text, remove_sw=False, with_punctuation=False
-                )
-            )
+            .map(lambda text: preprocess_text(text, remove_stop=False))
         )
         df_processed = df_processed.with_columns(
             pl.Series(f"processed_{col}", processed_column)
