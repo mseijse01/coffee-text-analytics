@@ -176,7 +176,7 @@ def analyze_price_distribution(df: pl.DataFrame) -> None:
         pl.col("price_per_kg").min().alias("Min"),
         pl.col("price_per_kg").max().alias("Max"),
     )
-    display(price_stats)
+    print(price_stats)
 
     # Create distribution plot
     fig = px.box(
@@ -211,7 +211,7 @@ def analyze_country_distribution(df: pl.DataFrame) -> pl.DataFrame:
     )
 
     print("\nTop 10 Countries by Number of Reviews:")
-    display(country_stats.head(10))
+    print(country_stats.head(10))
 
     # Create visualization
     fig = px.bar(
@@ -365,7 +365,7 @@ def load_parquet(path: Union[Path, str], name: str) -> pl.DataFrame:
     """Load DataFrame from parquet file."""
     df = pl.read_parquet(path)
     print(f"{name} DataFrame:")
-    display(df.head())
+    print(df.head())
     return df
 
 
@@ -383,7 +383,7 @@ def check_column_consistency(*dfs: pl.DataFrame) -> None:
 def check_missing_values(df: pl.DataFrame, name: str) -> None:
     """Check for missing values in DataFrame."""
     print(f"\nMissing values in {name} DataFrame:")
-    display(df.null_count())
+    print(df.null_count())
 
 
 # Add to cleaning.py
@@ -454,7 +454,7 @@ def analyze_numerical_columns(df: pl.DataFrame) -> None:
 
     if numerical_cols:
         stats = df.select(numerical_cols).describe()
-        display(stats)
+        print(stats)
     else:
         print("No numerical columns found.")
 
@@ -477,7 +477,7 @@ def check_target_variable(df: pl.DataFrame, target_col: str) -> None:
     # Basic stats
     stats = df[target_col].describe()
     print("Basic Statistics:")
-    display(stats)
+    print(stats)
 
     # Missing values
     n_missing = df[target_col].null_count()
@@ -515,7 +515,7 @@ def analyze_agtron_values(df: pl.DataFrame) -> None:
     )
 
     print("\nMost common Agtron values:")
-    display(agtron_counts.head(10))
+    print(agtron_counts.head(10))
 
     # Check for different formats
     print("\nValue format analysis:")
@@ -561,7 +561,7 @@ def analyze_agtron_values(df: pl.DataFrame) -> None:
             )
             .sort("count", descending=True)
         )
-        display(roast_agtron)
+        print(roast_agtron)
 
 
 def standardize_roast_degree(df: pl.DataFrame) -> pl.DataFrame:
@@ -625,7 +625,7 @@ def analyze_roast_standardization(df: pl.DataFrame) -> None:
     )
 
     print("\nDistribution of Standardized Roast Levels:")
-    display(roast_dist)
+    print(roast_dist)
 
     # Compare with original roast labels
     comparison = (
@@ -635,7 +635,7 @@ def analyze_roast_standardization(df: pl.DataFrame) -> None:
     )
 
     print("\nComparison with Original Roast Labels:")
-    display(comparison)
+    print(comparison)
 
 
 def drop_irrelevant_columns(df: pl.DataFrame) -> pl.DataFrame:
@@ -711,7 +711,7 @@ def analyze_missing_values(df: pl.DataFrame) -> None:
 
     # Convert to DataFrame and sort by number of missing values
     missing_df = pl.DataFrame(missing_stats).sort("Missing", descending=True)
-    display(
+    print(
         missing_df.filter(pl.col("Missing") > 0)
     )  # Show only columns with missing values
 
@@ -739,7 +739,7 @@ def analyze_outliers(df: pl.DataFrame, column: str) -> None:
     )
 
     print("\nBasic Statistics:")
-    display(stats)
+    print(stats)
 
     # Create box plot
     fig = px.box(df[column].to_pandas(), title=f"Distribution of {column}")
@@ -839,14 +839,14 @@ def process_and_analyze_text(
     print("\nSample of processed text for each purpose:")
 
     print("\nEmbeddings preprocessing (stopwords removed, punctuation retained):")
-    display(
+    print(
         df_embeddings.select(
             [col for col in df_embeddings.columns if "processed_" in col]
         ).head(2)
     )
 
     print("\nTopic Modeling preprocessing (stopwords retained, punctuation removed):")
-    display(
+    print(
         df_topic_modeling.select(
             [col for col in df_topic_modeling.columns if "processed_" in col]
         ).head(2)

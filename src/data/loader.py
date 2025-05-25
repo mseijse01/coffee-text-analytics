@@ -2,8 +2,35 @@
 
 from pathlib import Path
 import polars as pl
+import sys
+import os
 
-from config.settings import PATHS
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+# Import from the new configuration system
+try:
+    from config import config
+
+    PATHS = {
+        "raw": config.paths.raw,
+        "processed": config.paths.processed,
+        "root": config.paths.root,
+    }
+except ImportError:
+    # Fallback for when config is not available
+    PATHS = {"raw": Path("data/raw"), "processed": Path("data/processed")}
+
+# Import consolidated data quality functions
+try:
+    from utils.data_quality import analyze_data_quality, get_data_overview
+except ImportError:
+    # Fallback - define simple versions
+    def analyze_data_quality(df):
+        print("Data quality analysis not available")
+
+    def get_data_overview(df):
+        print(f"Dataset shape: {df.shape}")
 
 
 def load_main_dataset() -> pl.DataFrame:
@@ -20,90 +47,95 @@ def load_main_dataset() -> pl.DataFrame:
         FileNotFoundError: If the data file doesn't exist
         pl.ComputeError: If there are issues reading the CSV
     """
-    data_path = PATHS["raw"] / "coffee_clean.csv"
+    try:
+        # Use configuration system if available
+        data_path = config.paths.get_raw_data_path()
+    except NameError:
+        # Fallback path
+        data_path = PATHS["raw"] / "coffee_clean.csv"
+
+    if not data_path.exists():
+        raise FileNotFoundError(f"Data file not found: {data_path}")
+
     df = pl.read_csv(data_path, null_values="NA", infer_schema_length=10000)
     return df
 
 
-def analyze_data_quality(df) -> None:
+def load_processed_dataset() -> pl.DataFrame:
     """
-    Analyze data quality including missing values, duplicates, and value ranges.
+    Load the processed coffee review dataset.
+
+    Returns:
+        pl.DataFrame: Processed dataset
+
+    Raises:
+        FileNotFoundError: If the processed data file doesn't exist
+    """
+    try:
+        # Use configuration system if available
+        data_path = config.paths.get_processed_data_path()
+    except NameError:
+        # Fallback path
+        data_path = PATHS["processed"] / "coffee_processed.csv"
+
+    if not data_path.exists():
+        raise FileNotFoundError(f"Processed data file not found: {data_path}")
+
+    df = pl.read_csv(data_path, null_values="NA", infer_schema_length=10000)
+    return df
+
+
+def load_features_dataset() -> pl.DataFrame:
+    """
+    Load the features dataset.
+
+    Returns:
+        pl.DataFrame: Features dataset
+
+    Raises:
+        FileNotFoundError: If the features data file doesn't exist
+    """
+    try:
+        # Use configuration system if available
+        data_path = config.paths.get_features_data_path()
+    except NameError:
+        # Fallback path
+        data_path = PATHS["processed"] / "coffee_features.csv"
+
+    if not data_path.exists():
+        raise FileNotFoundError(f"Features data file not found: {data_path}")
+
+    df = pl.read_csv(data_path, null_values="NA", infer_schema_length=10000)
+    return df
+
+
+def validate_dataset(df: pl.DataFrame, dataset_name: str = "Dataset") -> bool:
+    """
+    Validate a dataset and provide quality analysis.
 
     Args:
-        df: Input DataFrame (Pandas or Polars)
+        df: DataFrame to validate
+        dataset_name: Name of the dataset for logging
+
+    Returns:
+        bool: True if dataset passes basic validation
     """
-    # Convert to Polars if it's a Pandas DataFrame
-    if hasattr(df, "isnull"):  # Pandas DataFrame
-        import pandas as pd
+    print(f"\n{dataset_name} Validation:")
+    print("-" * 50)
 
-        df_polars = pl.from_pandas(df)
-    else:  # Already Polars DataFrame
-        df_polars = df
+    # Basic checks
+    if df.is_empty():
+        print(f"ERROR: {dataset_name} is empty")
+        return False
 
-    # Missing values analysis
-    missing_values = df_polars.null_count()
+    print(f"✓ Dataset loaded successfully: {df.shape[0]:,} rows, {df.shape[1]} columns")
 
-    # Check if there are any missing values
-    total_missing = missing_values.sum_horizontal().item()
-
-    if total_missing > 0:
-        print("\nMissing Values Summary:")
-        for col, count in zip(df_polars.columns, missing_values.row(0)):
-            if count > 0:
-                percentage = (count / len(df_polars)) * 100
-                print(f"{col}: {count} ({percentage:.2f}%)")
-    else:
-        print("\nNo missing values found.")
-
-    # Duplicate analysis
-    n_duplicates = len(df_polars) - df_polars.unique().height
-    print(f"\nNumber of duplicate rows: {n_duplicates}")
-
-    # Value ranges for numerical columns
-    print("\nNumerical Columns Range:")
-    numerical_cols = [
-        "rating",
-        "aroma",
-        "acid",
-        "body",
-        "flavor",
-        "aftertaste",
-        "est_price",
-        "agtron",
-    ]
-
-    for col in numerical_cols:
-        if col in df_polars.columns:
-            stats = df_polars.select(
-                [
-                    pl.col(col).min().alias("min"),
-                    pl.col(col).mean().alias("mean"),
-                    pl.col(col).max().alias("max"),
-                ]
-            )
-            min_val = stats.item(0, "min")
-            mean_val = stats.item(0, "mean")
-            max_val = stats.item(0, "max")
-            print(f"\n{col}:")
-            print(f"Range: {min_val:.2f} to {max_val:.2f}")
-            print(f"Mean: {mean_val:.2f}")
-
-
-def get_data_overview(df: pl.DataFrame) -> None:
-    """
-    Display comprehensive overview of the dataset.
-
-    Args:
-        df: Input DataFrame
-    """
-    print("\nColumn Descriptions:")
-    for col in df.columns:
-        unique_count = df[col].n_unique()
-        print(f"\n{col}:")
-        print(f"- Type: {df[col].dtype}")
-        print(f"- Unique values: {unique_count}")
-
-        # Show sample of unique values for categorical columns
-        if df[col].dtype in [pl.Utf8, pl.Categorical]:
-            sample_values = df[col].unique().sample(min(5, unique_count), seed=42)
-            print(f"- Sample values: {sample_values.to_list()}")
+    # Perform quality analysis
+    try:
+        analyze_data_quality(df)
+        get_data_overview(df)
+        print(f"✓ {dataset_name} validation completed")
+        return True
+    except Exception as e:
+        print(f"ERROR: Validation failed for {dataset_name}: {e}")
+        return False
