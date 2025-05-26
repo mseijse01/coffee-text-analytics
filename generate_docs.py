@@ -23,16 +23,16 @@ def main():
         from src.utils.doc_generator import generate_api_docs
 
         # Generate main API documentation
-        generate_api_docs(src_path="src", output_file="API_DOCUMENTATION.md")
+        generate_api_docs(src_path="src", output_file="docs/API_DOCUMENTATION.md")
 
         print("\n✅ Documentation generation completed successfully!")
         print("\n📚 Generated files:")
-        print("   📄 API_DOCUMENTATION.md - Complete API reference")
-        print("   📄 API_QUICK_REFERENCE.md - Quick start guide")
+        print("   📄 docs/API_DOCUMENTATION.md - Complete API reference")
+        print("   📄 docs/API_QUICK_REFERENCE.md - Quick start guide")
 
         print("\n🎯 Usage:")
-        print("   • Open API_QUICK_REFERENCE.md for a quick overview")
-        print("   • Open API_DOCUMENTATION.md for detailed documentation")
+        print("   • Open docs/API_QUICK_REFERENCE.md for a quick overview")
+        print("   • Open docs/API_DOCUMENTATION.md for detailed documentation")
         print("   • Both files are in Markdown format for easy viewing")
 
     except ImportError as e:

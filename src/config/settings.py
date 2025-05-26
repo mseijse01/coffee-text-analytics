@@ -34,7 +34,6 @@ class PathConfig:
     models: Path = field(init=False)
     output: Path = field(init=False)
     figures: Path = field(init=False)
-    notebooks: Path = field(init=False)
     tests: Path = field(init=False)
     docs: Path = field(init=False)
 
@@ -51,7 +50,6 @@ class PathConfig:
         self.models = self.root / "models"
         self.output = self.root / "output"
         self.figures = self.output / "figures"
-        self.notebooks = self.root / "notebooks"
         self.tests = self.root / "tests"
         self.docs = self.root / "docs"
 
@@ -64,7 +62,6 @@ class PathConfig:
             self.models,
             self.output,
             self.figures,
-            self.notebooks,
             self.tests,
             self.docs,
         ]
@@ -104,7 +101,14 @@ class ModelConfig:
 
     # Models to train
     models_to_train: List[str] = field(
-        default_factory=lambda: ["linear", "random_forest", "xgboost", "mnir"]
+        default_factory=lambda: [
+            "linear",
+            "random_forest",
+            "xgboost",
+            "svr",
+            "decision_tree",
+            "mnir",
+        ]
     )
 
     # Model hyperparameters
@@ -133,12 +137,33 @@ class ModelConfig:
         default_factory=lambda: {"alpha": 1.0, "random_state": 42}
     )
 
+    # SVR specific parameters (following thesis methodology)
+    svr_params: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "kernel": "rbf",
+            "C": 1.0,
+            "gamma": "scale",
+            "epsilon": 0.1,
+            "random_state": 42,
+        }
+    )
+
+    # Decision Tree specific parameters
+    decision_tree_params: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "max_depth": None,
+            "min_samples_split": 2,
+            "min_samples_leaf": 1,
+            "random_state": 42,
+        }
+    )
+
     # MNIR specific parameters
     mnir_params: Dict[str, Any] = field(
         default_factory=lambda: {"alpha": 0.1, "max_iter": 1000, "random_state": 42}
     )
 
-    # Cross-validation settings
+    # Cross-validation settings (thesis uses 5-fold CV)
     cv_folds: int = 5
     test_size: float = 0.2
     random_state: int = 42
@@ -366,6 +391,8 @@ class Config:
             "random_forest": self.models.random_forest_params,
             "xgboost": self.models.xgboost_params,
             "linear": self.models.linear_params,
+            "svr": self.models.svr_params,
+            "decision_tree": self.models.decision_tree_params,
             "mnir": self.models.mnir_params,
         }
 

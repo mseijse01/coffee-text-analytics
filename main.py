@@ -40,6 +40,8 @@ from models import (
     CoffeeXGBoost,
     MultinomialInverseRegression,
     CoffeeModelEvaluator,
+    CoffeeSVR,
+    CoffeeDecisionTree,
 )
 
 # Configure logging using configuration system
@@ -127,6 +129,18 @@ def parse_args():
         action="store_true",
         help="Validate configuration and exit",
     )
+    parser.add_argument(
+        "--sample_fraction",
+        type=float,
+        default=None,
+        help="Fraction of data to sample (e.g., 0.1 for 10%%, 0.5 for 50%%)",
+    )
+    parser.add_argument(
+        "--sample_size",
+        type=int,
+        default=None,
+        help="Absolute number of samples to use (e.g., 1000)",
+    )
     return parser.parse_args()
 
 
@@ -164,6 +178,12 @@ def apply_cli_overrides(args):
         config.models.models_to_train = args.models
         logger.info(f"Models to train overridden: {args.models}")
 
+    # Log sampling configuration
+    if args.sample_fraction:
+        logger.info(f"Data sampling enabled: {args.sample_fraction * 100:.1f}% of data")
+    elif args.sample_size:
+        logger.info(f"Data sampling enabled: {args.sample_size} samples")
+
 
 def preprocess_data(args):
     """
@@ -184,6 +204,8 @@ def preprocess_data(args):
             input_file=args.input_file,
             output_file=str(config.paths.get_processed_data_path()),
             text_columns=config.models.text_columns,
+            sample_fraction=args.sample_fraction,
+            sample_size=args.sample_size,
         )
         return True
     except Exception as e:
@@ -214,9 +236,9 @@ def extract_features(args):
         # Create feature extraction configuration
         feature_config = {
             "tfidf": {
-                "max_features": config.features.max_features,
-                "ngram_range": tuple(config.features.ngram_range),
-                "models_dir": str(config.paths.models_dir),
+                "max_features": config.features.tfidf_max_features,
+                "ngram_range": config.features.tfidf_ngram_range,
+                "models_dir": str(config.paths.models),
             },
             "bert": {
                 "batch_size": config.features.bert_batch_size,
@@ -225,7 +247,7 @@ def extract_features(args):
             "topics": {
                 "n_topics": config.features.n_topics,
                 "algorithms": ["lda", "nmf"],
-                "models_dir": str(config.paths.models_dir),
+                "models_dir": str(config.paths.models),
             },
             "sentiment": {"batch_size": config.features.bert_batch_size},
             "glove": {"aggregation": "mean"},
@@ -271,7 +293,7 @@ def extract_features(args):
         result_df.write_csv(features_data_path)
 
         # Save feature manager
-        feature_manager.save_extractors(str(config.paths.models_dir))
+        feature_manager.save_extractors(str(config.paths.models))
 
         # Print feature summary
         feature_manager.print_summary()
@@ -319,7 +341,36 @@ def train_models(args):
         exclude_columns = (
             config.models.text_columns
             + [target_column]
-            + ["id", "name", "roaster", "roast", "loc", "url"]
+            + [
+                "id",
+                "slug",
+                "all_text",
+                "roaster",
+                "name",
+                "location",
+                "origin",
+                "roast",
+                "est_price",
+                "review_date",
+                "agtron",
+                "aroma",
+                "acid",
+                "body",
+                "flavor",
+                "aftertaste",
+                "with_milk",
+                "country_of_origin",
+                "price_value",
+                "price_unit",
+                "price_standardized",
+                "processed_desc_1",
+                "processed_desc_2",
+                "processed_desc_3",
+                "merged_text",
+                "processed_text",
+                "url",
+                "loc",
+            ]
         )
         feature_columns = [col for col in df.columns if col not in exclude_columns]
 
@@ -371,6 +422,12 @@ def train_models(args):
                 except Exception as e:
                     logger.warning(f"XGBoost not available: {e}")
                     continue
+            elif model_name == "svr":
+                models[model_name] = CoffeeSVR(model_configs.get(model_name, {}))
+            elif model_name == "decision_tree":
+                models[model_name] = CoffeeDecisionTree(
+                    model_configs.get(model_name, {})
+                )
 
         # Train models
         trained_models = {}
@@ -435,7 +492,7 @@ def train_models(args):
                     print(mnir_report)
 
                     # Save MNIR model
-                    mnir_path = config.paths.models_dir / "mnir_model.pkl"
+                    mnir_path = config.paths.models / "mnir_model.pkl"
                     mnir.save_model(str(mnir_path))
                     logger.info(f"MNIR model saved to {mnir_path}")
                 else:
@@ -445,7 +502,7 @@ def train_models(args):
                 logger.error(f"MNIR training failed: {e}")
 
         # Save trained models
-        models_dir = config.paths.models_dir
+        models_dir = config.paths.models
         for name, model in trained_models.items():
             try:
                 model_path = models_dir / f"{name}_model.pkl"
@@ -458,7 +515,7 @@ def train_models(args):
                 logger.warning(f"Failed to save {name} model: {e}")
 
         # Save evaluation results
-        results_path = config.paths.output_dir / "model_comparison_results.pkl"
+        results_path = config.paths.output / "model_comparison_results.pkl"
         import pickle
 
         with open(results_path, "wb") as f:
@@ -489,7 +546,7 @@ def visualize_results(args):
 
     try:
         # Load evaluation results
-        results_path = config.paths.output_dir / "model_comparison_results.pkl"
+        results_path = config.paths.output / "model_comparison_results.pkl"
         if not results_path.exists():
             logger.error("No evaluation results found. Run training step first.")
             return False
@@ -503,7 +560,7 @@ def visualize_results(args):
         evaluator = CoffeeModelEvaluator()
 
         # Create visualizations
-        figures_dir = config.paths.output_dir / "figures"
+        figures_dir = config.paths.output / "figures"
         figures_dir.mkdir(exist_ok=True)
 
         # Model comparison plot
@@ -629,7 +686,7 @@ def main():
         logger.info("=" * 50)
         logger.info("PIPELINE COMPLETED SUCCESSFULLY!")
         logger.info("=" * 50)
-        logger.info(f"Results saved to: {config.paths.output_dir}")
+        logger.info(f"Results saved to: {config.paths.output}")
     else:
         logger.error("=" * 50)
         logger.error("PIPELINE FAILED!")

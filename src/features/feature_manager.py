@@ -322,7 +322,13 @@ class CoffeeFeatureManager:
         feature_counts = {}
         for name, extractor in self.extractors.items():
             if extractor.is_fitted:
-                feature_counts[name] = extractor.get_feature_count()
+                # Try to get feature count, fallback to feature names length
+                if hasattr(extractor, "get_feature_count"):
+                    feature_counts[name] = extractor.get_feature_count()
+                elif hasattr(extractor, "feature_names_"):
+                    feature_counts[name] = len(extractor.feature_names_)
+                else:
+                    feature_counts[name] = 0
         return feature_counts
 
     def get_total_feature_count(self) -> int:
@@ -338,12 +344,20 @@ class CoffeeFeatureManager:
         """
         info = {}
         for name, extractor in self.extractors.items():
+            # Get feature count safely
+            feature_count = 0
+            if extractor.is_fitted:
+                if hasattr(extractor, "get_feature_count"):
+                    feature_count = extractor.get_feature_count()
+                elif hasattr(extractor, "feature_names_"):
+                    feature_count = len(extractor.feature_names_)
+
             extractor_info = {
                 "is_fitted": extractor.is_fitted,
-                "feature_count": extractor.get_feature_count()
-                if extractor.is_fitted
-                else 0,
-                "config": extractor.get_config(),
+                "feature_count": feature_count,
+                "config": extractor.get_config()
+                if hasattr(extractor, "get_config")
+                else extractor.config,
             }
 
             # Add specific info for certain extractors
