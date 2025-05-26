@@ -26,6 +26,8 @@ from .regressors import (
     CoffeeLassoRegression,
     CoffeeRandomForest,
     CoffeeXGBoost,
+    CoffeeSVR,
+    CoffeeDecisionTree,
 )
 
 # Evaluation
@@ -51,6 +53,8 @@ __all__ = [
     "CoffeeLassoRegression",
     "CoffeeRandomForest",
     "CoffeeXGBoost",
+    "CoffeeSVR",
+    "CoffeeDecisionTree",
     # Evaluation
     "CoffeeModelEvaluator",
 ]

@@ -186,6 +186,7 @@ cache/
 
 # Project-specific: Large text processing files
 *.log
+coffee_analytics.log
 large_text_files/
 temp_embeddings/
 temp_features/

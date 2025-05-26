@@ -96,7 +96,14 @@ class ConfigValidator:
             )
 
         # Validate models to train
-        valid_models = {"linear", "random_forest", "xgboost", "mnir"}
+        valid_models = {
+            "linear",
+            "random_forest",
+            "xgboost",
+            "svr",
+            "decision_tree",
+            "mnir",
+        }
         invalid_models = set(models.models_to_train) - valid_models
         if invalid_models:
             self.errors.append(f"Invalid model names: {invalid_models}")
@@ -118,6 +125,8 @@ class ConfigValidator:
         self._validate_model_params("random_forest", models.random_forest_params)
         self._validate_model_params("xgboost", models.xgboost_params)
         self._validate_model_params("linear", models.linear_params)
+        self._validate_model_params("svr", models.svr_params)
+        self._validate_model_params("decision_tree", models.decision_tree_params)
         self._validate_model_params("mnir", models.mnir_params)
 
     def _validate_model_params(self, model_name: str, params: Dict[str, Any]):
@@ -302,35 +311,52 @@ def check_dependencies() -> Tuple[bool, List[str]]:
     Returns:
         Tuple of (all_available, missing_packages)
     """
-    required_packages = [
+    # Core required packages
+    core_packages = [
         "polars",
         "pandas",
         "numpy",
-        "scikit-learn",
-        "transformers",
-        "torch",
+        "sklearn",  # scikit-learn imports as sklearn
         "plotly",
         "nltk",
-        "gensim",
         "xgboost",
     ]
 
-    missing_packages = []
+    # Optional packages (for advanced features)
+    optional_packages = [
+        "transformers",  # For BERT features
+        "torch",  # For BERT/transformers
+        "gensim",  # For GloVe embeddings
+    ]
 
-    for package in required_packages:
+    missing_core = []
+    missing_optional = []
+
+    for package in core_packages:
         try:
             __import__(package)
         except ImportError:
-            missing_packages.append(package)
+            missing_core.append(package)
 
-    all_available = len(missing_packages) == 0
+    for package in optional_packages:
+        try:
+            __import__(package)
+        except ImportError:
+            missing_optional.append(package)
 
-    if not all_available:
-        logger.warning(f"Missing required packages: {missing_packages}")
-    else:
-        logger.info("All required dependencies are available")
+    all_core_available = len(missing_core) == 0
 
-    return all_available, missing_packages
+    if missing_core:
+        logger.error(f"Missing required core packages: {missing_core}")
+    if missing_optional:
+        logger.warning(
+            f"Missing optional packages (some features will be limited): {missing_optional}"
+        )
+
+    if all_core_available:
+        logger.info("All core dependencies are available")
+
+    return all_core_available, missing_core
 
 
 def get_config_summary(config: Config) -> Dict[str, Any]:
