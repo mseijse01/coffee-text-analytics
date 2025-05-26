@@ -22,16 +22,16 @@ from nltk.stem import WordNetLemmatizer
 
 # Import text preprocessing from the centralized location
 try:
+    from ..data.preprocessing import preprocess_text
+except ImportError:
+    # Fallback for when running tests
     import sys
     import os
 
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from data.preprocessing import preprocess_text
-except ImportError:
-    # Fallback if import fails
-    def preprocess_text(text, remove_stop=True):
-        """Fallback text preprocessing function."""
-        return str(text).lower() if isinstance(text, str) else ""
+
+from .polars_utils import PolarsOptimizer
 
 
 # Price cleaning utilities
@@ -100,13 +100,10 @@ def standardize_prices(df: pl.DataFrame) -> pl.DataFrame:
     if "est_price" not in df.columns:
         raise ValueError("DataFrame must contain 'est_price' column")
 
-    # Import optimization utility
-    from .polars_utils import efficient_pandas_apply
+    # Use optimization utility
 
     # Apply price cleaning efficiently
-    return efficient_pandas_apply(df, "est_price", clean_price).rename(
-        {"est_price": "price_per_kg"}
-    )
+    return PolarsOptimizer.efficient_apply(df, "est_price", clean_price, "price_per_kg")
 
 
 # Country extraction utilities
@@ -277,7 +274,9 @@ def apply_text_preprocessing(
             )
 
         # Apply preprocessing efficiently
-        df = efficient_pandas_apply(df, column, preprocess_func, f"processed_{column}")
+        df = PolarsOptimizer.efficient_apply(
+            df, column, preprocess_func, f"processed_{column}"
+        )
 
     print("Text preprocessing complete.")
     return df
