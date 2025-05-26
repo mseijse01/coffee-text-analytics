@@ -367,7 +367,9 @@ def load_csv_for_preprocessing(file_path: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def process_raw_data(input_file, output_file, text_columns=None):
+def process_raw_data(
+    input_file, output_file, text_columns=None, sample_fraction=None, sample_size=None
+):
     """
     Process raw coffee review data and save processed version.
 
@@ -375,6 +377,8 @@ def process_raw_data(input_file, output_file, text_columns=None):
         input_file (str): Path to input file
         output_file (str): Path to output file
         text_columns (list): List of text columns to process
+        sample_fraction (float): Fraction of data to sample (e.g., 0.1 for 10%)
+        sample_size (int): Absolute number of samples to use
     """
     # Ensure output directory exists
     output_dir = os.path.dirname(output_file)
@@ -384,6 +388,27 @@ def process_raw_data(input_file, output_file, text_columns=None):
     df = load_csv_for_preprocessing(input_file)
     if df.empty:
         raise ValueError(f"Failed to load data from {input_file}")
+
+    original_size = len(df)
+    logger.info(f"Original dataset size: {original_size} rows")
+
+    # Apply sampling if requested
+    if sample_fraction is not None:
+        if not 0 < sample_fraction <= 1:
+            raise ValueError("sample_fraction must be between 0 and 1")
+        sample_size_calculated = int(original_size * sample_fraction)
+        df = df.sample(n=sample_size_calculated, random_state=42)
+        logger.info(f"Sampled {sample_fraction * 100:.1f}% of data: {len(df)} rows")
+    elif sample_size is not None:
+        if sample_size <= 0:
+            raise ValueError("sample_size must be positive")
+        if sample_size > original_size:
+            logger.warning(
+                f"Requested sample_size ({sample_size}) is larger than dataset ({original_size}). Using full dataset."
+            )
+        else:
+            df = df.sample(n=sample_size, random_state=42)
+            logger.info(f"Sampled {sample_size} rows from {original_size} total rows")
 
     # Set default text columns for coffee review data
     if text_columns is None:

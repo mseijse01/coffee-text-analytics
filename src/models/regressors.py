@@ -520,3 +520,233 @@ class CoffeeXGBoost(BaseRegressor):
 
         importances = self.model_.feature_importances_
         return dict(zip(self.feature_names_, importances))
+
+
+class CoffeeSVR(BaseRegressor):
+    """
+    Support Vector Regressor wrapper following thesis methodology.
+    """
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """
+        Initialize SVR model.
+
+        Args:
+            config: Configuration dictionary with parameters:
+                - kernel: Kernel type (default: 'rbf')
+                - C: Regularization parameter (default: 1.0)
+                - gamma: Kernel coefficient (default: 'scale')
+                - epsilon: Epsilon parameter (default: 0.1)
+                - scale_features: Whether to scale features (default: True)
+                - tune_hyperparameters: Whether to tune hyperparameters (default: True)
+                - cv: Cross-validation folds (default: 5)
+        """
+        super().__init__(config)
+
+        default_config = {
+            "kernel": "rbf",
+            "C": 1.0,
+            "gamma": "scale",
+            "epsilon": 0.1,
+            "scale_features": True,
+            "tune_hyperparameters": True,
+            "cv": 5,
+        }
+        default_config.update(self.config)
+        self.config = default_config
+
+        self.scaler_ = None
+        if self.config["scale_features"]:
+            self.scaler_ = StandardScaler()
+
+        self.best_params_ = None
+
+    def fit(
+        self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+    ) -> "CoffeeSVR":
+        """Fit SVR with optional hyperparameter tuning."""
+        logger.info("Fitting SVR model")
+
+        # Convert to numpy if needed
+        if isinstance(X, pd.DataFrame):
+            self.feature_names_ = list(X.columns)
+            X = X.values
+        else:
+            self.feature_names_ = [f"feature_{i}" for i in range(X.shape[1])]
+
+        if isinstance(y, pd.Series):
+            y = y.values
+
+        # Scale features if requested
+        if self.scaler_ is not None:
+            X = self.scaler_.fit_transform(X)
+
+        if self.config["tune_hyperparameters"]:
+            # Import SVR
+            from sklearn.svm import SVR
+
+            # Hyperparameter tuning
+            svr = SVR()
+
+            param_grid = {
+                "kernel": ["rbf", "linear", "poly"],
+                "C": [0.1, 1.0, 10.0],
+                "gamma": ["scale", "auto", 0.001, 0.01],
+                "epsilon": [0.01, 0.1, 0.2],
+            }
+
+            grid_search = GridSearchCV(
+                svr, param_grid, cv=self.config["cv"], scoring="r2", n_jobs=-1
+            )
+            grid_search.fit(X, y)
+
+            self.model_ = grid_search.best_estimator_
+            self.best_params_ = grid_search.best_params_
+
+            logger.info(f"SVR fitted with best params: {self.best_params_}")
+        else:
+            # Import SVR
+            from sklearn.svm import SVR
+
+            # Use default parameters
+            self.model_ = SVR(
+                kernel=self.config["kernel"],
+                C=self.config["C"],
+                gamma=self.config["gamma"],
+                epsilon=self.config["epsilon"],
+            )
+            self.model_.fit(X, y)
+
+            logger.info("SVR fitted with default parameters")
+
+        self.is_fitted = True
+        return self
+
+    def predict(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+        """Make predictions."""
+        if not self.is_fitted:
+            raise ModelError("Model must be fitted before prediction")
+
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+
+        if self.scaler_ is not None:
+            X = self.scaler_.transform(X)
+
+        return self.model_.predict(X)
+
+    def get_feature_importance(self) -> Dict[str, float]:
+        """Get feature importance (not available for SVR)."""
+        if not self.is_fitted:
+            raise ModelError("Model must be fitted to get feature importance")
+
+        logger.warning("SVR does not provide feature importance scores")
+        return {}
+
+
+class CoffeeDecisionTree(BaseRegressor):
+    """
+    Decision Tree Regressor wrapper following thesis methodology.
+    """
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """
+        Initialize Decision Tree model.
+
+        Args:
+            config: Configuration dictionary with parameters:
+                - max_depth: Maximum depth (default: None)
+                - min_samples_split: Minimum samples to split (default: 2)
+                - min_samples_leaf: Minimum samples in leaf (default: 1)
+                - random_state: Random state (default: 42)
+                - tune_hyperparameters: Whether to tune hyperparameters (default: True)
+                - cv: Cross-validation folds (default: 5)
+        """
+        super().__init__(config)
+
+        default_config = {
+            "max_depth": None,
+            "min_samples_split": 2,
+            "min_samples_leaf": 1,
+            "random_state": 42,
+            "tune_hyperparameters": True,
+            "cv": 5,
+        }
+        default_config.update(self.config)
+        self.config = default_config
+
+        self.best_params_ = None
+
+    def fit(
+        self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+    ) -> "CoffeeDecisionTree":
+        """Fit Decision Tree with optional hyperparameter tuning."""
+        logger.info("Fitting Decision Tree model")
+
+        # Convert to numpy if needed
+        if isinstance(X, pd.DataFrame):
+            self.feature_names_ = list(X.columns)
+            X = X.values
+        else:
+            self.feature_names_ = [f"feature_{i}" for i in range(X.shape[1])]
+
+        if isinstance(y, pd.Series):
+            y = y.values
+
+        if self.config["tune_hyperparameters"]:
+            # Import DecisionTreeRegressor
+            from sklearn.tree import DecisionTreeRegressor
+
+            # Hyperparameter tuning
+            dt = DecisionTreeRegressor(random_state=self.config["random_state"])
+
+            param_grid = {
+                "max_depth": [None, 5, 10, 20],
+                "min_samples_split": [2, 5, 10],
+                "min_samples_leaf": [1, 2, 4],
+            }
+
+            grid_search = GridSearchCV(
+                dt, param_grid, cv=self.config["cv"], scoring="r2", n_jobs=-1
+            )
+            grid_search.fit(X, y)
+
+            self.model_ = grid_search.best_estimator_
+            self.best_params_ = grid_search.best_params_
+
+            logger.info(f"Decision Tree fitted with best params: {self.best_params_}")
+        else:
+            # Import DecisionTreeRegressor
+            from sklearn.tree import DecisionTreeRegressor
+
+            # Use default parameters
+            self.model_ = DecisionTreeRegressor(
+                max_depth=self.config["max_depth"],
+                min_samples_split=self.config["min_samples_split"],
+                min_samples_leaf=self.config["min_samples_leaf"],
+                random_state=self.config["random_state"],
+            )
+            self.model_.fit(X, y)
+
+            logger.info("Decision Tree fitted with default parameters")
+
+        self.is_fitted = True
+        return self
+
+    def predict(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+        """Make predictions."""
+        if not self.is_fitted:
+            raise ModelError("Model must be fitted before prediction")
+
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+
+        return self.model_.predict(X)
+
+    def get_feature_importance(self) -> Dict[str, float]:
+        """Get feature importance from Decision Tree."""
+        if not self.is_fitted:
+            raise ModelError("Model must be fitted to get feature importance")
+
+        importances = self.model_.feature_importances_
+        return dict(zip(self.feature_names_, importances))
