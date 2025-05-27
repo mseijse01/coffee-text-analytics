@@ -574,9 +574,22 @@ def train_models(args):
             "random_forest": {
                 "tune_hyperparameters": True,
                 "cv": config.models.cv_folds,
+                "use_two_step_tuning": config.models.two_step_tuning_enabled,
+                "global_config": config,  # Pass global config for two-step tuning
             },
-            "xgboost": {"tune_hyperparameters": True, "cv": config.models.cv_folds},
-            "svr": config.models.svr_params,
+            "xgboost": {
+                "tune_hyperparameters": True,
+                "cv": config.models.cv_folds,
+                "use_two_step_tuning": config.models.two_step_tuning_enabled,
+                "global_config": config,  # Pass global config for two-step tuning
+            },
+            "svr": {
+                **config.models.svr_params,
+                "tune_hyperparameters": True,
+                "cv": config.models.cv_folds,
+                "use_two_step_tuning": config.models.two_step_tuning_enabled,
+                "global_config": config,  # Pass global config for two-step tuning
+            },
             "decision_tree": config.models.decision_tree_params,
         }
 

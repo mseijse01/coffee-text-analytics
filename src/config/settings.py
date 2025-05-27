@@ -223,6 +223,75 @@ class ModelConfig:
         }
     )
 
+    # Two-Step Hyperparameter Tuning (Signature Approach)
+    # Phase 1: Randomized Search → Phase 2: Grid Search
+    two_step_tuning_enabled: bool = True  # Enable signature two-step approach
+
+    # Randomized Search parameters (Phase 1: Wide exploration)
+    randomized_search_config: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "n_iter": 50,  # Number of parameter settings sampled
+            "cv": 3,  # Use 3-fold CV for speed in randomized search
+            "scoring": "r2",
+            "n_jobs": -1,
+            "random_state": 57,
+            "verbose": 1,
+        }
+    )
+
+    # Grid Search parameters (Phase 2: Fine-tuning)
+    grid_search_config: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "cv": 5,  # Use 5-fold CV for final tuning
+            "scoring": "r2",
+            "n_jobs": -1,
+            "verbose": 1,
+        }
+    )
+
+    # Two-step parameter grids for each model
+    random_forest_two_step: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "randomized_params": {
+                "n_estimators": [50, 100, 200, 300, 500],
+                "max_depth": [None, 5, 10, 15, 20, 25],
+                "min_samples_split": [2, 5, 10, 15, 20],
+                "min_samples_leaf": [1, 2, 4, 6, 8],
+                "max_features": ["sqrt", "log2", 0.3, 0.5, 0.7],
+                "bootstrap": [True, False],
+            },
+            "grid_refinement_factor": 3,  # How many values around best to test
+        }
+    )
+
+    xgboost_two_step: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "randomized_params": {
+                "n_estimators": [50, 100, 200, 300, 500],
+                "max_depth": [3, 4, 5, 6, 7, 8, 9],
+                "learning_rate": [0.01, 0.05, 0.1, 0.15, 0.2, 0.3],
+                "subsample": [0.6, 0.7, 0.8, 0.9, 1.0],
+                "colsample_bytree": [0.6, 0.7, 0.8, 0.9, 1.0],
+                "reg_alpha": [0, 0.01, 0.1, 1, 10],
+                "reg_lambda": [0, 0.01, 0.1, 1, 10],
+            },
+            "grid_refinement_factor": 3,
+        }
+    )
+
+    svr_two_step: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "randomized_params": {
+                "kernel": ["rbf", "linear", "poly"],
+                "C": [0.01, 0.1, 1, 10, 100, 1000],
+                "gamma": ["scale", "auto", 0.001, 0.01, 0.1, 1],
+                "epsilon": [0.001, 0.01, 0.1, 0.2, 0.5],
+                "degree": [2, 3, 4],  # For poly kernel
+            },
+            "grid_refinement_factor": 3,
+        }
+    )
+
 
 @dataclass
 class FeatureConfig:
