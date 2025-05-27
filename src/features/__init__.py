@@ -25,6 +25,9 @@ from .sentiment_extractor import SentimentExtractor
 # Unified manager
 from .feature_manager import CoffeeFeatureManager, GloVeExtractor
 
+# Feature selection
+from .feature_selector import LassoFeatureSelector
+
 # Legacy CoffeeFeatureExtractor has been removed - use CoffeeFeatureManager instead
 
 
@@ -45,4 +48,6 @@ __all__ = [
     "GloVeExtractor",
     # Unified manager
     "CoffeeFeatureManager",
+    # Feature selection
+    "LassoFeatureSelector",
 ]

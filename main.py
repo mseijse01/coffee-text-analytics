@@ -31,7 +31,7 @@ from config.validation import validate_config, print_config_summary, check_depen
 from config.environments import apply_environment_config
 
 # Import new component-based architecture
-from features import CoffeeFeatureManager
+from features import CoffeeFeatureManager, LassoFeatureSelector
 from models import (
     CoffeeLinearRegression,
     CoffeeRidgeRegression,
@@ -380,21 +380,46 @@ def train_models(args):
         logger.info(f"Features shape: {X.shape}")
         logger.info(f"Target shape: {y.shape}")
 
-        # Split data
+        # Split data using stratified sampling (thesis methodology)
         from sklearn.model_selection import train_test_split
+        import pandas as pd
+
+        # Create stratified bins for the target variable (rating)
+        # This ensures balanced representation across rating ranges
+        n_bins = 5  # Create 5 bins for stratification
+        y_binned = pd.cut(y, bins=n_bins, labels=False)
+
+        logger.info(f"Stratified sampling with {n_bins} bins")
+        logger.info(
+            f"Bin distribution: {pd.Series(y_binned).value_counts().sort_index()}"
+        )
 
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
+            X,
+            y,
+            test_size=config.models.test_size,  # Use 0.3 from config (70/30 split)
+            random_state=config.models.random_state,
+            stratify=y_binned,  # Stratify based on rating bins
         )
+
+        logger.info(
+            f"Train set size: {len(X_train)} ({len(X_train) / len(X) * 100:.1f}%)"
+        )
+        logger.info(f"Test set size: {len(X_test)} ({len(X_test) / len(X) * 100:.1f}%)")
 
         # Initialize models based on configuration
         models = {}
         model_configs = {
-            "linear": {"scale_features": False},
-            "ridge": {"scale_features": True, "cv": 5},
-            "lasso": {"scale_features": True, "cv": 5},
-            "random_forest": {"tune_hyperparameters": True, "cv": 3},
-            "xgboost": {"tune_hyperparameters": True, "cv": 3},
+            "linear": config.models.linear_params,
+            "ridge": config.models.ridge_params,
+            "lasso": config.models.lasso_params,
+            "random_forest": {
+                "tune_hyperparameters": True,
+                "cv": config.models.cv_folds,
+            },
+            "xgboost": {"tune_hyperparameters": True, "cv": config.models.cv_folds},
+            "svr": config.models.svr_params,
+            "decision_tree": config.models.decision_tree_params,
         }
 
         for model_name in config.models.models_to_train:
@@ -476,8 +501,8 @@ def train_models(args):
 
                 if sensory_data:
                     mnir_config = {
-                        "lasso_cv": 5,
-                        "random_state": 42,
+                        "lasso_cv": config.models.lasso_cv_folds,
+                        "random_state": config.models.random_state,
                         "sensory_attributes": list(sensory_data.keys()),
                     }
 
@@ -601,8 +626,17 @@ def visualize_results(args):
 
         X = df[feature_columns]
         y = df[target_column]
+
+        # Use same stratified sampling as in training
+        n_bins = 5
+        y_binned = pd.cut(y, bins=n_bins, labels=False)
+
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
+            X,
+            y,
+            test_size=config.models.test_size,
+            random_state=config.models.random_state,
+            stratify=y_binned,
         )
 
         logger.info(f"Creating prediction plot for best model: {best_r2_model}...")
