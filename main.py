@@ -544,20 +544,42 @@ def train_models(args):
 
         # Create stratified bins for the target variable (rating)
         # This ensures balanced representation across rating ranges
-        n_bins = 5  # Create 5 bins for stratification
-        y_binned = pd.cut(y, bins=n_bins, labels=False)
+        n_bins = 5  # Start with 5 bins for stratification
 
-        logger.info(f"Stratified sampling with {n_bins} bins")
-        logger.info(
-            f"Bin distribution: {pd.Series(y_binned).value_counts().sort_index()}"
-        )
+        # Try stratified sampling with decreasing number of bins
+        stratify_var = None
+        for bins in [5, 4, 3]:
+            try:
+                y_binned = pd.cut(y, bins=bins, labels=False)
+                bin_counts = pd.Series(y_binned).value_counts()
+
+                # Check if all bins have at least 2 samples (minimum for stratification)
+                if bin_counts.min() >= 2:
+                    stratify_var = y_binned
+                    n_bins = bins
+                    logger.info(f"Stratified sampling with {n_bins} bins")
+                    logger.info(f"Bin distribution: {bin_counts.sort_index()}")
+                    break
+                else:
+                    logger.warning(
+                        f"Bins={bins}: Some bins have <2 samples, trying fewer bins..."
+                    )
+            except Exception as e:
+                logger.warning(f"Stratification with {bins} bins failed: {e}")
+
+        # If stratification still fails, use simple random sampling
+        if stratify_var is None:
+            logger.warning(
+                "Stratified sampling not possible with small sample - using random sampling"
+            )
+            logger.info("This is acceptable for small development samples")
 
         X_train, X_test, y_train, y_test = train_test_split(
             X,
             y,
             test_size=config.models.test_size,  # Use 0.3 from config (70/30 split)
             random_state=config.models.random_state,
-            stratify=y_binned,  # Stratify based on rating bins
+            stratify=stratify_var,  # Use stratify_var (None if stratification failed)
         )
 
         logger.info(

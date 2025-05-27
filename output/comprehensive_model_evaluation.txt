@@ -1,0 +1,33 @@
+================================================================================
+🏆 COMPREHENSIVE MODEL COMPARISON REPORT
+================================================================================
+Following thesis methodology with MAE, RMSE, R² evaluation
+
+📊 PERFORMANCE SUMMARY TABLE:
+
+Model           R²       RMSE     MAE      MSE      MAPE    
+------------------------------------------------------------
+linear          0.9013   0.4725   0.3218   0.2233   0.35    
+ridge           0.9463   0.3487   0.2237   0.1216   0.24    
+lasso           0.9024   0.4699   0.3216   0.2208   0.35    
+random_forest   0.4880   1.0761   0.7866   1.1580   0.85    
+xgboost         0.5282   1.0330   0.7648   1.0671   0.82    
+svr             0.9460   0.3494   0.2237   0.1221   0.24    
+decision_tree   0.2396   1.3114   0.9943   1.7198   1.07    
+
+🥇 BEST MODELS BY METRIC:
+  R2                  : ridge (0.9463)
+  RMSE                : ridge (0.3487)
+  MAE                 : svr (0.2237)
+  MSE                 : ridge (0.1216)
+  MAPE                : svr (0.2401)
+  EXPLAINED_VARIANCE  : ridge (0.9473)
+
+📈 PERFORMANCE INTERPRETATION:
+  Best Overall Model: ridge
+  Performance Category: Excellent
+  R² Score: 0.9463
+
+================================================================================
+✅ COMPREHENSIVE COMPARISON COMPLETE
+================================================================================
