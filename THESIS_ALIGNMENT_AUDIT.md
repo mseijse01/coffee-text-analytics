@@ -254,6 +254,62 @@ From thesis (page 279):
 - Validate meaningful topic extraction and interpretation
 - Ensure both algorithm features are integrated in modeling
 
+### 16. **Missing Categorical Feature Encoding (CRITICAL)**
+
+#### ❌ **Current Implementation Gap**
+- **Missing one-hot encoding**: Categorical features (`roaster`, `origin`, `roast`, `country_of_origin`) are excluded from modeling
+- **Thesis requirement violated**: "For categorical variables such as *roaster*, *country of origin*, and *roast level*, one-hot encoding was applied"
+- **Performance impact**: Missing ~10% of predictive power from categorical features
+- **Feature composition mismatch**: Only text + sensory features included, categorical features completely absent
+
+#### ✅ **Thesis Methodology (Required)**
+From thesis (page 420-430):
+- **One-hot encoding applied**: "categorical variables such as *roaster*, *country of origin*, and *roast level*"
+- **Binary columns created**: "This transformation converted categorical values into binary columns"
+- **Model compatibility**: "making them suitable for machine learning models"
+- **Feature contribution**: Categorical features provide ~10% of predictive power
+
+#### 🔧 **Required Implementation**
+```python
+# Current exclusion (WRONG):
+exclude_columns = ["roaster", "origin", "roast", "country_of_origin"]
+
+# Required implementation:
+categorical_features = ["roaster", "origin", "roast", "country_of_origin"]
+encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
+encoded_features = encoder.fit_transform(df[categorical_features])
+feature_names = encoder.get_feature_names_out(categorical_features)
+# Result: roaster_CompanyA, origin_Ethiopia, roast_Light, etc.
+```
+
+#### 📊 **Current vs Expected Feature Composition**
+**Current (WRONG)**:
+- Text features: ~4,792 features ✅
+- Sensory features: 5 features ✅  
+- Categorical features: 0 features ❌
+
+**Expected (THESIS)**:
+- Text features: ~4,792 features ✅
+- Sensory features: 5 features ✅
+- Categorical features: ~50-200 features (depending on unique values) ❌ MISSING
+
+#### 🎯 **Impact Analysis**
+- **Missing predictive power**: ~10% performance loss
+- **Feature importance gaps**: No categorical variables in SHAP analysis
+- **Model hierarchy issues**: Could explain why ensemble models underperform
+- **Thesis compliance**: Major methodology violation
+
+### 17. **Topic Modeling Configuration Verification**
+
+#### ⚠️ **Needs Verification**
+- **Current**: Using 10 topics ✅, but need to verify both LDA and NMF
+- **Thesis**: "10 topics per model" for both LDA and NMF algorithms
+
+#### 🔧 **Required Verification**
+- Confirm both LDA and NMF use exactly 10 topics
+- Validate meaningful topic extraction and interpretation
+- Ensure both algorithm features are integrated in modeling
+
 ## 📋 Implementation Plan
 
 ### ~~Phase 1: Fix Text Column Processing (CRITICAL)~~ ✅ COMPLETED
@@ -293,15 +349,22 @@ From thesis (page 279):
 # 4. Train models on this combined feature set
 ```
 
-### Phase 3: Fix Text Preprocessing Pipelines
+### Phase 3: Fix Text Preprocessing Pipelines & Categorical Features
 
-#### 3.1 **Implement Specialized Preprocessing**
+#### 3.1 **🚨 CRITICAL: Implement Categorical Feature Encoding (HIGH PRIORITY)**
+- [ ] **Create categorical feature encoder** - implement one-hot encoding for roaster, origin, roast, country_of_origin
+- [ ] **Update feature extraction pipeline** - integrate categorical encoding before feature selection
+- [ ] **Modify exclusion logic** - remove categorical features from exclude list, include encoded features
+- [ ] **Update corrected LASSO selector** - ensure categorical features preserved separately (not subject to LASSO)
+- [ ] **Test categorical feature impact** - validate ~10% performance improvement expected
+
+#### 3.2 **Implement Specialized Preprocessing**
 - [ ] **Create embedding/sentiment pipeline**: Remove stopwords, retain punctuation
 - [ ] **Create topic modeling pipeline**: Retain stopwords, remove punctuation
 - [ ] **Generate three datasets**: embeddings, topic modeling, sentiment analysis
 - [ ] **Apply appropriate pipeline** per feature extraction task
 
-#### 3.2 **Box-Cox Transformation Implementation** 🔄 IN PROGRESS
+#### 3.3 **Box-Cox Transformation Implementation** 🔄 IN PROGRESS
 - [x] **Implement Box-Cox transformation** for target variable normalization ✅
 - [ ] **Run dual pipeline** - train models with and without Box-Cox
 - [ ] **Compare performance** across all models (with vs without Box-Cox)
@@ -483,12 +546,13 @@ rf_params = {
 5. ~~**Fix LASSO methodology** - combine text features before selection~~ ✅  
 
 ### This Week:
-1. **Implement Box-Cox dual pipeline** - test with and without transformation, compare performance ✅ (Already in plan)
-2. ~~**Implement two-step hyperparameter tuning** - Randomized Search → Grid Search (signature approach)~~ ✅
-3. ~~**Extend SHAP analysis** - apply to all models beyond MNIR~~ ✅
-4. ~~**Add comprehensive evaluation metrics** - MAE, RMSE, R² for all models~~ ✅
-5. **Verify topic modeling configuration** - ensure LDA and NMF both use 10 topics
-6. **🧪 IMPLEMENT COMPREHENSIVE TESTING & VALIDATION PLAN** - extend testing infrastructure for all new features
+1. **🚨 IMPLEMENT CATEGORICAL FEATURE ENCODING** - one-hot encode roaster, origin, roast, country_of_origin (CRITICAL)
+2. **Implement Box-Cox dual pipeline** - test with and without transformation, compare performance ✅ (Already in plan)
+3. ~~**Implement two-step hyperparameter tuning** - Randomized Search → Grid Search (signature approach)~~ ✅
+4. ~~**Extend SHAP analysis** - apply to all models beyond MNIR~~ ✅
+5. ~~**Add comprehensive evaluation metrics** - MAE, RMSE, R² for all models~~ ✅
+6. **Verify topic modeling configuration** - ensure LDA and NMF both use 10 topics
+7. **🧪 IMPLEMENT COMPREHENSIVE TESTING & VALIDATION PLAN** - extend testing infrastructure for all new features
 
 ### Next Steps:
 1. ~~**Validate stratified sampling** - ensure proper train/test distribution~~ ✅
@@ -497,6 +561,7 @@ rf_params = {
 4. **Performance validation** - ensure robust evaluation across all models
 5. **🧪 Phase 1 Testing Implementation** - SHAP analysis, two-step tuning, Box-Cox pipeline tests
 6. **🧪 Phase 2 Testing Implementation** - feature naming, LASSO methodology, evaluation metrics tests
+7. **🧪 Phase 3 Testing Implementation** - categorical feature encoding, complete feature pipeline tests
 
 ## 📊 Expected Outcomes
 
@@ -506,6 +571,15 @@ After fixes, we should see:
 - **Text features dominating** importance rankings
 - **Sensible feature reduction** (~85-90%, not 95%+)
 - **Thesis-aligned results** matching expected performance hierarchy
+- **🚨 Categorical features contributing** ~10% performance improvement
+- **Complete feature composition**: Text (68%) + Sensory (22%) + Categorical (10%)
+- **SHAP analysis including** categorical variables (roaster_*, origin_*, roast_*)
+
+### 🎯 **Categorical Feature Impact Expectations**
+- **Performance boost**: +5-15% R² improvement across all models
+- **Feature importance**: Categorical variables appearing in top features
+- **Model hierarchy restoration**: Ensemble models (XGBoost, RF) outperforming linear models
+- **Thesis compliance**: Complete methodology alignment achieved
 
 ---
 
@@ -580,7 +654,21 @@ class TestBoxCoxDualPipeline:
 
 #### **Phase 2: Feature and Data Validation (MEDIUM PRIORITY)**
 
-##### 2.1 **Feature Naming Convention Testing**
+##### 2.1 **🚨 Categorical Feature Encoding Testing (HIGH PRIORITY)**
+```python
+# tests/test_categorical_encoding.py
+class TestCategoricalFeatureEncoding:
+    def test_one_hot_encoder_initialization()
+    def test_categorical_feature_identification()  # roaster, origin, roast, country_of_origin
+    def test_encoding_transformation()
+    def test_feature_name_generation()  # roaster_CompanyA, origin_Ethiopia
+    def test_handle_unknown_categories()
+    def test_integration_with_feature_pipeline()
+    def test_exclusion_logic_update()
+    def test_lasso_selector_preservation()  # categorical features not subject to LASSO
+```
+
+##### 2.2 **Feature Naming Convention Testing**
 ```python
 # tests/test_feature_naming.py
 class TestFeatureNamingConvention:
@@ -592,7 +680,7 @@ class TestFeatureNamingConvention:
     def test_column_source_identification()
 ```
 
-##### 2.2 **Corrected LASSO Methodology Testing**
+##### 2.3 **Corrected LASSO Methodology Testing**
 ```python
 # tests/test_corrected_lasso.py
 class TestCorrectedLassoFeatureSelection:
@@ -604,7 +692,7 @@ class TestCorrectedLassoFeatureSelection:
     def test_thesis_methodology_compliance()
 ```
 
-##### 2.3 **Comprehensive Evaluation Metrics Testing**
+##### 2.4 **Comprehensive Evaluation Metrics Testing**
 ```python
 # tests/test_comprehensive_evaluation.py
 class TestComprehensiveEvaluation:
