@@ -256,36 +256,19 @@ def extract_features(args):
         # Initialize feature manager
         feature_manager = CoffeeFeatureManager(feature_config)
 
-        # Combine text columns for feature extraction
-        combined_texts = []
-        for i in range(len(df)):
-            text_parts = []
-            for col in config.models.text_columns:
-                if col in df.columns:
-                    text_value = df[col][i]
-                    if text_value and isinstance(text_value, str):
-                        text_parts.append(text_value.strip())
+        # Following thesis methodology: process desc_1, desc_2, desc_3 separately
+        logger.info(
+            "Following thesis methodology: separate processing of description columns"
+        )
+        logger.info(f"Processing columns separately: {config.models.text_columns}")
 
-            combined_text = " ".join(text_parts) if text_parts else ""
-            combined_texts.append(combined_text)
+        # Fit feature extractors on combined text from all columns
+        logger.info("Fitting feature extractors on combined text from all columns...")
+        feature_manager.fit(df, config.models.text_columns)
 
-        logger.info(f"Combined {len(combined_texts)} texts for feature extraction")
-
-        # Fit feature extractors
-        logger.info("Fitting feature extractors...")
-        feature_manager.fit(combined_texts)
-
-        # Extract features
-        logger.info("Extracting features...")
-        features_df = feature_manager.extract_features(combined_texts)
-
-        # Combine with original data
-        if not features_df.is_empty():
-            # Convert original data to match features
-            result_df = df.hstack(features_df)
-        else:
-            logger.warning("No features extracted, using original data")
-            result_df = df
+        # Extract features separately for each column
+        logger.info("Extracting features separately for each description column...")
+        result_df = feature_manager.extract_all_features(df, config.models.text_columns)
 
         # Save features
         features_data_path = config.paths.get_features_data_path()

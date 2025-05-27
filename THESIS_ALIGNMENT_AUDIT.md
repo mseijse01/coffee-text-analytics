@@ -162,18 +162,18 @@ From thesis (page 279):
 
 ### Phase 1: Fix Text Column Processing (CRITICAL)
 
-#### 1.1 **Implement Separate Description Column Processing**
-- [ ] **Modify feature extractors** to process `desc_1`, `desc_2`, `desc_3` separately
-- [ ] **Update TF-IDF extraction** to create separate vectorizers per column
-- [ ] **Update BERT embedding** to extract embeddings per column separately  
-- [ ] **Update GloVe embedding** to extract embeddings per column separately
-- [ ] **Update sentiment analysis** to analyze each column separately
-- [ ] **Update topic modeling** to model topics per column separately
+#### 1.1 **Implement Separate Description Column Processing** ✅ COMPLETED
+- [x] **Modify feature extractors** to process `desc_1`, `desc_2`, `desc_3` separately ✅
+- [x] **Update TF-IDF extraction** to create separate vectorizers per column ✅
+- [x] **Update BERT embedding** to extract embeddings per column separately ✅
+- [x] **Update GloVe embedding** to extract embeddings per column separately ✅
+- [x] **Update sentiment analysis** to analyze each column separately ✅
+- [x] **Update topic modeling** to model topics per column separately ✅
 
-#### 1.2 **Update Feature Naming Convention**
-- [ ] Change from generic `tfidf_0`, `bert_0` to `tfidf_desc_1_0`, `bert_desc_1_0`
-- [ ] Ensure feature names reflect source column: `glove_desc_2_0`, `sentiment_desc_3_pos`
-- [ ] Update feature selection to handle column-specific features
+#### 1.2 **Update Feature Naming Convention** ✅ COMPLETED
+- [x] Change from generic `tfidf_0`, `bert_0` to `tfidf_desc_1_0`, `bert_desc_1_0` ✅
+- [x] Ensure feature names reflect source column: `glove_desc_2_0`, `sentiment_desc_3_pos` ✅
+- [x] Update feature selection to handle column-specific features ✅
 
 #### 1.3 **Validate Separate Processing**
 - [ ] Verify each desc column produces distinct feature sets
@@ -205,8 +205,8 @@ From thesis (page 279):
 - [ ] **Generate three datasets**: embeddings, topic modeling, sentiment analysis
 - [ ] **Apply appropriate pipeline** per feature extraction task
 
-#### 3.2 **Box-Cox Transformation Implementation**
-- [ ] **Implement Box-Cox transformation** for target variable normalization
+#### 3.2 **Box-Cox Transformation Implementation** ✅ COMPLETED
+- [x] **Implement Box-Cox transformation** for target variable normalization ✅
 - [ ] **Test impact on model performance** across all models
 - [ ] **Document decision** to keep or discard (following thesis approach)
 - [ ] **Handle skewness** in coffee ratings distribution
