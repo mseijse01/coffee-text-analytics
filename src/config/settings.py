@@ -99,10 +99,12 @@ class ModelConfig:
         default_factory=lambda: ["aroma", "acid", "body", "flavor", "aftertaste"]
     )
 
-    # Models to train
+    # Models to train (aligned with thesis methodology)
     models_to_train: List[str] = field(
         default_factory=lambda: [
             "linear",
+            "ridge",
+            "lasso",
             "random_forest",
             "xgboost",
             "svr",
@@ -118,7 +120,7 @@ class ModelConfig:
             "max_depth": 10,
             "min_samples_split": 5,
             "min_samples_leaf": 2,
-            "random_state": 42,
+            "random_state": 57,
         }
     )
 
@@ -129,12 +131,30 @@ class ModelConfig:
             "learning_rate": 0.1,
             "subsample": 0.8,
             "colsample_bytree": 0.8,
-            "random_state": 42,
+            "random_state": 57,
         }
     )
 
-    linear_params: Dict[str, Any] = field(
-        default_factory=lambda: {"alpha": 1.0, "random_state": 42}
+    linear_params: Dict[str, Any] = field(default_factory=lambda: {"random_state": 57})
+
+    # Ridge regression parameters
+    ridge_params: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "alpha": 1.0,
+            "alpha_grid": [0.1, 1.0, 10.0, 100.0],
+            "cv": 5,
+            "random_state": 57,
+        }
+    )
+
+    # Lasso regression parameters (thesis methodology)
+    lasso_params: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "alpha": 1.0,
+            "alpha_grid": [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
+            "cv": 5,
+            "random_state": 57,
+        }
     )
 
     # SVR specific parameters (following thesis methodology)
@@ -144,7 +164,7 @@ class ModelConfig:
             "C": 1.0,
             "gamma": "scale",
             "epsilon": 0.1,
-            "random_state": 42,
+            "random_state": 57,
         }
     )
 
@@ -154,19 +174,39 @@ class ModelConfig:
             "max_depth": None,
             "min_samples_split": 2,
             "min_samples_leaf": 1,
-            "random_state": 42,
+            "random_state": 57,
         }
     )
 
     # MNIR specific parameters
     mnir_params: Dict[str, Any] = field(
-        default_factory=lambda: {"alpha": 0.1, "max_iter": 1000, "random_state": 42}
+        default_factory=lambda: {"alpha": 0.1, "max_iter": 1000, "random_state": 57}
     )
 
     # Cross-validation settings (thesis uses 5-fold CV)
     cv_folds: int = 5
-    test_size: float = 0.2
-    random_state: int = 42
+    test_size: float = 0.3  # Thesis uses 70/30 split
+    random_state: int = 57
+
+    # Lasso-specific parameters for feature selection (thesis methodology)
+    lasso_alpha_range: List[float] = field(
+        default_factory=lambda: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+    )
+    lasso_cv_folds: int = 5
+
+    # Feature selection settings
+    feature_selection_enabled: bool = True
+    feature_selection_config: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "alpha_range": [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
+            "cv_folds": 5,
+            "max_features_per_group": 200,
+            "min_features_per_group": 10,
+            "selection_threshold": "mean",
+            "random_state": 57,
+            "scale_features": True,
+        }
+    )
 
 
 @dataclass
@@ -181,8 +221,8 @@ class FeatureConfig:
 
     # Topic modeling parameters
     n_topics: int = 10
-    lda_random_state: int = 42
-    nmf_random_state: int = 42
+    lda_random_state: int = 57
+    nmf_random_state: int = 57
 
     # BERT parameters
     bert_model_name: str = "distilbert-base-uncased"
