@@ -2,22 +2,28 @@
 Model evaluation utilities for coffee rating prediction.
 
 This module provides comprehensive evaluation capabilities for regression models
-including cross-validation, performance metrics, and visualization.
+including cross-validation, performance metrics, visualization, and SHAP analysis.
+
+Following thesis methodology for comprehensive model evaluation with MAE, RMSE, and R².
 """
 
 import numpy as np
 import pandas as pd
 import logging
-from typing import List, Dict, Optional, Any, Union
+from typing import List, Dict, Optional, Any, Union, Tuple
 from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.metrics import (
     mean_squared_error,
     r2_score,
     mean_absolute_error,
     mean_absolute_percentage_error,
+    explained_variance_score,
+    max_error,
 )
 import matplotlib.pyplot as plt
 import seaborn as sns
+from pathlib import Path
+import pickle
 
 from .base import BaseEvaluator, BaseModel, ModelEvaluationError
 
@@ -28,16 +34,22 @@ try:
     import shap
 
     SHAP_AVAILABLE = True
+    logger.info("SHAP available for model interpretability")
 except ImportError:
     SHAP_AVAILABLE = False
+    logger.warning(
+        "SHAP not available. Install shap package for interpretability analysis."
+    )
 
 
 class CoffeeModelEvaluator(BaseEvaluator):
     """
     Comprehensive model evaluator for coffee rating prediction models.
 
-    Provides detailed evaluation metrics, cross-validation, and visualization
-    capabilities for regression models.
+    Provides detailed evaluation metrics, cross-validation, visualization,
+    and SHAP analysis capabilities for regression models.
+
+    Following thesis methodology with comprehensive MAE, RMSE, R² reporting.
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -49,6 +61,8 @@ class CoffeeModelEvaluator(BaseEvaluator):
                 - cv_folds: Number of cross-validation folds (default: 5)
                 - scoring_metrics: List of metrics to compute (default: ['r2', 'mse', 'mae'])
                 - plot_style: Matplotlib style for plots (default: 'seaborn')
+                - enable_shap: Whether to enable SHAP analysis (default: True)
+                - shap_sample_size: Sample size for SHAP analysis (default: 100)
         """
         self.config = config or {}
 
@@ -60,6 +74,10 @@ class CoffeeModelEvaluator(BaseEvaluator):
                 "neg_mean_absolute_error",
             ],
             "plot_style": "seaborn-v0_8",
+            "enable_shap": True,
+            "shap_sample_size": 100,
+            "comprehensive_metrics": True,  # Enable thesis-aligned comprehensive metrics
+            "standardized_reporting": True,  # Enable standardized evaluation format
         }
         default_config.update(self.config)
         self.config = default_config
@@ -69,6 +87,25 @@ class CoffeeModelEvaluator(BaseEvaluator):
             plt.style.use(self.config["plot_style"])
         except:
             logger.warning(f"Could not set plot style: {self.config['plot_style']}")
+
+        # Initialize SHAP analyzer if available and enabled
+        self.shap_analyzer = None
+        if SHAP_AVAILABLE and self.config["enable_shap"]:
+            try:
+                from utils.shap_analysis import ComprehensiveSHAPAnalyzer
+
+                shap_config = {
+                    "sample_size": self.config["shap_sample_size"],
+                    "random_state": 57,
+                }
+                self.shap_analyzer = ComprehensiveSHAPAnalyzer(shap_config)
+                logger.info(
+                    "SHAP analyzer initialized for comprehensive interpretability"
+                )
+            except ImportError:
+                logger.warning(
+                    "Could not import SHAP analyzer. SHAP analysis disabled."
+                )
 
     def evaluate_model(
         self,
@@ -97,7 +134,7 @@ class CoffeeModelEvaluator(BaseEvaluator):
         y_test: Union[np.ndarray, pd.Series],
     ) -> Dict[str, Any]:
         """
-        Evaluate a model on test data.
+        Evaluate a model on test data with comprehensive metrics.
 
         Args:
             model: Fitted model to evaluate
@@ -105,16 +142,16 @@ class CoffeeModelEvaluator(BaseEvaluator):
             y_test: Test targets
 
         Returns:
-            Dictionary with evaluation results
+            Dictionary with comprehensive evaluation results
         """
-        logger.info("Evaluating model on test data")
+        logger.info("Evaluating model on test data with comprehensive metrics")
 
         try:
             # Make predictions
             y_pred = model.predict(X_test)
 
-            # Calculate metrics
-            metrics = self._calculate_metrics(y_test, y_pred)
+            # Calculate comprehensive metrics (thesis methodology)
+            metrics = self._calculate_comprehensive_metrics(y_test, y_pred)
 
             # Add model information
             evaluation_results = {
@@ -134,7 +171,27 @@ class CoffeeModelEvaluator(BaseEvaluator):
             except:
                 logger.info("Feature importance not available for this model")
 
-            logger.info(f"Model evaluation completed. R² = {metrics['r2']:.4f}")
+            # Add SHAP analysis if enabled
+            if self.shap_analyzer and self.config["enable_shap"]:
+                try:
+                    logger.info("Running SHAP analysis for model interpretability...")
+                    shap_results = self.shap_analyzer.analyze_all_models(
+                        {type(model).__name__: model}, X_test, y_test
+                    )
+                    evaluation_results["shap_analysis"] = shap_results
+                    logger.info("SHAP analysis completed")
+                except Exception as e:
+                    logger.warning(f"SHAP analysis failed: {e}")
+
+            # Generate standardized report if enabled
+            if self.config["standardized_reporting"]:
+                evaluation_results["standardized_report"] = (
+                    self._generate_standardized_report(evaluation_results)
+                )
+
+            logger.info(
+                f"Model evaluation completed. R² = {metrics['r2']:.4f}, RMSE = {metrics['rmse']:.4f}, MAE = {metrics['mae']:.4f}"
+            )
             return evaluation_results
 
         except Exception as e:
@@ -201,32 +258,27 @@ class CoffeeModelEvaluator(BaseEvaluator):
                     "train_std": np.std(train_scores),
                 }
 
-            # Add overall summary
-            processed_results["summary"] = {
-                "cv_folds": cv_folds,
-                "model_type": type(model).__name__,
-                "n_samples": len(y),
-            }
-
-            logger.info("Cross-validation completed successfully")
+            logger.info(f"Cross-validation completed")
             return processed_results
 
         except Exception as e:
             logger.error(f"Error during cross-validation: {e}")
             raise ModelEvaluationError(f"Failed to perform cross-validation: {e}")
 
-    def _calculate_metrics(
+    def _calculate_comprehensive_metrics(
         self, y_true: Union[np.ndarray, pd.Series], y_pred: np.ndarray
     ) -> Dict[str, float]:
         """
-        Calculate comprehensive regression metrics.
+        Calculate comprehensive regression metrics following thesis methodology.
+
+        Implements thesis requirement: "MAE, RMSE, and R² as performance metrics"
 
         Args:
             y_true: True values
             y_pred: Predicted values
 
         Returns:
-            Dictionary of metrics
+            Dictionary of comprehensive metrics
         """
         # Convert to numpy arrays
         if hasattr(y_true, "values"):
@@ -234,53 +286,194 @@ class CoffeeModelEvaluator(BaseEvaluator):
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
 
-        metrics = {
+        # Core thesis metrics (MAE, RMSE, R²)
+        core_metrics = {
             "r2": r2_score(y_true, y_pred),
-            "mse": mean_squared_error(y_true, y_pred),
             "rmse": np.sqrt(mean_squared_error(y_true, y_pred)),
             "mae": mean_absolute_error(y_true, y_pred),
-            "mape": mean_absolute_percentage_error(y_true, y_pred)
-            * 100,  # Convert to percentage
         }
 
-        # Additional metrics
-        residuals = y_true - y_pred
-        metrics.update(
-            {
-                "mean_residual": np.mean(residuals),
-                "std_residual": np.std(residuals),
-                "max_error": np.max(np.abs(residuals)),
-                "explained_variance": 1 - (np.var(residuals) / np.var(y_true)),
-            }
-        )
+        # Additional comprehensive metrics
+        additional_metrics = {
+            "mse": mean_squared_error(y_true, y_pred),
+            "mape": mean_absolute_percentage_error(y_true, y_pred)
+            * 100,  # Convert to percentage
+            "explained_variance": explained_variance_score(y_true, y_pred),
+            "max_error": max_error(y_true, y_pred),
+        }
 
-        return metrics
+        # Statistical metrics
+        residuals = y_true - y_pred
+        statistical_metrics = {
+            "mean_residual": np.mean(residuals),
+            "std_residual": np.std(residuals),
+            "median_residual": np.median(residuals),
+            "residual_skewness": self._calculate_skewness(residuals),
+            "residual_kurtosis": self._calculate_kurtosis(residuals),
+        }
+
+        # Performance interpretation metrics
+        interpretation_metrics = {
+            "performance_category": self._categorize_performance(core_metrics["r2"]),
+            "rmse_normalized": core_metrics["rmse"] / np.std(y_true),  # Normalized RMSE
+            "mae_normalized": core_metrics["mae"]
+            / np.mean(np.abs(y_true)),  # Normalized MAE
+        }
+
+        # Combine all metrics
+        comprehensive_metrics = {
+            **core_metrics,
+            **additional_metrics,
+            **statistical_metrics,
+            **interpretation_metrics,
+        }
+
+        return comprehensive_metrics
+
+    def _calculate_skewness(self, data: np.ndarray) -> float:
+        """Calculate skewness of data."""
+        try:
+            from scipy.stats import skew
+
+            return float(skew(data))
+        except ImportError:
+            # Manual calculation if scipy not available
+            mean = np.mean(data)
+            std = np.std(data)
+            if std == 0:
+                return 0.0
+            return np.mean(((data - mean) / std) ** 3)
+
+    def _calculate_kurtosis(self, data: np.ndarray) -> float:
+        """Calculate kurtosis of data."""
+        try:
+            from scipy.stats import kurtosis
+
+            return float(kurtosis(data))
+        except ImportError:
+            # Manual calculation if scipy not available
+            mean = np.mean(data)
+            std = np.std(data)
+            if std == 0:
+                return 0.0
+            return np.mean(((data - mean) / std) ** 4) - 3
+
+    def _categorize_performance(self, r2_score: float) -> str:
+        """Categorize model performance based on R² score."""
+        if r2_score >= 0.9:
+            return "Excellent"
+        elif r2_score >= 0.8:
+            return "Very Good"
+        elif r2_score >= 0.7:
+            return "Good"
+        elif r2_score >= 0.6:
+            return "Fair"
+        elif r2_score >= 0.5:
+            return "Poor"
+        else:
+            return "Very Poor"
+
+    def _generate_standardized_report(self, evaluation_results: Dict[str, Any]) -> str:
+        """Generate standardized evaluation report following thesis format."""
+
+        metrics = evaluation_results["metrics"]
+        model_type = evaluation_results["model_type"]
+        n_samples = evaluation_results["n_test_samples"]
+
+        report = []
+        report.append("=" * 60)
+        report.append("📊 STANDARDIZED MODEL EVALUATION REPORT")
+        report.append("=" * 60)
+        report.append(f"Model: {model_type}")
+        report.append(f"Test Samples: {n_samples}")
+        report.append("")
+
+        # Core thesis metrics
+        report.append("🎯 CORE PERFORMANCE METRICS (Thesis Methodology):")
+        report.append(
+            f"  R² Score:  {metrics['r2']:.4f} ({metrics['performance_category']})"
+        )
+        report.append(f"  RMSE:      {metrics['rmse']:.4f}")
+        report.append(f"  MAE:       {metrics['mae']:.4f}")
+        report.append("")
+
+        # Additional metrics
+        report.append("📈 ADDITIONAL METRICS:")
+        report.append(f"  MSE:                {metrics['mse']:.4f}")
+        report.append(f"  MAPE:               {metrics['mape']:.2f}%")
+        report.append(f"  Explained Variance: {metrics['explained_variance']:.4f}")
+        report.append(f"  Max Error:          {metrics['max_error']:.4f}")
+        report.append("")
+
+        # Normalized metrics
+        report.append("🔍 NORMALIZED METRICS:")
+        report.append(f"  Normalized RMSE:    {metrics['rmse_normalized']:.4f}")
+        report.append(f"  Normalized MAE:     {metrics['mae_normalized']:.4f}")
+        report.append("")
+
+        # Residual analysis
+        report.append("📊 RESIDUAL ANALYSIS:")
+        report.append(f"  Mean Residual:      {metrics['mean_residual']:.4f}")
+        report.append(f"  Std Residual:       {metrics['std_residual']:.4f}")
+        report.append(f"  Median Residual:    {metrics['median_residual']:.4f}")
+        report.append(f"  Residual Skewness:  {metrics['residual_skewness']:.4f}")
+        report.append(f"  Residual Kurtosis:  {metrics['residual_kurtosis']:.4f}")
+        report.append("")
+
+        # Feature importance if available
+        if "feature_importance" in evaluation_results:
+            feature_importance = evaluation_results["feature_importance"]
+            if feature_importance:
+                sorted_features = sorted(
+                    feature_importance.items(), key=lambda x: x[1], reverse=True
+                )[:10]
+
+                report.append("🏆 TOP 10 FEATURE IMPORTANCE:")
+                for i, (feature, importance) in enumerate(sorted_features, 1):
+                    report.append(f"  {i:2d}. {feature}: {importance:.4f}")
+                report.append("")
+
+        # SHAP analysis if available
+        if "shap_analysis" in evaluation_results:
+            report.append("🔍 SHAP INTERPRETABILITY ANALYSIS:")
+            report.append("  ✅ SHAP analysis completed")
+            report.append("  📊 Feature importance calculated with SHAP values")
+            report.append("  📈 Model interpretability enhanced")
+            report.append("")
+
+        report.append("=" * 60)
+        report.append("✅ EVALUATION COMPLETE")
+        report.append("=" * 60)
+
+        return "\n".join(report)
 
     def compare_models(
         self,
         models: Dict[str, BaseModel],
         X_test: Union[np.ndarray, pd.DataFrame],
         y_test: Union[np.ndarray, pd.Series],
+        include_shap: bool = True,
     ) -> Dict[str, Any]:
         """
-        Compare multiple models on the same test set.
+        Compare multiple models on the same test set with comprehensive analysis.
 
         Args:
             models: Dictionary mapping model names to fitted models
             X_test: Test features
             y_test: Test targets
+            include_shap: Whether to include SHAP analysis in comparison
 
         Returns:
-            Comparison results
+            Comprehensive comparison results
         """
-        logger.info(f"Comparing {len(models)} models")
+        logger.info(f"🔍 Comparing {len(models)} models with comprehensive evaluation")
 
         comparison_results = {}
         all_predictions = {}
 
         for name, model in models.items():
             try:
-                logger.info(f"Evaluating {name}")
+                logger.info(f"📊 Evaluating {name}")
                 results = self.evaluate(model, X_test, y_test)
                 comparison_results[name] = results
                 all_predictions[name] = results["predictions"]
@@ -288,8 +481,8 @@ class CoffeeModelEvaluator(BaseEvaluator):
                 logger.error(f"Failed to evaluate {name}: {e}")
                 comparison_results[name] = {"error": str(e)}
 
-        # Create comparison summary
-        summary_metrics = ["r2", "rmse", "mae", "mape"]
+        # Create comprehensive comparison summary
+        summary_metrics = ["r2", "rmse", "mae", "mse", "mape", "explained_variance"]
         comparison_summary = {}
 
         for metric in summary_metrics:
@@ -317,12 +510,118 @@ class CoffeeModelEvaluator(BaseEvaluator):
                 )
             best_models[metric] = best_model[0]
 
+        # Comprehensive SHAP analysis across all models
+        shap_comparison = None
+        if include_shap and self.shap_analyzer and SHAP_AVAILABLE:
+            try:
+                logger.info(
+                    "🔍 Running comprehensive SHAP analysis across all models..."
+                )
+                shap_comparison = self.shap_analyzer.analyze_all_models(
+                    models, X_test, y_test
+                )
+                logger.info("✅ Comprehensive SHAP analysis completed")
+            except Exception as e:
+                logger.warning(f"Comprehensive SHAP analysis failed: {e}")
+
+        # Generate comprehensive comparison report
+        comparison_report = self._generate_comparison_report(
+            comparison_summary, best_models, shap_comparison
+        )
+
         return {
             "individual_results": comparison_results,
             "summary_metrics": comparison_summary,
             "best_models": best_models,
             "all_predictions": all_predictions,
+            "shap_comparison": shap_comparison,
+            "comparison_report": comparison_report,
         }
+
+    def _generate_comparison_report(
+        self,
+        summary_metrics: Dict[str, Dict[str, float]],
+        best_models: Dict[str, str],
+        shap_comparison: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Generate comprehensive model comparison report."""
+
+        report = []
+        report.append("=" * 80)
+        report.append("🏆 COMPREHENSIVE MODEL COMPARISON REPORT")
+        report.append("=" * 80)
+        report.append("Following thesis methodology with MAE, RMSE, R² evaluation")
+        report.append("")
+
+        # Performance summary table
+        report.append("📊 PERFORMANCE SUMMARY TABLE:")
+        report.append("")
+
+        # Header
+        models = list(next(iter(summary_metrics.values())).keys())
+        header = (
+            f"{'Model':<15} {'R²':<8} {'RMSE':<8} {'MAE':<8} {'MSE':<8} {'MAPE':<8}"
+        )
+        report.append(header)
+        report.append("-" * len(header))
+
+        # Model rows
+        for model in models:
+            r2 = summary_metrics.get("r2", {}).get(model, np.nan)
+            rmse = summary_metrics.get("rmse", {}).get(model, np.nan)
+            mae = summary_metrics.get("mae", {}).get(model, np.nan)
+            mse = summary_metrics.get("mse", {}).get(model, np.nan)
+            mape = summary_metrics.get("mape", {}).get(model, np.nan)
+
+            row = f"{model:<15} {r2:<8.4f} {rmse:<8.4f} {mae:<8.4f} {mse:<8.4f} {mape:<8.2f}"
+            report.append(row)
+
+        report.append("")
+
+        # Best models
+        report.append("🥇 BEST MODELS BY METRIC:")
+        for metric, best_model in best_models.items():
+            best_value = summary_metrics.get(metric, {}).get(best_model, np.nan)
+            report.append(f"  {metric.upper():<20}: {best_model} ({best_value:.4f})")
+        report.append("")
+
+        # SHAP analysis summary
+        if shap_comparison and "comparison" in shap_comparison:
+            comparison = shap_comparison["comparison"]
+            report.append("🔍 SHAP FEATURE IMPORTANCE ANALYSIS:")
+
+            if "top_features" in comparison:
+                report.append("  Top Features Across All Models:")
+                for i, feature in enumerate(comparison["top_features"][:5], 1):
+                    report.append(f"    {i}. {feature}")
+
+            if "model_agreement" in comparison:
+                agreement = comparison["model_agreement"]
+                report.append(
+                    f"  Model Agreement: {agreement['agreement_interpretation']}"
+                )
+                report.append(
+                    f"  Average Correlation: {agreement['average_agreement']:.3f}"
+                )
+
+            report.append("")
+
+        # Performance interpretation
+        report.append("📈 PERFORMANCE INTERPRETATION:")
+        best_r2_model = best_models.get("r2", "Unknown")
+        best_r2_value = summary_metrics.get("r2", {}).get(best_r2_model, 0)
+        performance_category = self._categorize_performance(best_r2_value)
+
+        report.append(f"  Best Overall Model: {best_r2_model}")
+        report.append(f"  Performance Category: {performance_category}")
+        report.append(f"  R² Score: {best_r2_value:.4f}")
+        report.append("")
+
+        report.append("=" * 80)
+        report.append("✅ COMPREHENSIVE COMPARISON COMPLETE")
+        report.append("=" * 80)
+
+        return "\n".join(report)
 
     def compare_models_with_predictions(
         self,
@@ -352,8 +651,8 @@ class CoffeeModelEvaluator(BaseEvaluator):
             try:
                 logger.info(f"Evaluating {name} predictions")
 
-                # Calculate metrics directly
-                metrics = self._calculate_metrics(y_test, predictions)
+                # Calculate comprehensive metrics
+                metrics = self._calculate_comprehensive_metrics(y_test, predictions)
 
                 # Create results structure similar to evaluate method
                 results = {
@@ -366,14 +665,20 @@ class CoffeeModelEvaluator(BaseEvaluator):
                     else np.array(y_test) - predictions,
                 }
 
+                # Add standardized report
+                if self.config["standardized_reporting"]:
+                    results["standardized_report"] = self._generate_standardized_report(
+                        results
+                    )
+
                 comparison_results[name] = results
 
             except Exception as e:
                 logger.error(f"Failed to evaluate {name} predictions: {e}")
                 comparison_results[name] = {"error": str(e)}
 
-        # Create comparison summary
-        summary_metrics = ["r2", "rmse", "mae", "mape"]
+        # Create comprehensive comparison summary
+        summary_metrics = ["r2", "rmse", "mae", "mse", "mape", "explained_variance"]
         comparison_summary = {}
 
         for metric in summary_metrics:
@@ -401,12 +706,39 @@ class CoffeeModelEvaluator(BaseEvaluator):
                 )
             best_models[metric] = best_model[0]
 
+        # Generate comparison report
+        comparison_report = self._generate_comparison_report(
+            comparison_summary, best_models, None
+        )
+
         return {
             "individual_results": comparison_results,
             "summary_metrics": comparison_summary,
             "best_models": best_models,
             "all_predictions": predictions_dict,
+            "comparison_report": comparison_report,
         }
+
+    def save_comprehensive_evaluation(
+        self, evaluation_results: Dict[str, Any], filepath: Union[str, Path]
+    ):
+        """Save comprehensive evaluation results to file."""
+
+        filepath = Path(filepath)
+
+        # Save full results as pickle
+        with open(filepath.with_suffix(".pkl"), "wb") as f:
+            pickle.dump(evaluation_results, f)
+
+        # Save standardized report as text
+        if "comparison_report" in evaluation_results:
+            with open(filepath.with_suffix(".txt"), "w") as f:
+                f.write(evaluation_results["comparison_report"])
+        elif "standardized_report" in evaluation_results:
+            with open(filepath.with_suffix(".txt"), "w") as f:
+                f.write(evaluation_results["standardized_report"])
+
+        logger.info(f"Comprehensive evaluation results saved to {filepath}")
 
     def plot_predictions(
         self,

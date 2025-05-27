@@ -717,26 +717,76 @@ def train_models(args):
             trained_models = boxcox_trained_models
 
         else:
-            # Standard evaluation without Box-Cox
-            logger.info("Evaluating models (no Box-Cox transformation)...")
+            # Standard evaluation with comprehensive metrics and SHAP analysis
+            logger.info(
+                "🔍 Evaluating models with comprehensive metrics and SHAP analysis..."
+            )
             comparison_results = evaluator.compare_models(
-                trained_models, X_test, y_test
+                trained_models, X_test, y_test, include_shap=True
             )
 
-        # Print results
-        print("\n" + "=" * 50)
-        print("MODEL COMPARISON RESULTS")
-        print("=" * 50)
+        # Print comprehensive results
+        print("\n" + "=" * 80)
+        print("🏆 COMPREHENSIVE MODEL COMPARISON RESULTS")
+        print("=" * 80)
+        print("Following thesis methodology with MAE, RMSE, R² evaluation")
+        print("")
 
-        summary_metrics = comparison_results["summary_metrics"]
-        for metric in ["r2", "rmse", "mae"]:
-            print(f"\n{metric.upper()}:")
-            for model_name, value in summary_metrics[metric].items():
-                print(f"  {model_name}: {value:.4f}")
+        # Print comparison report if available
+        if "comparison_report" in comparison_results:
+            print(comparison_results["comparison_report"])
+        else:
+            # Fallback to basic summary
+            summary_metrics = comparison_results["summary_metrics"]
+            for metric in ["r2", "rmse", "mae"]:
+                print(f"\n{metric.upper()}:")
+                for model_name, value in summary_metrics[metric].items():
+                    print(f"  {model_name}: {value:.4f}")
 
-        print(f"\nBest models:")
-        for metric, best_model in comparison_results["best_models"].items():
-            print(f"  {metric}: {best_model}")
+            print(f"\nBest models:")
+            for metric, best_model in comparison_results["best_models"].items():
+                print(f"  {metric}: {best_model}")
+
+        # Run comprehensive SHAP analysis if not already included
+        if (
+            "shap_comparison" not in comparison_results
+            or comparison_results["shap_comparison"] is None
+        ):
+            try:
+                logger.info("🔍 Running standalone comprehensive SHAP analysis...")
+                from utils.shap_analysis import run_comprehensive_shap_analysis
+
+                shap_output_dir = config.paths.output / "shap_analysis"
+                shap_results = run_comprehensive_shap_analysis(
+                    trained_models, X_test, y_test, shap_output_dir
+                )
+
+                # Print SHAP analysis report
+                if shap_results and "comparison" in shap_results:
+                    print("\n" + "=" * 80)
+                    print("🔍 COMPREHENSIVE SHAP ANALYSIS RESULTS")
+                    print("=" * 80)
+
+                    comparison = shap_results["comparison"]
+                    if "top_features" in comparison:
+                        print("🏆 TOP FEATURES ACROSS ALL MODELS:")
+                        for i, feature in enumerate(comparison["top_features"][:10], 1):
+                            print(f"  {i:2d}. {feature}")
+
+                    if "model_agreement" in comparison:
+                        agreement = comparison["model_agreement"]
+                        print(
+                            f"\n🤝 MODEL AGREEMENT: {agreement['agreement_interpretation']}"
+                        )
+                        print(
+                            f"   Average Correlation: {agreement['average_agreement']:.3f}"
+                        )
+
+                    print("\n✅ SHAP analysis completed successfully!")
+                    print(f"📊 Results saved to: {shap_output_dir}")
+
+            except Exception as e:
+                logger.warning(f"Standalone SHAP analysis failed: {e}")
 
         # Train MNIR if requested
         if "mnir" in config.models.models_to_train:
@@ -790,13 +840,10 @@ def train_models(args):
             except Exception as e:
                 logger.warning(f"Failed to save {name} model: {e}")
 
-        # Save evaluation results
-        results_path = config.paths.output / "model_comparison_results.pkl"
-        import pickle
-
-        with open(results_path, "wb") as f:
-            pickle.dump(comparison_results, f)
-        logger.info(f"Evaluation results saved to {results_path}")
+        # Save comprehensive evaluation results
+        results_path = config.paths.output / "comprehensive_model_evaluation"
+        evaluator.save_comprehensive_evaluation(comparison_results, results_path)
+        logger.info(f"Comprehensive evaluation results saved to {results_path}")
 
         return True
 
