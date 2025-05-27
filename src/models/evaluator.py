@@ -324,6 +324,90 @@ class CoffeeModelEvaluator(BaseEvaluator):
             "all_predictions": all_predictions,
         }
 
+    def compare_models_with_predictions(
+        self,
+        predictions_dict: Dict[str, np.ndarray],
+        y_test: Union[np.ndarray, pd.Series],
+    ) -> Dict[str, Any]:
+        """
+        Compare multiple models using pre-computed predictions.
+
+        This is useful for Box-Cox dual pipeline where predictions need to be
+        inverse transformed before evaluation.
+
+        Args:
+            predictions_dict: Dictionary mapping model names to prediction arrays
+            y_test: Test targets
+
+        Returns:
+            Comparison results in same format as compare_models
+        """
+        logger.info(
+            f"Comparing {len(predictions_dict)} models using pre-computed predictions"
+        )
+
+        comparison_results = {}
+
+        for name, predictions in predictions_dict.items():
+            try:
+                logger.info(f"Evaluating {name} predictions")
+
+                # Calculate metrics directly
+                metrics = self._calculate_metrics(y_test, predictions)
+
+                # Create results structure similar to evaluate method
+                results = {
+                    "metrics": metrics,
+                    "model_type": f"{name}_predictions",
+                    "n_test_samples": len(y_test),
+                    "predictions": predictions,
+                    "residuals": y_test - predictions
+                    if hasattr(y_test, "__sub__")
+                    else np.array(y_test) - predictions,
+                }
+
+                comparison_results[name] = results
+
+            except Exception as e:
+                logger.error(f"Failed to evaluate {name} predictions: {e}")
+                comparison_results[name] = {"error": str(e)}
+
+        # Create comparison summary
+        summary_metrics = ["r2", "rmse", "mae", "mape"]
+        comparison_summary = {}
+
+        for metric in summary_metrics:
+            comparison_summary[metric] = {}
+            for name, results in comparison_results.items():
+                if "metrics" in results:
+                    comparison_summary[metric][name] = results["metrics"].get(
+                        metric, np.nan
+                    )
+
+        # Find best model for each metric
+        best_models = {}
+        for metric in summary_metrics:
+            if metric in ["r2", "explained_variance"]:
+                # Higher is better
+                best_model = max(
+                    comparison_summary[metric].items(),
+                    key=lambda x: x[1] if not np.isnan(x[1]) else -np.inf,
+                )
+            else:
+                # Lower is better
+                best_model = min(
+                    comparison_summary[metric].items(),
+                    key=lambda x: x[1] if not np.isnan(x[1]) else np.inf,
+                )
+            best_models[metric] = best_model[0]
+
+        return {
+            "individual_results": comparison_results,
+            "summary_metrics": comparison_summary,
+            "best_models": best_models,
+            "all_predictions": predictions_dict,
+        }
+
     def plot_predictions(
         self,
         y_true: Union[np.ndarray, pd.Series],

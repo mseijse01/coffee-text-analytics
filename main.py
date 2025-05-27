@@ -626,9 +626,89 @@ def train_models(args):
         # Initialize evaluator
         evaluator = CoffeeModelEvaluator()
 
-        # Evaluate models
-        logger.info("Evaluating models...")
-        comparison_results = evaluator.compare_models(trained_models, X_test, y_test)
+        # Check if Box-Cox dual pipeline is enabled
+        if config.models.box_cox_dual_pipeline:
+            logger.info(
+                "🔄 Box-Cox dual pipeline enabled - running comprehensive comparison"
+            )
+
+            # Import the dual pipeline function
+            from utils.transformations import run_box_cox_dual_pipeline
+
+            # Run dual pipeline analysis
+            dual_pipeline_results = run_box_cox_dual_pipeline(
+                X_train, X_test, y_train, y_test, models, config, logger
+            )
+
+            # Use baseline results as the main comparison results
+            comparison_results = dual_pipeline_results["baseline_results"]
+
+            # Log dual pipeline summary
+            logger.info("📊 Box-Cox Dual Pipeline completed successfully!")
+            logger.info(f"Recommendation: {dual_pipeline_results['recommendation']}")
+            logger.info(f"Reason: {dual_pipeline_results['recommendation_reason']}")
+
+        elif config.models.box_cox_enabled:
+            logger.info(
+                "📊 Box-Cox transformation enabled - applying to target variable"
+            )
+
+            # Import Box-Cox transformer
+            from utils.transformations import BoxCoxTransformer
+
+            # Apply Box-Cox transformation
+            transformer = BoxCoxTransformer(config.models.box_cox_config)
+            y_train_transformed = transformer.fit_transform(y_train)
+            y_test_transformed = transformer.transform(y_test)
+
+            logger.info(
+                f"Box-Cox transformation applied (λ = {transformer.lambda_:.4f})"
+            )
+
+            # Retrain models with transformed target
+            boxcox_trained_models = {}
+            for name, model in models.items():
+                try:
+                    logger.info(f"Training {name} with Box-Cox transformation...")
+                    # Create fresh model instance
+                    model_copy = type(model)(
+                        model.config if hasattr(model, "config") else {}
+                    )
+                    model_copy.fit(X_train, y_train_transformed)
+                    boxcox_trained_models[name] = model_copy
+                    logger.info(f"{name} model trained successfully with Box-Cox")
+                except Exception as e:
+                    logger.error(f"Failed to train {name} with Box-Cox: {e}")
+
+            # Get predictions and inverse transform them
+            boxcox_predictions = {}
+            for name, model in boxcox_trained_models.items():
+                try:
+                    pred_transformed = model.predict(X_test)
+                    pred_original = transformer.inverse_transform(pred_transformed)
+                    boxcox_predictions[name] = pred_original
+                except Exception as e:
+                    logger.error(f"Failed to get predictions for {name}: {e}")
+
+            # Evaluate against original scale targets
+            comparison_results = evaluator.compare_models_with_predictions(
+                boxcox_predictions, y_test
+            )
+
+            # Save Box-Cox transformer
+            transformer_path = config.paths.models / "box_cox_transformer.pkl"
+            transformer.save_transformer(transformer_path)
+            logger.info(f"Box-Cox transformer saved to {transformer_path}")
+
+            # Update trained_models to use Box-Cox models
+            trained_models = boxcox_trained_models
+
+        else:
+            # Standard evaluation without Box-Cox
+            logger.info("Evaluating models (no Box-Cox transformation)...")
+            comparison_results = evaluator.compare_models(
+                trained_models, X_test, y_test
+            )
 
         # Print results
         print("\n" + "=" * 50)

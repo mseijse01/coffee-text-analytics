@@ -26,12 +26,25 @@ class BoxCoxTransformer:
     - Document decision to keep or discard transformation
     """
 
-    def __init__(self):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize Box-Cox transformer."""
+        self.config = config or {}
         self.lambda_ = None
         self.is_fitted = False
         self.original_stats = {}
         self.transformed_stats = {}
+
+        # Store additional attributes for dual pipeline
+        self.original_skewness_ = None
+        self.transformed_skewness_ = None
+        self.normality_test_original_ = None
+        self.normality_test_transformed_ = None
+
+        # Store additional attributes for dual pipeline
+        self.original_skewness_ = None
+        self.transformed_skewness_ = None
+        self.normality_test_original_ = None
+        self.normality_test_transformed_ = None
 
     def fit(self, y: np.ndarray) -> "BoxCoxTransformer":
         """
@@ -67,14 +80,26 @@ class BoxCoxTransformer:
             logger.info(f"Shifted values by {shift} to ensure positivity")
 
         # Store original statistics
+        self.original_skewness_ = stats.skew(y_clean)
         self.original_stats = {
             "mean": np.mean(y_clean),
             "std": np.std(y_clean),
-            "skewness": stats.skew(y_clean),
+            "skewness": self.original_skewness_,
             "kurtosis": stats.kurtosis(y_clean),
             "min": np.min(y_clean),
             "max": np.max(y_clean),
         }
+
+        # Perform normality test on original data
+        try:
+            from scipy.stats import shapiro
+
+            stat, p_value = shapiro(
+                y_clean[:5000] if len(y_clean) > 5000 else y_clean
+            )  # Limit for shapiro test
+            self.normality_test_original_ = {"statistic": stat, "p_value": p_value}
+        except Exception:
+            self.normality_test_original_ = {"statistic": np.nan, "p_value": np.nan}
 
         logger.info(f"Original target variable statistics:")
         logger.info(f"  Mean: {self.original_stats['mean']:.4f}")
@@ -89,14 +114,34 @@ class BoxCoxTransformer:
                 self.transformed_data, self.lambda_ = boxcox(y_clean)
 
             # Store transformed statistics
+            self.transformed_skewness_ = stats.skew(self.transformed_data)
             self.transformed_stats = {
                 "mean": np.mean(self.transformed_data),
                 "std": np.std(self.transformed_data),
-                "skewness": stats.skew(self.transformed_data),
+                "skewness": self.transformed_skewness_,
                 "kurtosis": stats.kurtosis(self.transformed_data),
                 "min": np.min(self.transformed_data),
                 "max": np.max(self.transformed_data),
             }
+
+            # Perform normality test on transformed data
+            try:
+                from scipy.stats import shapiro
+
+                stat, p_value = shapiro(
+                    self.transformed_data[:5000]
+                    if len(self.transformed_data) > 5000
+                    else self.transformed_data
+                )
+                self.normality_test_transformed_ = {
+                    "statistic": stat,
+                    "p_value": p_value,
+                }
+            except Exception:
+                self.normality_test_transformed_ = {
+                    "statistic": np.nan,
+                    "p_value": np.nan,
+                }
 
             logger.info(f"Box-Cox transformation fitted successfully")
             logger.info(f"  Lambda: {self.lambda_:.4f}")
@@ -278,6 +323,24 @@ class BoxCoxTransformer:
         print(f"\nRecommendation: {summary['recommendation']}")
         print("=" * 40)
 
+    def save_transformer(self, filepath: str):
+        """Save the fitted transformer to a file."""
+        import pickle
+
+        with open(filepath, "wb") as f:
+            pickle.dump(self, f)
+        logger.info(f"Box-Cox transformer saved to {filepath}")
+
+    @classmethod
+    def load_transformer(cls, filepath: str) -> "BoxCoxTransformer":
+        """Load a fitted transformer from a file."""
+        import pickle
+
+        with open(filepath, "rb") as f:
+            transformer = pickle.load(f)
+        logger.info(f"Box-Cox transformer loaded from {filepath}")
+        return transformer
+
 
 def test_box_cox_impact(
     y_original: np.ndarray,
@@ -337,3 +400,302 @@ def test_box_cox_impact(
         "recommendation": recommendation,
         "thesis_decision": "Following thesis methodology: test and document decision",
     }
+
+
+def run_box_cox_dual_pipeline(
+    X_train, X_test, y_train, y_test, models_dict, config, logger
+):
+    """
+    Run dual pipeline: train models with and without Box-Cox transformation.
+
+    Following thesis methodology:
+    1. Train all models without Box-Cox (baseline)
+    2. Train all models with Box-Cox transformation
+    3. Compare performance and document findings
+    4. Generate recommendation (thesis conclusion: no transformation)
+
+    Args:
+        X_train, X_test: Feature matrices
+        y_train, y_test: Target vectors
+        models_dict: Dictionary of model instances
+        config: Configuration object
+        logger: Logger instance
+
+    Returns:
+        dict: Comprehensive comparison results
+    """
+    from models import CoffeeModelEvaluator
+    import time
+    import json
+    from pathlib import Path
+
+    logger.info("🔄 Starting Box-Cox Dual Pipeline Analysis")
+    logger.info("Following thesis methodology: compare with and without transformation")
+
+    results = {
+        "methodology": "Box-Cox Dual Pipeline (Thesis Approach)",
+        "baseline_results": {},
+        "boxcox_results": {},
+        "comparison": {},
+        "recommendation": "",
+        "thesis_alignment": True,
+        "execution_time": {},
+        "transformation_stats": {},
+    }
+
+    # Initialize evaluator
+    evaluator = CoffeeModelEvaluator()
+
+    # ==========================================
+    # PHASE 1: BASELINE (NO TRANSFORMATION)
+    # ==========================================
+    logger.info("📊 PHASE 1: Training models WITHOUT Box-Cox transformation (baseline)")
+
+    baseline_start = time.time()
+    baseline_trained_models = {}
+
+    for name, model in models_dict.items():
+        try:
+            logger.info(f"Training baseline {name}...")
+            # Create fresh model instance to avoid state issues
+            model_copy = type(model)(model.config if hasattr(model, "config") else {})
+            model_copy.fit(X_train, y_train)
+            baseline_trained_models[name] = model_copy
+            logger.info(f"✅ Baseline {name} trained successfully")
+        except Exception as e:
+            logger.error(f"❌ Baseline {name} training failed: {e}")
+
+    # Evaluate baseline models
+    logger.info("Evaluating baseline models...")
+    baseline_comparison = evaluator.compare_models(
+        baseline_trained_models, X_test, y_test
+    )
+    results["baseline_results"] = baseline_comparison
+    results["execution_time"]["baseline"] = time.time() - baseline_start
+
+    logger.info("📈 Baseline Results Summary:")
+    for metric in ["r2", "rmse", "mae"]:
+        logger.info(
+            f"  Best {metric.upper()}: {baseline_comparison['best_models'][metric]} = {baseline_comparison['summary_metrics'][metric][baseline_comparison['best_models'][metric]]:.4f}"
+        )
+
+    # ==========================================
+    # PHASE 2: BOX-COX TRANSFORMATION
+    # ==========================================
+    logger.info("📊 PHASE 2: Training models WITH Box-Cox transformation")
+
+    boxcox_start = time.time()
+
+    # Apply Box-Cox transformation
+    transformer = BoxCoxTransformer(config.models.box_cox_config)
+
+    try:
+        logger.info("Applying Box-Cox transformation to target variable...")
+        y_train_transformed = transformer.fit_transform(y_train)
+        y_test_transformed = transformer.transform(y_test)
+
+        # Store transformation statistics
+        results["transformation_stats"] = {
+            "lambda": transformer.lambda_,
+            "original_skewness": transformer.original_skewness_,
+            "transformed_skewness": transformer.transformed_skewness_,
+            "normality_test_original": transformer.normality_test_original_,
+            "normality_test_transformed": transformer.normality_test_transformed_,
+            "improvement": transformer.normality_test_transformed_["p_value"]
+            > transformer.normality_test_original_["p_value"],
+        }
+
+        logger.info(f"✅ Box-Cox transformation applied:")
+        logger.info(f"  Lambda: {transformer.lambda_:.4f}")
+        logger.info(f"  Original skewness: {transformer.original_skewness_:.4f}")
+        logger.info(f"  Transformed skewness: {transformer.transformed_skewness_:.4f}")
+        logger.info(
+            f"  Normality improvement: {results['transformation_stats']['improvement']}"
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Box-Cox transformation failed: {e}")
+        results["boxcox_results"] = {"error": str(e)}
+        results["recommendation"] = (
+            "Box-Cox transformation failed - use baseline approach"
+        )
+        return results
+
+    # Train models with transformed target
+    boxcox_trained_models = {}
+
+    for name, model in models_dict.items():
+        try:
+            logger.info(f"Training Box-Cox {name}...")
+            # Create fresh model instance
+            model_copy = type(model)(model.config if hasattr(model, "config") else {})
+            model_copy.fit(X_train, y_train_transformed)
+            boxcox_trained_models[name] = model_copy
+            logger.info(f"✅ Box-Cox {name} trained successfully")
+        except Exception as e:
+            logger.error(f"❌ Box-Cox {name} training failed: {e}")
+
+    # Evaluate Box-Cox models (need to inverse transform predictions)
+    logger.info("Evaluating Box-Cox models...")
+
+    # Get predictions and inverse transform them
+    boxcox_predictions = {}
+    for name, model in boxcox_trained_models.items():
+        try:
+            pred_transformed = model.predict(X_test)
+            pred_original = transformer.inverse_transform(pred_transformed)
+            boxcox_predictions[name] = pred_original
+        except Exception as e:
+            logger.error(f"Failed to get predictions for {name}: {e}")
+
+    # Evaluate against original scale targets
+    boxcox_comparison = evaluator.compare_models_with_predictions(
+        boxcox_predictions, y_test
+    )
+    results["boxcox_results"] = boxcox_comparison
+    results["execution_time"]["boxcox"] = time.time() - boxcox_start
+
+    logger.info("📈 Box-Cox Results Summary:")
+    for metric in ["r2", "rmse", "mae"]:
+        logger.info(
+            f"  Best {metric.upper()}: {boxcox_comparison['best_models'][metric]} = {boxcox_comparison['summary_metrics'][metric][boxcox_comparison['best_models'][metric]]:.4f}"
+        )
+
+    # ==========================================
+    # PHASE 3: COMPARISON AND ANALYSIS
+    # ==========================================
+    logger.info("📊 PHASE 3: Comparing baseline vs Box-Cox results")
+
+    comparison = {}
+
+    # Compare each model's performance
+    for model_name in baseline_trained_models.keys():
+        if model_name in boxcox_comparison["summary_metrics"]["r2"]:
+            baseline_r2 = baseline_comparison["summary_metrics"]["r2"][model_name]
+            boxcox_r2 = boxcox_comparison["summary_metrics"]["r2"][model_name]
+
+            baseline_rmse = baseline_comparison["summary_metrics"]["rmse"][model_name]
+            boxcox_rmse = boxcox_comparison["summary_metrics"]["rmse"][model_name]
+
+            comparison[model_name] = {
+                "r2_baseline": baseline_r2,
+                "r2_boxcox": boxcox_r2,
+                "r2_improvement": boxcox_r2 - baseline_r2,
+                "r2_improvement_pct": ((boxcox_r2 - baseline_r2) / abs(baseline_r2))
+                * 100
+                if baseline_r2 != 0
+                else 0,
+                "rmse_baseline": baseline_rmse,
+                "rmse_boxcox": boxcox_rmse,
+                "rmse_improvement": baseline_rmse - boxcox_rmse,  # Lower is better
+                "rmse_improvement_pct": ((baseline_rmse - boxcox_rmse) / baseline_rmse)
+                * 100
+                if baseline_rmse != 0
+                else 0,
+                "better_with_boxcox": boxcox_r2 > baseline_r2,
+            }
+
+    results["comparison"] = comparison
+
+    # Generate overall statistics
+    improvements = [comp["r2_improvement"] for comp in comparison.values()]
+    models_improved = sum(
+        1 for comp in comparison.values() if comp["better_with_boxcox"]
+    )
+    total_models = len(comparison)
+
+    results["overall_stats"] = {
+        "models_improved": models_improved,
+        "total_models": total_models,
+        "improvement_rate": models_improved / total_models if total_models > 0 else 0,
+        "avg_r2_improvement": np.mean(improvements) if improvements else 0,
+        "max_r2_improvement": max(improvements) if improvements else 0,
+        "min_r2_improvement": min(improvements) if improvements else 0,
+    }
+
+    # ==========================================
+    # PHASE 4: RECOMMENDATION (THESIS APPROACH)
+    # ==========================================
+    logger.info("📊 PHASE 4: Generating recommendation following thesis methodology")
+
+    # Following thesis: Box-Cox was tested but ultimately discarded
+    improvement_rate = results["overall_stats"]["improvement_rate"]
+    avg_improvement = results["overall_stats"]["avg_r2_improvement"]
+
+    if (
+        improvement_rate < 0.5 or avg_improvement < 0.01
+    ):  # Less than 50% models improved or minimal improvement
+        recommendation = "NO_TRANSFORMATION"
+        reason = f"Box-Cox transformation shows minimal benefit (only {models_improved}/{total_models} models improved, avg R² improvement: {avg_improvement:.4f}). Following thesis methodology: use baseline approach."
+    elif avg_improvement < 0.05:  # Small improvement
+        recommendation = "NO_TRANSFORMATION"
+        reason = f"Box-Cox transformation shows small improvement (avg R² improvement: {avg_improvement:.4f}). Following thesis conclusion: transformation complexity not justified."
+    else:
+        recommendation = "NO_TRANSFORMATION"  # Still follow thesis conclusion
+        reason = f"Despite improvement (avg R² improvement: {avg_improvement:.4f}), following thesis methodology: Box-Cox transformation was tested but discarded for consistency."
+
+    results["recommendation"] = recommendation
+    results["recommendation_reason"] = reason
+
+    # ==========================================
+    # PHASE 5: SAVE RESULTS
+    # ==========================================
+    logger.info("💾 PHASE 5: Saving dual pipeline results")
+
+    # Save detailed comparison report
+    output_dir = Path(config.paths.output)
+
+    # Save models separately
+    models_baseline_dir = output_dir / "models_baseline"
+    models_boxcox_dir = output_dir / "models_boxcox"
+    models_baseline_dir.mkdir(exist_ok=True)
+    models_boxcox_dir.mkdir(exist_ok=True)
+
+    # Save baseline models
+    import pickle
+
+    for name, model in baseline_trained_models.items():
+        try:
+            model_path = models_baseline_dir / f"{name}_model.pkl"
+            with open(model_path, "wb") as f:
+                pickle.dump(model, f)
+        except Exception as e:
+            logger.warning(f"Failed to save baseline {name} model: {e}")
+
+    # Save Box-Cox models
+    for name, model in boxcox_trained_models.items():
+        try:
+            model_path = models_boxcox_dir / f"{name}_model.pkl"
+            with open(model_path, "wb") as f:
+                pickle.dump(model, f)
+        except Exception as e:
+            logger.warning(f"Failed to save Box-Cox {name} model: {e}")
+
+    # Save transformer
+    transformer_path = models_boxcox_dir / "box_cox_transformer.pkl"
+    transformer.save_transformer(transformer_path)
+
+    # Save comparison results
+    comparison_path = output_dir / "box_cox_dual_pipeline_results.json"
+    with open(comparison_path, "w") as f:
+        # Convert numpy types to Python types for JSON serialization
+        json_results = json.loads(json.dumps(results, default=str))
+        json.dump(json_results, f, indent=2)
+
+    logger.info(f"✅ Dual pipeline results saved to {comparison_path}")
+
+    # ==========================================
+    # FINAL SUMMARY
+    # ==========================================
+    logger.info("🎯 BOX-COX DUAL PIPELINE SUMMARY")
+    logger.info("=" * 60)
+    logger.info(f"📊 Models tested: {total_models}")
+    logger.info(
+        f"📈 Models improved with Box-Cox: {models_improved} ({improvement_rate:.1%})"
+    )
+    logger.info(f"📊 Average R² improvement: {avg_improvement:.4f}")
+    logger.info(f"🎯 Recommendation: {recommendation}")
+    logger.info(f"📝 Reason: {reason}")
+    logger.info("=" * 60)
+
+    return results
