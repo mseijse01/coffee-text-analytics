@@ -352,7 +352,7 @@ def select_features(args):
             return False
 
         # Exclude non-feature columns (same logic as in train_models)
-        exclude_columns = (
+        potential_exclude_columns = (
             config.models.text_columns
             + [target_column]
             + [
@@ -386,6 +386,10 @@ def select_features(args):
                 "loc",
             ]
         )
+        # Only exclude columns that actually exist in the dataframe
+        exclude_columns = [
+            col for col in potential_exclude_columns if col in df.columns
+        ]
         feature_columns = [col for col in df.columns if col not in exclude_columns]
 
         X = df[feature_columns]

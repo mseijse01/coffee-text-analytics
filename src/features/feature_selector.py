@@ -165,10 +165,15 @@ class LassoFeatureSelector:
         lasso_cv.fit(X_group_scaled, y)
 
         # Create feature selector based on LASSO coefficients
+        # Adapt max_features to group size
+        max_features_for_group = min(
+            self.config["max_features_per_group"], X_group.shape[1]
+        )
+
         selector = SelectFromModel(
             lasso_cv,
             threshold=self.config["selection_threshold"],
-            max_features=self.config["max_features_per_group"],
+            max_features=max_features_for_group,
         )
 
         # Fit selector and get selected features
@@ -176,18 +181,20 @@ class LassoFeatureSelector:
         selected_mask = selector.get_support()
         selected_indices = np.where(selected_mask)[0]
 
-        # Ensure minimum number of features
-        if len(selected_indices) < self.config["min_features_per_group"]:
+        # Ensure minimum number of features (but not more than available)
+        min_features_for_group = min(
+            self.config["min_features_per_group"], X_group.shape[1]
+        )
+
+        if len(selected_indices) < min_features_for_group:
             # Select top features by absolute coefficient value
             abs_coefs = np.abs(lasso_cv.coef_)
-            top_indices = np.argsort(abs_coefs)[
-                -self.config["min_features_per_group"] :
-            ]
+            top_indices = np.argsort(abs_coefs)[-min_features_for_group:]
             selected_mask = np.zeros(len(abs_coefs), dtype=bool)
             selected_mask[top_indices] = True
             selected_indices = top_indices
             logger.info(
-                f"Enforced minimum {self.config['min_features_per_group']} features for group '{group_name}'"
+                f"Enforced minimum {min_features_for_group} features for group '{group_name}' (adapted from {self.config['min_features_per_group']})"
             )
 
         # Calculate selection statistics
