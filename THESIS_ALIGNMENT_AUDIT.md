@@ -857,3 +857,39 @@ class TestReporter:
 **Priority**: HIGH - Core methodology tests first, then comprehensive coverage  
 **Timeline**: 3 weeks for complete implementation  
 **Dependencies**: Existing codebase, test data, CI/CD setup 
+
+#### **Phase 1: Infrastructure and Utility Testing (HIGH PRIORITY)**
+
+##### 1.1 **🧹 Clean Outputs Utility Testing (COMPLETED)** ✅
+```python
+# clean_outputs.py - IMPLEMENTED ✅
+class CleanOutputsUtility:
+    def test_directory_identification()     # ✅ Identifies all target directories
+    def test_size_calculation()            # ✅ Calculates directory sizes correctly
+    def test_dry_run_mode()               # ✅ Shows what would be deleted
+    def test_selective_cleaning()         # ✅ Interactive directory selection
+    def test_confirmation_prompts()       # ✅ Safety confirmation system
+    def test_error_handling()             # ✅ Graceful permission error handling
+```
+
+**✅ Features Implemented:**
+- Interactive and non-interactive modes
+- Dry-run preview functionality  
+- Selective directory cleaning
+- Size reporting and confirmation prompts
+- Safety features and error handling
+- Integration with config system
+
+##### 1.2 **🚨 Categorical Feature Encoding Testing (HIGH PRIORITY)**
+```python
+# tests/test_categorical_encoding.py
+class TestCategoricalFeatureEncoding:
+    def test_one_hot_encoder_initialization()
+    def test_categorical_feature_identification()  # roaster, origin, roast, country_of_origin
+    def test_encoding_transformation()
+    def test_feature_name_generation()  # roaster_CompanyA, origin_Ethiopia
+    def test_handle_unknown_categories()
+    def test_integration_with_feature_pipeline()
+    def test_exclusion_logic_update()
+    def test_lasso_selector_preservation()  # categorical features not subject to LASSO
+```
