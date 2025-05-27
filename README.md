@@ -106,10 +106,11 @@ coffee-text-analytics/
 │   ├── raw/coffee_clean.csv        # CoffeeReview.com dataset
 │   └── processed/                  # Processed data files
 ├── 📁 docs/                        # 📚 Centralized documentation
-│   ├── API_DOCUMENTATION.md        # Complete API reference
-│   ├── CLEANUP_SUMMARY.md          # Refactoring history
-│   ├── THESIS_ALIGNMENT_REPORT.md  # Research alignment
-│   └── thesis.md                   # Original thesis
+│   ├── FEATURE_SELECTION_GUIDE.md  # LASSO feature selection guide
+│   ├── PERFORMANCE_SUMMARY.md      # Complete performance analysis
+│   ├── thesis.md                   # Original thesis document
+│   ├── findings.md                 # Research findings and insights
+│   └── methodology.md              # Detailed research methodology
 ├── 📁 models/                      # 🎯 Model persistence (ACTIVE)
 │   ├── tfidf_vectorizer.pkl        # TF-IDF models
 │   ├── lda_model.pkl              # Topic models
@@ -398,6 +399,17 @@ Per text column, the pipeline generates:
 - Implements complete academic methodology
 - Provides reproducible research pipeline
 - Enables extension and validation studies
+
+## 📚 Documentation
+
+### Core Documentation
+- **[Feature Selection Guide](docs/FEATURE_SELECTION_GUIDE.md)**: Comprehensive LASSO feature selection documentation with API reference, usage examples, and troubleshooting
+- **[Performance Summary](docs/PERFORMANCE_SUMMARY.md)**: Complete performance analysis, validation results, and thesis alignment evidence
+- **[Thesis Document](docs/thesis.md)**: Complete thesis documentation and research framework
+
+### Research Reference
+- **[Research Findings](docs/findings.md)**: Key insights and results from thesis research, including model performance hierarchy and feature importance analysis
+- **[Methodology](docs/methodology.md)**: Detailed research methodology, theoretical framework, and implementation details
 
 ## 📚 Dependencies & Technology Stack
 

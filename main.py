@@ -31,7 +31,7 @@ from config.validation import validate_config, print_config_summary, check_depen
 from config.environments import apply_environment_config
 
 # Import new component-based architecture
-from features import CoffeeFeatureManager
+from features import CoffeeFeatureManager, LassoFeatureSelector
 from models import (
     CoffeeLinearRegression,
     CoffeeRidgeRegression,
@@ -83,7 +83,7 @@ def parse_args():
     parser.add_argument(
         "--steps",
         nargs="+",
-        choices=["preprocess", "features", "train", "visualize", "all"],
+        choices=["preprocess", "features", "select", "train", "visualize", "all"],
         default=["all"],
         help="Pipeline steps to run (default: all)",
     )
@@ -309,6 +309,151 @@ def extract_features(args):
         return False
 
 
+def select_features(args):
+    """
+    Perform LASSO-based feature selection using the new LassoFeatureSelector.
+
+    Args:
+        args: Command-line arguments
+
+    Returns:
+        bool: Success status
+    """
+    logger.info("Starting LASSO-based feature selection step")
+
+    try:
+        # Check if feature selection is enabled
+        if not config.models.feature_selection_enabled:
+            logger.info("Feature selection is disabled in configuration")
+            # Copy features file to selected features file
+            import shutil
+
+            features_path = config.paths.get_features_data_path()
+            selected_features_path = (
+                config.paths.processed / "coffee_features_selected.csv"
+            )
+            shutil.copy2(features_path, selected_features_path)
+            logger.info("Copied features file without selection")
+            return True
+
+        # Load features data
+        features_data_path = config.paths.get_features_data_path()
+        logger.info(f"Loading features from {features_data_path}")
+
+        # Load as Polars first, then convert to Pandas for sklearn compatibility
+        df_polars = pl.read_csv(features_data_path)
+        df = df_polars.to_pandas()
+        logger.info(f"Loaded features shape: {df.shape}")
+
+        # Prepare features and target
+        target_column = config.models.target_column
+        if target_column not in df.columns:
+            logger.error(f"Target column '{target_column}' not found in data")
+            return False
+
+        # Exclude non-feature columns (same logic as in train_models)
+        potential_exclude_columns = (
+            config.models.text_columns
+            + [target_column]
+            + [
+                "id",
+                "slug",
+                "all_text",
+                "roaster",
+                "name",
+                "location",
+                "origin",
+                "roast",
+                "est_price",
+                "review_date",
+                "agtron",
+                "aroma",
+                "acid",
+                "body",
+                "flavor",
+                "aftertaste",
+                "with_milk",
+                "country_of_origin",
+                "price_value",
+                "price_unit",
+                "price_standardized",
+                "processed_desc_1",
+                "processed_desc_2",
+                "processed_desc_3",
+                "merged_text",
+                "processed_text",
+                "url",
+                "loc",
+            ]
+        )
+        # Only exclude columns that actually exist in the dataframe
+        exclude_columns = [
+            col for col in potential_exclude_columns if col in df.columns
+        ]
+        feature_columns = [col for col in df.columns if col not in exclude_columns]
+
+        X = df[feature_columns]
+        y = df[target_column]
+
+        logger.info(f"Features shape before selection: {X.shape}")
+        logger.info(f"Target shape: {y.shape}")
+
+        # Initialize feature selector with configuration
+        selector_config = config.models.feature_selection_config.copy()
+        selector = LassoFeatureSelector(selector_config)
+
+        # Fit and transform features
+        logger.info("Fitting LASSO feature selector...")
+        X_selected = selector.fit_transform(X, y)
+
+        logger.info(f"Features shape after selection: {X_selected.shape}")
+
+        # Print selection summary
+        selector.print_summary()
+
+        # Create new dataframe with selected features and non-feature columns
+        if isinstance(X_selected, pd.DataFrame):
+            selected_feature_names = X_selected.columns.tolist()
+        else:
+            selected_feature_names = selector.get_selected_features()
+            X_selected = pd.DataFrame(
+                X_selected, columns=selected_feature_names, index=X.index
+            )
+
+        # Combine selected features with non-feature columns
+        non_feature_df = df[exclude_columns]
+        result_df = pd.concat([non_feature_df, X_selected], axis=1)
+
+        # Save selected features
+        selected_features_path = config.paths.processed / "coffee_features_selected.csv"
+        logger.info(f"Saving selected features to {selected_features_path}")
+        result_df.to_csv(selected_features_path, index=False)
+
+        # Save feature selector
+        selector_path = config.paths.models / "lasso_feature_selector.pkl"
+        selector.save_selector(selector_path)
+        logger.info(f"Feature selector saved to {selector_path}")
+
+        # Save selection summary
+        summary = selector.get_selection_summary()
+        summary_path = config.paths.output / "feature_selection_summary.pkl"
+        import pickle
+
+        with open(summary_path, "wb") as f:
+            pickle.dump(summary, f)
+        logger.info(f"Selection summary saved to {summary_path}")
+
+        logger.info(f"Feature selection completed. Final shape: {result_df.shape}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Feature selection failed: {e}")
+        import traceback
+
+        logger.error(traceback.format_exc())
+        return False
+
+
 def train_models(args):
     """
     Train models using the new component-based architecture.
@@ -322,9 +467,16 @@ def train_models(args):
     logger.info("Starting model training step with component-based models")
 
     try:
-        # Load features data
-        features_data_path = config.paths.get_features_data_path()
-        logger.info(f"Loading features from {features_data_path}")
+        # Load features data (use selected features if available)
+        selected_features_path = config.paths.processed / "coffee_features_selected.csv"
+        if selected_features_path.exists():
+            features_data_path = selected_features_path
+            logger.info(f"Loading selected features from {features_data_path}")
+        else:
+            features_data_path = config.paths.get_features_data_path()
+            logger.info(
+                f"Loading original features from {features_data_path} (no feature selection performed)"
+            )
 
         # Load as Polars first, then convert to Pandas for sklearn compatibility
         df_polars = pl.read_csv(features_data_path)
@@ -380,21 +532,46 @@ def train_models(args):
         logger.info(f"Features shape: {X.shape}")
         logger.info(f"Target shape: {y.shape}")
 
-        # Split data
+        # Split data using stratified sampling (thesis methodology)
         from sklearn.model_selection import train_test_split
+        import pandas as pd
+
+        # Create stratified bins for the target variable (rating)
+        # This ensures balanced representation across rating ranges
+        n_bins = 5  # Create 5 bins for stratification
+        y_binned = pd.cut(y, bins=n_bins, labels=False)
+
+        logger.info(f"Stratified sampling with {n_bins} bins")
+        logger.info(
+            f"Bin distribution: {pd.Series(y_binned).value_counts().sort_index()}"
+        )
 
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
+            X,
+            y,
+            test_size=config.models.test_size,  # Use 0.3 from config (70/30 split)
+            random_state=config.models.random_state,
+            stratify=y_binned,  # Stratify based on rating bins
         )
+
+        logger.info(
+            f"Train set size: {len(X_train)} ({len(X_train) / len(X) * 100:.1f}%)"
+        )
+        logger.info(f"Test set size: {len(X_test)} ({len(X_test) / len(X) * 100:.1f}%)")
 
         # Initialize models based on configuration
         models = {}
         model_configs = {
-            "linear": {"scale_features": False},
-            "ridge": {"scale_features": True, "cv": 5},
-            "lasso": {"scale_features": True, "cv": 5},
-            "random_forest": {"tune_hyperparameters": True, "cv": 3},
-            "xgboost": {"tune_hyperparameters": True, "cv": 3},
+            "linear": config.models.linear_params,
+            "ridge": config.models.ridge_params,
+            "lasso": config.models.lasso_params,
+            "random_forest": {
+                "tune_hyperparameters": True,
+                "cv": config.models.cv_folds,
+            },
+            "xgboost": {"tune_hyperparameters": True, "cv": config.models.cv_folds},
+            "svr": config.models.svr_params,
+            "decision_tree": config.models.decision_tree_params,
         }
 
         for model_name in config.models.models_to_train:
@@ -476,8 +653,8 @@ def train_models(args):
 
                 if sensory_data:
                     mnir_config = {
-                        "lasso_cv": 5,
-                        "random_state": 42,
+                        "lasso_cv": config.models.lasso_cv_folds,
+                        "random_state": config.models.random_state,
                         "sensory_attributes": list(sensory_data.keys()),
                     }
 
@@ -601,8 +778,17 @@ def visualize_results(args):
 
         X = df[feature_columns]
         y = df[target_column]
+
+        # Use same stratified sampling as in training
+        n_bins = 5
+        y_binned = pd.cut(y, bins=n_bins, labels=False)
+
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
+            X,
+            y,
+            test_size=config.models.test_size,
+            random_state=config.models.random_state,
+            stratify=y_binned,
         )
 
         logger.info(f"Creating prediction plot for best model: {best_r2_model}...")
@@ -652,7 +838,7 @@ def main():
     # Determine steps to run
     steps_to_run = args.steps
     if "all" in steps_to_run:
-        steps_to_run = ["preprocess", "features", "train", "visualize"]
+        steps_to_run = ["preprocess", "features", "select", "train", "visualize"]
 
     # Execute pipeline steps
     success = True
@@ -669,15 +855,21 @@ def main():
         logger.info("=" * 50)
         success &= extract_features(args)
 
+    if "select" in steps_to_run and success:
+        logger.info("=" * 50)
+        logger.info("STEP 3: FEATURE SELECTION")
+        logger.info("=" * 50)
+        success &= select_features(args)
+
     if "train" in steps_to_run and success:
         logger.info("=" * 50)
-        logger.info("STEP 3: MODEL TRAINING")
+        logger.info("STEP 4: MODEL TRAINING")
         logger.info("=" * 50)
         success &= train_models(args)
 
     if "visualize" in steps_to_run and success:
         logger.info("=" * 50)
-        logger.info("STEP 4: VISUALIZATION")
+        logger.info("STEP 5: VISUALIZATION")
         logger.info("=" * 50)
         success &= visualize_results(args)
 
