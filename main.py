@@ -142,6 +142,16 @@ def parse_args():
         default=None,
         help="Absolute number of samples to use (e.g., 1000)",
     )
+    parser.add_argument(
+        "--box_cox",
+        action="store_true",
+        help="Enable Box-Cox transformation for target variable",
+    )
+    parser.add_argument(
+        "--box_cox_dual",
+        action="store_true",
+        help="Run dual pipeline: compare models with and without Box-Cox transformation",
+    )
     return parser.parse_args()
 
 
@@ -178,6 +188,17 @@ def apply_cli_overrides(args):
     if args.models != config.models.models_to_train:
         config.models.models_to_train = args.models
         logger.info(f"Models to train overridden: {args.models}")
+
+    # Apply Box-Cox configuration
+    if args.box_cox:
+        config.models.box_cox_enabled = True
+        logger.info("Box-Cox transformation enabled")
+
+    if args.box_cox_dual:
+        config.models.box_cox_dual_pipeline = True
+        logger.info(
+            "Box-Cox dual pipeline enabled (will compare with and without transformation)"
+        )
 
     # Log sampling configuration
     if args.sample_fraction:

@@ -208,6 +208,21 @@ class ModelConfig:
         }
     )
 
+    # Box-Cox transformation settings (thesis methodology)
+    box_cox_enabled: bool = False  # Default: no transformation (thesis conclusion)
+    box_cox_dual_pipeline: bool = (
+        False  # Run both with and without Box-Cox for comparison
+    )
+    box_cox_config: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "lambda_range": (-2, 2),  # Range for lambda parameter search
+            "method": "mle",  # Maximum likelihood estimation
+            "alpha": 0.05,  # Significance level for normality tests
+            "save_comparison": True,  # Save comparison results
+            "random_state": 57,
+        }
+    )
+
 
 @dataclass
 class FeatureConfig:

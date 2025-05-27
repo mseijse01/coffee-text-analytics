@@ -183,9 +183,71 @@ From thesis (page 279):
 - **SHAP integration**: Includes SHAP analysis for interpretability
 - **Thesis alignment**: Matches thesis MNIR methodology exactly
 
+---
+
+## 🔍 **NEWLY IDENTIFIED MISALIGNMENTS (Phase 4)**
+
+### 11. **Data Splitting Strategy Details**
+
+#### ⚠️ **Potential Issue**
+- **Current**: Using 70/30 split ✅, but stratification implementation needs verification
+- **Thesis**: "Stratified sampling was used to ensure the distribution of coffee ratings remained consistent across both subsets"
+
+#### 🔧 **Required Verification**
+- Verify stratified sampling maintains rating distribution consistency
+- Document stratification approach and effectiveness
+- Test distribution statistics between train/test splits
+
+### 12. **SHAP Analysis Scope**
+
+#### ❌ **Current Limitation**
+- **Current**: SHAP analysis mainly in MNIR
+- **Thesis**: Extensive SHAP analysis across all models for feature importance
+
+#### 🔧 **Required Implementation**
+- Extend SHAP to Linear, Ridge, Lasso, Random Forest, XGBoost, SVR
+- Generate SHAP summary plots for all models
+- Create SHAP dependence plots for feature interactions
+- Compare feature importance across model types
+
+### 13. **Two-Step Hyperparameter Tuning (Signature Approach)**
+
+#### ❌ **Current Gap**
+- **Current**: Basic hyperparameter tuning
+- **Thesis**: "A two-step process was employed: Randomized Search → Grid Search"
+
+#### 🔧 **Required Implementation**
+- **Phase 1**: Randomized Search to explore wide hyperparameter space
+- **Phase 2**: Grid Search to refine promising regions
+- Apply to all models consistently
+- Document optimization process and rationale
+
+### 14. **Comprehensive Model Evaluation Metrics**
+
+#### ❌ **Current Limitation**
+- **Current**: Primarily R² reporting
+- **Thesis**: "MAE, RMSE, and R² as performance metrics" for all models
+
+#### 🔧 **Required Implementation**
+- Add MAE and RMSE reporting alongside R²
+- Standardize evaluation format across all models
+- Create evaluation summary tables matching thesis format
+- Document metric interpretation and significance
+
+### 15. **Topic Modeling Configuration Verification**
+
+#### ⚠️ **Needs Verification**
+- **Current**: Using 10 topics ✅, but need to verify both LDA and NMF
+- **Thesis**: "10 topics per model" for both LDA and NMF algorithms
+
+#### 🔧 **Required Verification**
+- Confirm both LDA and NMF use exactly 10 topics
+- Validate meaningful topic extraction and interpretation
+- Ensure both algorithm features are integrated in modeling
+
 ## 📋 Implementation Plan
 
-### Phase 1: Fix Text Column Processing (CRITICAL)
+### ~~Phase 1: Fix Text Column Processing (CRITICAL)~~ ✅ COMPLETED
 
 #### 1.1 **Implement Separate Description Column Processing** ✅ COMPLETED
 - [x] **Modify feature extractors** to process `desc_1`, `desc_2`, `desc_3` separately ✅
@@ -280,18 +342,41 @@ From thesis methodology:
 6. Train models on this combined set
 ```
 
-### Phase 4: Validation and Testing
+### Phase 4: Advanced Methodology Alignment
 
-#### 4.1 **Performance Validation**
-- [ ] Test with larger sample (10-20%) to validate model hierarchy
-- [ ] Ensure XGBoost > Random Forest > Linear models
-- [ ] Validate feature importance aligns with thesis findings
+#### 4.1 **Data Splitting Strategy Validation**
+- [ ] **Verify stratified sampling implementation** - ensure rating distribution consistency across train/test splits
+- [ ] **Document stratification approach** - confirm 70/30 split maintains representative samples
+- [ ] **Test stratification effectiveness** - compare distribution statistics between splits
 
-#### 4.2 **Feature Importance Validation**
-From thesis findings:
-- **Text features** should dominate importance
-- **Acidity** should be most important sensory feature
-- **Origin** should be most important categorical feature
+#### 4.2 **SHAP Analysis Extension** 
+- [ ] **Extend SHAP to all models** - implement comprehensive feature importance analysis beyond MNIR
+- [ ] **Generate SHAP summary plots** - create visualizations for Linear, Ridge, Lasso, Random Forest, XGBoost, SVR
+- [ ] **SHAP dependence plots** - analyze feature interactions and non-linear relationships
+- [ ] **Feature importance comparison** - compare SHAP values across different model types
+
+#### 4.3 **Two-Step Hyperparameter Tuning (Signature Approach)**
+- [ ] **Implement Randomized Search phase** - explore wide hyperparameter space efficiently
+- [ ] **Implement Grid Search refinement** - fine-tune promising regions from randomized search
+- [ ] **Document optimization process** - record hyperparameter exploration and selection rationale
+- [ ] **Apply to all models** - ensure consistent optimization approach across Linear, Ridge, Lasso, RF, XGBoost, SVR
+
+#### 4.4 **Comprehensive Model Evaluation**
+- [ ] **Add MAE and RMSE reporting** - complement R² with additional error metrics
+- [ ] **Standardize evaluation format** - ensure all models report MAE, RMSE, R² consistently
+- [ ] **Create evaluation summary tables** - match thesis reporting format
+- [ ] **Document metric interpretation** - explain what each metric reveals about model performance
+
+#### 4.5 **Topic Modeling Verification**
+- [ ] **Verify LDA and NMF configuration** - ensure both algorithms use 10 topics as per thesis
+- [ ] **Validate topic extraction** - confirm meaningful topic interpretation
+- [ ] **Check topic feature integration** - ensure both LDA and NMF features included in modeling
+
+#### 4.6 **Performance Validation**
+- [ ] Test with larger sample (10-20%) to get reliable model performance  
+- [ ] **Focus on methodology alignment** - ensure thesis methodology is followed correctly
+- [ ] **Document performance differences** - explain any deviations from thesis results as valid findings
+- [ ] Validate feature importance aligns with thesis methodology (not necessarily results)
 
 ## 🔧 Technical Implementation Tasks
 
@@ -389,16 +474,17 @@ rf_params = {
 5. ~~**Fix LASSO methodology** - combine text features before selection~~ ✅  
 
 ### This Week:
-1. **Implement Box-Cox dual pipeline** - test with and without transformation, compare performance
-2. **Test with 10% sample** - get more reliable model performance  
-3. **Reduce model complexity** - prevent overfitting on small samples
-4. ~~**Validate separate column processing** - ensure distinct feature extraction per column~~ ✅
+1. **Implement Box-Cox dual pipeline** - test with and without transformation, compare performance ✅ (Already in plan)
+2. **Implement two-step hyperparameter tuning** - Randomized Search → Grid Search (signature approach)
+3. **Extend SHAP analysis** - apply to all models beyond MNIR
+4. **Add comprehensive evaluation metrics** - MAE, RMSE, R² for all models
+5. **Verify topic modeling configuration** - ensure LDA and NMF both use 10 topics
 
 ### Next Steps:
-1. **Validate performance hierarchy** - ensure XGBoost > Random Forest
-2. **Check feature importance** - ensure text features dominate
-3. **Extend SHAP analysis** - apply to all models, not just MNIR
-4. **Update documentation** - reflect correct methodology
+1. **Validate stratified sampling** - ensure proper train/test distribution
+2. **Test with larger samples** - 10-20% for reliable performance assessment
+3. **Document methodology alignment** - focus on process, not matching thesis results
+4. **Performance validation** - ensure robust evaluation across all models
 
 ## 📊 Expected Outcomes
 
