@@ -348,7 +348,7 @@ class CoffeeRandomForest(BaseRegressor):
     def fit(
         self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]
     ) -> "CoffeeRandomForest":
-        """Fit Random Forest with optional hyperparameter tuning."""
+        """Fit Random Forest with optional two-step hyperparameter tuning."""
         logger.info("Fitting Random Forest model")
 
         # Convert to numpy if needed
@@ -362,25 +362,47 @@ class CoffeeRandomForest(BaseRegressor):
             y = y.values
 
         if self.config["tune_hyperparameters"]:
-            # Hyperparameter tuning
-            rf = RandomForestRegressor(random_state=self.config["random_state"])
+            # Check if two-step tuning is enabled
+            if self.config.get("use_two_step_tuning", False):
+                # Two-step hyperparameter tuning (signature approach)
+                from utils.hyperparameter_tuning import apply_two_step_tuning
 
-            param_grid = {
-                "n_estimators": [50, 100, 200],
-                "max_depth": [None, 10, 20],
-                "min_samples_split": [2, 5, 10],
-                "min_samples_leaf": [1, 2, 4],
-            }
+                rf = RandomForestRegressor(random_state=self.config["random_state"])
 
-            grid_search = GridSearchCV(
-                rf, param_grid, cv=self.config["cv"], scoring="r2", n_jobs=-1
-            )
-            grid_search.fit(X, y)
+                # Apply two-step tuning
+                self.model_, self.optimization_summary_ = apply_two_step_tuning(
+                    estimator=rf,
+                    X=X,
+                    y=y,
+                    model_name="random_forest",
+                    config=self.config.get("global_config"),  # Pass global config
+                )
 
-            self.model_ = grid_search.best_estimator_
-            self.best_params_ = grid_search.best_params_
+                self.best_params_ = self.model_.get_params()
+                logger.info(f"Random Forest fitted with two-step tuning")
 
-            logger.info(f"Random Forest fitted with best params: {self.best_params_}")
+            else:
+                # Traditional single-step hyperparameter tuning
+                rf = RandomForestRegressor(random_state=self.config["random_state"])
+
+                param_grid = {
+                    "n_estimators": [50, 100, 200],
+                    "max_depth": [None, 10, 20],
+                    "min_samples_split": [2, 5, 10],
+                    "min_samples_leaf": [1, 2, 4],
+                }
+
+                grid_search = GridSearchCV(
+                    rf, param_grid, cv=self.config["cv"], scoring="r2", n_jobs=-1
+                )
+                grid_search.fit(X, y)
+
+                self.model_ = grid_search.best_estimator_
+                self.best_params_ = grid_search.best_params_
+
+                logger.info(
+                    f"Random Forest fitted with traditional tuning: {self.best_params_}"
+                )
         else:
             # Use default parameters
             self.model_ = RandomForestRegressor(
@@ -456,7 +478,7 @@ class CoffeeXGBoost(BaseRegressor):
     def fit(
         self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]
     ) -> "CoffeeXGBoost":
-        """Fit XGBoost with optional hyperparameter tuning."""
+        """Fit XGBoost with optional two-step hyperparameter tuning."""
         logger.info("Fitting XGBoost model")
 
         # Convert to numpy if needed
@@ -470,24 +492,46 @@ class CoffeeXGBoost(BaseRegressor):
             y = y.values
 
         if self.config["tune_hyperparameters"]:
-            # Hyperparameter tuning
-            xgb_model = xgb.XGBRegressor(random_state=self.config["random_state"])
+            # Check if two-step tuning is enabled
+            if self.config.get("use_two_step_tuning", False):
+                # Two-step hyperparameter tuning (signature approach)
+                from utils.hyperparameter_tuning import apply_two_step_tuning
 
-            param_grid = {
-                "n_estimators": [50, 100, 200],
-                "max_depth": [3, 6, 9],
-                "learning_rate": [0.01, 0.1, 0.2],
-            }
+                xgb_model = xgb.XGBRegressor(random_state=self.config["random_state"])
 
-            grid_search = GridSearchCV(
-                xgb_model, param_grid, cv=self.config["cv"], scoring="r2", n_jobs=-1
-            )
-            grid_search.fit(X, y)
+                # Apply two-step tuning
+                self.model_, self.optimization_summary_ = apply_two_step_tuning(
+                    estimator=xgb_model,
+                    X=X,
+                    y=y,
+                    model_name="xgboost",
+                    config=self.config.get("global_config"),  # Pass global config
+                )
 
-            self.model_ = grid_search.best_estimator_
-            self.best_params_ = grid_search.best_params_
+                self.best_params_ = self.model_.get_params()
+                logger.info(f"XGBoost fitted with two-step tuning")
 
-            logger.info(f"XGBoost fitted with best params: {self.best_params_}")
+            else:
+                # Traditional single-step hyperparameter tuning
+                xgb_model = xgb.XGBRegressor(random_state=self.config["random_state"])
+
+                param_grid = {
+                    "n_estimators": [50, 100, 200],
+                    "max_depth": [3, 6, 9],
+                    "learning_rate": [0.01, 0.1, 0.2],
+                }
+
+                grid_search = GridSearchCV(
+                    xgb_model, param_grid, cv=self.config["cv"], scoring="r2", n_jobs=-1
+                )
+                grid_search.fit(X, y)
+
+                self.model_ = grid_search.best_estimator_
+                self.best_params_ = grid_search.best_params_
+
+                logger.info(
+                    f"XGBoost fitted with traditional tuning: {self.best_params_}"
+                )
         else:
             # Use default parameters
             self.model_ = xgb.XGBRegressor(
@@ -564,7 +608,7 @@ class CoffeeSVR(BaseRegressor):
     def fit(
         self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]
     ) -> "CoffeeSVR":
-        """Fit SVR with optional hyperparameter tuning."""
+        """Fit SVR with optional two-step hyperparameter tuning."""
         logger.info("Fitting SVR model")
 
         # Convert to numpy if needed
@@ -582,28 +626,48 @@ class CoffeeSVR(BaseRegressor):
             X = self.scaler_.fit_transform(X)
 
         if self.config["tune_hyperparameters"]:
-            # Import SVR
-            from sklearn.svm import SVR
+            # Check if two-step tuning is enabled
+            if self.config.get("use_two_step_tuning", False):
+                # Two-step hyperparameter tuning (signature approach)
+                from utils.hyperparameter_tuning import apply_two_step_tuning
+                from sklearn.svm import SVR
 
-            # Hyperparameter tuning
-            svr = SVR()
+                svr = SVR()
 
-            param_grid = {
-                "kernel": ["rbf", "linear", "poly"],
-                "C": [0.1, 1.0, 10.0],
-                "gamma": ["scale", "auto", 0.001, 0.01],
-                "epsilon": [0.01, 0.1, 0.2],
-            }
+                # Apply two-step tuning
+                self.model_, self.optimization_summary_ = apply_two_step_tuning(
+                    estimator=svr,
+                    X=X,
+                    y=y,
+                    model_name="svr",
+                    config=self.config.get("global_config"),  # Pass global config
+                )
 
-            grid_search = GridSearchCV(
-                svr, param_grid, cv=self.config["cv"], scoring="r2", n_jobs=-1
-            )
-            grid_search.fit(X, y)
+                self.best_params_ = self.model_.get_params()
+                logger.info(f"SVR fitted with two-step tuning")
 
-            self.model_ = grid_search.best_estimator_
-            self.best_params_ = grid_search.best_params_
+            else:
+                # Traditional single-step hyperparameter tuning
+                from sklearn.svm import SVR
 
-            logger.info(f"SVR fitted with best params: {self.best_params_}")
+                svr = SVR()
+
+                param_grid = {
+                    "kernel": ["rbf", "linear", "poly"],
+                    "C": [0.1, 1.0, 10.0],
+                    "gamma": ["scale", "auto", 0.001, 0.01],
+                    "epsilon": [0.01, 0.1, 0.2],
+                }
+
+                grid_search = GridSearchCV(
+                    svr, param_grid, cv=self.config["cv"], scoring="r2", n_jobs=-1
+                )
+                grid_search.fit(X, y)
+
+                self.model_ = grid_search.best_estimator_
+                self.best_params_ = grid_search.best_params_
+
+                logger.info(f"SVR fitted with traditional tuning: {self.best_params_}")
         else:
             # Import SVR
             from sklearn.svm import SVR

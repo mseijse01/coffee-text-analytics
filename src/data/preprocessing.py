@@ -170,6 +170,113 @@ def preprocess_text(text, remove_stop=True):
     return " ".join(tokens)
 
 
+def preprocess_text_for_embeddings(text):
+    """
+    Preprocess text for embedding-based models and sentiment analysis (thesis methodology).
+
+    Following thesis methodology:
+    - Remove stopwords
+    - Retain punctuation
+    - Clean and tokenize
+    - Lemmatize
+
+    Args:
+        text (str): Input text
+
+    Returns:
+        str: Preprocessed text optimized for embeddings and sentiment analysis
+    """
+    # Clean text but retain punctuation
+    text = clean_text(text, remove_punctuation=False)
+    tokens = tokenize_text(text)
+    tokens = [token.lower() for token in tokens]
+    # Remove stopwords (keep_stopwords=False)
+    tokens = remove_stopwords(tokens, keep_stopwords=False)
+    tokens = lemmatize_text(tokens)
+    return " ".join(tokens)
+
+
+def preprocess_text_for_topics(text):
+    """
+    Preprocess text for topic modeling (thesis methodology).
+
+    Following thesis methodology:
+    - Retain stopwords (important for context in topic modeling)
+    - Remove punctuation (reduces noise in topic modeling)
+    - Clean and tokenize
+    - Lemmatize
+
+    Args:
+        text (str): Input text
+
+    Returns:
+        str: Preprocessed text optimized for topic modeling
+    """
+    # Clean text and remove punctuation
+    text = clean_text(text, remove_punctuation=True)
+    tokens = tokenize_text(text)
+    tokens = [token.lower() for token in tokens]
+    # Keep stopwords (keep_stopwords=True)
+    tokens = remove_stopwords(tokens, keep_stopwords=True)
+    tokens = lemmatize_text(tokens)
+    return " ".join(tokens)
+
+
+def create_specialized_datasets(df, text_columns=None):
+    """
+    Create three specialized datasets following thesis methodology.
+
+    Following thesis approach:
+    1. Embeddings dataset: For TF-IDF, BERT, GloVe, sentiment analysis
+    2. Topic modeling dataset: For LDA and NMF
+    3. Sentiment dataset: Same as embeddings (shared requirements)
+
+    Args:
+        df (pd.DataFrame): Input DataFrame with text columns
+        text_columns (list): List of text columns to process
+
+    Returns:
+        tuple: (embeddings_df, topics_df, sentiment_df)
+    """
+    if text_columns is None:
+        text_columns = ["desc_1", "desc_2", "desc_3"]
+
+    logger.info("Creating specialized datasets following thesis methodology")
+    logger.info("1. Embeddings dataset: Remove stopwords, retain punctuation")
+    logger.info("2. Topic modeling dataset: Retain stopwords, remove punctuation")
+    logger.info("3. Sentiment dataset: Same as embeddings")
+
+    # Create copies for each specialized dataset
+    embeddings_df = df.copy()
+    topics_df = df.copy()
+    sentiment_df = df.copy()
+
+    # Process each text column with specialized preprocessing
+    for col in text_columns:
+        if col in df.columns:
+            logger.info(f"Processing column {col} for specialized datasets")
+
+            # Embeddings preprocessing (remove stopwords, retain punctuation)
+            embeddings_df[f"processed_{col}_embeddings"] = (
+                df[col].fillna("").apply(preprocess_text_for_embeddings)
+            )
+
+            # Topic modeling preprocessing (retain stopwords, remove punctuation)
+            topics_df[f"processed_{col}_topics"] = (
+                df[col].fillna("").apply(preprocess_text_for_topics)
+            )
+
+            # Sentiment preprocessing (same as embeddings)
+            sentiment_df[f"processed_{col}_sentiment"] = (
+                df[col].fillna("").apply(preprocess_text_for_embeddings)
+            )
+        else:
+            logger.warning(f"Column '{col}' not found in DataFrame")
+
+    logger.info("Specialized datasets created successfully")
+    return embeddings_df, topics_df, sentiment_df
+
+
 def extract_country_info(location: str) -> str:
     """
     Extract country name from location string.
