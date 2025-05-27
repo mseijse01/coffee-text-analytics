@@ -32,6 +32,7 @@ from config.environments import apply_environment_config
 
 # Import new component-based architecture
 from features import CoffeeFeatureManager, LassoFeatureSelector
+from features.feature_selector_corrected import CorrectedLassoFeatureSelector
 from models import (
     CoffeeLinearRegression,
     CoffeeRidgeRegression,
@@ -141,6 +142,16 @@ def parse_args():
         default=None,
         help="Absolute number of samples to use (e.g., 1000)",
     )
+    parser.add_argument(
+        "--box_cox",
+        action="store_true",
+        help="Enable Box-Cox transformation for target variable",
+    )
+    parser.add_argument(
+        "--box_cox_dual",
+        action="store_true",
+        help="Run dual pipeline: compare models with and without Box-Cox transformation",
+    )
     return parser.parse_args()
 
 
@@ -177,6 +188,17 @@ def apply_cli_overrides(args):
     if args.models != config.models.models_to_train:
         config.models.models_to_train = args.models
         logger.info(f"Models to train overridden: {args.models}")
+
+    # Apply Box-Cox configuration
+    if args.box_cox:
+        config.models.box_cox_enabled = True
+        logger.info("Box-Cox transformation enabled")
+
+    if args.box_cox_dual:
+        config.models.box_cox_dual_pipeline = True
+        logger.info(
+            "Box-Cox dual pipeline enabled (will compare with and without transformation)"
+        )
 
     # Log sampling configuration
     if args.sample_fraction:
@@ -256,36 +278,19 @@ def extract_features(args):
         # Initialize feature manager
         feature_manager = CoffeeFeatureManager(feature_config)
 
-        # Combine text columns for feature extraction
-        combined_texts = []
-        for i in range(len(df)):
-            text_parts = []
-            for col in config.models.text_columns:
-                if col in df.columns:
-                    text_value = df[col][i]
-                    if text_value and isinstance(text_value, str):
-                        text_parts.append(text_value.strip())
+        # Following thesis methodology: process desc_1, desc_2, desc_3 separately
+        logger.info(
+            "Following thesis methodology: separate processing of description columns"
+        )
+        logger.info(f"Processing columns separately: {config.models.text_columns}")
 
-            combined_text = " ".join(text_parts) if text_parts else ""
-            combined_texts.append(combined_text)
+        # Fit feature extractors on combined text from all columns
+        logger.info("Fitting feature extractors on combined text from all columns...")
+        feature_manager.fit(df, config.models.text_columns)
 
-        logger.info(f"Combined {len(combined_texts)} texts for feature extraction")
-
-        # Fit feature extractors
-        logger.info("Fitting feature extractors...")
-        feature_manager.fit(combined_texts)
-
-        # Extract features
-        logger.info("Extracting features...")
-        features_df = feature_manager.extract_features(combined_texts)
-
-        # Combine with original data
-        if not features_df.is_empty():
-            # Convert original data to match features
-            result_df = df.hstack(features_df)
-        else:
-            logger.warning("No features extracted, using original data")
-            result_df = df
+        # Extract features separately for each column
+        logger.info("Extracting features separately for each description column...")
+        result_df = feature_manager.extract_all_features(df, config.models.text_columns)
 
         # Save features
         features_data_path = config.paths.get_features_data_path()
@@ -398,9 +403,10 @@ def select_features(args):
         logger.info(f"Features shape before selection: {X.shape}")
         logger.info(f"Target shape: {y.shape}")
 
-        # Initialize feature selector with configuration
+        # Initialize corrected feature selector with configuration (thesis methodology)
         selector_config = config.models.feature_selection_config.copy()
-        selector = LassoFeatureSelector(selector_config)
+        selector = CorrectedLassoFeatureSelector(selector_config)
+        logger.info("Using corrected LASSO feature selector (thesis methodology)")
 
         # Fit and transform features
         logger.info("Fitting LASSO feature selector...")
@@ -538,20 +544,42 @@ def train_models(args):
 
         # Create stratified bins for the target variable (rating)
         # This ensures balanced representation across rating ranges
-        n_bins = 5  # Create 5 bins for stratification
-        y_binned = pd.cut(y, bins=n_bins, labels=False)
+        n_bins = 5  # Start with 5 bins for stratification
 
-        logger.info(f"Stratified sampling with {n_bins} bins")
-        logger.info(
-            f"Bin distribution: {pd.Series(y_binned).value_counts().sort_index()}"
-        )
+        # Try stratified sampling with decreasing number of bins
+        stratify_var = None
+        for bins in [5, 4, 3]:
+            try:
+                y_binned = pd.cut(y, bins=bins, labels=False)
+                bin_counts = pd.Series(y_binned).value_counts()
+
+                # Check if all bins have at least 2 samples (minimum for stratification)
+                if bin_counts.min() >= 2:
+                    stratify_var = y_binned
+                    n_bins = bins
+                    logger.info(f"Stratified sampling with {n_bins} bins")
+                    logger.info(f"Bin distribution: {bin_counts.sort_index()}")
+                    break
+                else:
+                    logger.warning(
+                        f"Bins={bins}: Some bins have <2 samples, trying fewer bins..."
+                    )
+            except Exception as e:
+                logger.warning(f"Stratification with {bins} bins failed: {e}")
+
+        # If stratification still fails, use simple random sampling
+        if stratify_var is None:
+            logger.warning(
+                "Stratified sampling not possible with small sample - using random sampling"
+            )
+            logger.info("This is acceptable for small development samples")
 
         X_train, X_test, y_train, y_test = train_test_split(
             X,
             y,
             test_size=config.models.test_size,  # Use 0.3 from config (70/30 split)
             random_state=config.models.random_state,
-            stratify=y_binned,  # Stratify based on rating bins
+            stratify=stratify_var,  # Use stratify_var (None if stratification failed)
         )
 
         logger.info(
@@ -568,9 +596,22 @@ def train_models(args):
             "random_forest": {
                 "tune_hyperparameters": True,
                 "cv": config.models.cv_folds,
+                "use_two_step_tuning": config.models.two_step_tuning_enabled,
+                "global_config": config,  # Pass global config for two-step tuning
             },
-            "xgboost": {"tune_hyperparameters": True, "cv": config.models.cv_folds},
-            "svr": config.models.svr_params,
+            "xgboost": {
+                "tune_hyperparameters": True,
+                "cv": config.models.cv_folds,
+                "use_two_step_tuning": config.models.two_step_tuning_enabled,
+                "global_config": config,  # Pass global config for two-step tuning
+            },
+            "svr": {
+                **config.models.svr_params,
+                "tune_hyperparameters": True,
+                "cv": config.models.cv_folds,
+                "use_two_step_tuning": config.models.two_step_tuning_enabled,
+                "global_config": config,  # Pass global config for two-step tuning
+            },
             "decision_tree": config.models.decision_tree_params,
         }
 
@@ -620,24 +661,154 @@ def train_models(args):
         # Initialize evaluator
         evaluator = CoffeeModelEvaluator()
 
-        # Evaluate models
-        logger.info("Evaluating models...")
-        comparison_results = evaluator.compare_models(trained_models, X_test, y_test)
+        # Check if Box-Cox dual pipeline is enabled
+        if config.models.box_cox_dual_pipeline:
+            logger.info(
+                "🔄 Box-Cox dual pipeline enabled - running comprehensive comparison"
+            )
 
-        # Print results
-        print("\n" + "=" * 50)
-        print("MODEL COMPARISON RESULTS")
-        print("=" * 50)
+            # Import the dual pipeline function
+            from utils.transformations import run_box_cox_dual_pipeline
 
-        summary_metrics = comparison_results["summary_metrics"]
-        for metric in ["r2", "rmse", "mae"]:
-            print(f"\n{metric.upper()}:")
-            for model_name, value in summary_metrics[metric].items():
-                print(f"  {model_name}: {value:.4f}")
+            # Run dual pipeline analysis
+            dual_pipeline_results = run_box_cox_dual_pipeline(
+                X_train, X_test, y_train, y_test, models, config, logger
+            )
 
-        print(f"\nBest models:")
-        for metric, best_model in comparison_results["best_models"].items():
-            print(f"  {metric}: {best_model}")
+            # Use baseline results as the main comparison results
+            comparison_results = dual_pipeline_results["baseline_results"]
+
+            # Log dual pipeline summary
+            logger.info("📊 Box-Cox Dual Pipeline completed successfully!")
+            logger.info(f"Recommendation: {dual_pipeline_results['recommendation']}")
+            logger.info(f"Reason: {dual_pipeline_results['recommendation_reason']}")
+
+        elif config.models.box_cox_enabled:
+            logger.info(
+                "📊 Box-Cox transformation enabled - applying to target variable"
+            )
+
+            # Import Box-Cox transformer
+            from utils.transformations import BoxCoxTransformer
+
+            # Apply Box-Cox transformation
+            transformer = BoxCoxTransformer(config.models.box_cox_config)
+            y_train_transformed = transformer.fit_transform(y_train)
+            y_test_transformed = transformer.transform(y_test)
+
+            logger.info(
+                f"Box-Cox transformation applied (λ = {transformer.lambda_:.4f})"
+            )
+
+            # Retrain models with transformed target
+            boxcox_trained_models = {}
+            for name, model in models.items():
+                try:
+                    logger.info(f"Training {name} with Box-Cox transformation...")
+                    # Create fresh model instance
+                    model_copy = type(model)(
+                        model.config if hasattr(model, "config") else {}
+                    )
+                    model_copy.fit(X_train, y_train_transformed)
+                    boxcox_trained_models[name] = model_copy
+                    logger.info(f"{name} model trained successfully with Box-Cox")
+                except Exception as e:
+                    logger.error(f"Failed to train {name} with Box-Cox: {e}")
+
+            # Get predictions and inverse transform them
+            boxcox_predictions = {}
+            for name, model in boxcox_trained_models.items():
+                try:
+                    pred_transformed = model.predict(X_test)
+                    pred_original = transformer.inverse_transform(pred_transformed)
+                    boxcox_predictions[name] = pred_original
+                except Exception as e:
+                    logger.error(f"Failed to get predictions for {name}: {e}")
+
+            # Evaluate against original scale targets
+            comparison_results = evaluator.compare_models_with_predictions(
+                boxcox_predictions, y_test
+            )
+
+            # Save Box-Cox transformer
+            transformer_path = config.paths.models / "box_cox_transformer.pkl"
+            transformer.save_transformer(transformer_path)
+            logger.info(f"Box-Cox transformer saved to {transformer_path}")
+
+            # Update trained_models to use Box-Cox models
+            trained_models = boxcox_trained_models
+
+        else:
+            # Standard evaluation with comprehensive metrics and SHAP analysis
+            logger.info(
+                "🔍 Evaluating models with comprehensive metrics and SHAP analysis..."
+            )
+            comparison_results = evaluator.compare_models(
+                trained_models, X_test, y_test, include_shap=True
+            )
+
+        # Print comprehensive results
+        print("\n" + "=" * 80)
+        print("🏆 COMPREHENSIVE MODEL COMPARISON RESULTS")
+        print("=" * 80)
+        print("Following thesis methodology with MAE, RMSE, R² evaluation")
+        print("")
+
+        # Print comparison report if available
+        if "comparison_report" in comparison_results:
+            print(comparison_results["comparison_report"])
+        else:
+            # Fallback to basic summary
+            summary_metrics = comparison_results["summary_metrics"]
+            for metric in ["r2", "rmse", "mae"]:
+                print(f"\n{metric.upper()}:")
+                for model_name, value in summary_metrics[metric].items():
+                    print(f"  {model_name}: {value:.4f}")
+
+            print(f"\nBest models:")
+            for metric, best_model in comparison_results["best_models"].items():
+                print(f"  {metric}: {best_model}")
+
+        # Run comprehensive SHAP analysis if not already included
+        if (
+            "shap_comparison" not in comparison_results
+            or comparison_results["shap_comparison"] is None
+        ):
+            try:
+                logger.info("🔍 Running standalone comprehensive SHAP analysis...")
+                from utils.shap_analysis import run_comprehensive_shap_analysis
+
+                shap_output_dir = config.paths.output / "shap_analysis"
+                shap_results = run_comprehensive_shap_analysis(
+                    trained_models, X_test, y_test, shap_output_dir
+                )
+
+                # Print SHAP analysis report
+                if shap_results and "comparison" in shap_results:
+                    print("\n" + "=" * 80)
+                    print("🔍 COMPREHENSIVE SHAP ANALYSIS RESULTS")
+                    print("=" * 80)
+
+                    comparison = shap_results["comparison"]
+                    if "top_features" in comparison:
+                        print("🏆 TOP FEATURES ACROSS ALL MODELS:")
+                        for i, feature in enumerate(comparison["top_features"][:10], 1):
+                            print(f"  {i:2d}. {feature}")
+
+                    if "model_agreement" in comparison:
+                        agreement = comparison["model_agreement"]
+                        print(
+                            f"\n🤝 MODEL AGREEMENT: {agreement['agreement_interpretation']}"
+                        )
+                        print(
+                            f"   Average Correlation: {agreement['average_agreement']:.3f}"
+                        )
+
+                    print("\n✅ SHAP analysis completed successfully!")
+                    print(f"📊 Results saved to: {shap_output_dir}")
+
+            except Exception as e:
+                logger.warning(f"Standalone SHAP analysis failed: {e}")
 
         # Train MNIR if requested
         if "mnir" in config.models.models_to_train:
@@ -691,13 +862,10 @@ def train_models(args):
             except Exception as e:
                 logger.warning(f"Failed to save {name} model: {e}")
 
-        # Save evaluation results
-        results_path = config.paths.output / "model_comparison_results.pkl"
-        import pickle
-
-        with open(results_path, "wb") as f:
-            pickle.dump(comparison_results, f)
-        logger.info(f"Evaluation results saved to {results_path}")
+        # Save comprehensive evaluation results
+        results_path = config.paths.output / "comprehensive_model_evaluation"
+        evaluator.save_comprehensive_evaluation(comparison_results, results_path)
+        logger.info(f"Comprehensive evaluation results saved to {results_path}")
 
         return True
 

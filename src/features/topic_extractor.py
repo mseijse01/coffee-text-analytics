@@ -90,12 +90,14 @@ class TopicExtractor(BaseTopicExtractor):
             return self
 
         try:
-            # Create TF-IDF vectorizer for topic modeling
+            # Create TF-IDF vectorizer for topic modeling (thesis methodology)
+            # Following thesis: retain stopwords, remove punctuation for topic modeling
             self.vectorizer_ = TfidfVectorizer(
                 max_features=self.config["max_features"],
-                stop_words="english",
+                stop_words=None,  # Retain stopwords for topic modeling (thesis methodology)
                 min_df=1 if len(texts) < 10 else 2,
                 max_df=1.0 if len(texts) < 20 else 0.95,
+                token_pattern=r"(?u)\b\w\w+\b",  # Only words, no punctuation
             )
 
             # Fit vectorizer and transform texts

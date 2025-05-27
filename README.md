@@ -529,3 +529,66 @@ If you use this code or methodology in your research, please cite:
 **Institution**: Erasmus University Rotterdam, Erasmus School of Economics  
 **Program**: Data Science and Marketing Analytics  
 **Year**: 2024
+
+## 🧹 Clean Output Directories
+
+The `clean_outputs.py` utility helps ensure fresh pipeline runs by cleaning output directories and removing artifacts from previous executions.
+
+### Usage
+
+```bash
+# Interactive mode with confirmation (safest)
+python clean_outputs.py
+
+# Clean all directories without confirmation (fast)
+python clean_outputs.py --confirm
+
+# Preview what would be deleted (safe testing)
+python clean_outputs.py --dry-run
+
+# Choose specific directories to clean
+python clean_outputs.py --selective
+
+# Preview selective cleaning
+python clean_outputs.py --selective --dry-run
+```
+
+### What Gets Cleaned
+
+The utility can clean the following directories and files:
+
+- **📊 All Output Results**: Complete `output/` directory
+- **🤖 All Trained Models**: Complete `models/` directory  
+- **📈 Figures and Plots**: Generated visualizations
+- **🔍 SHAP Analysis Results**: SHAP analysis outputs
+- **📋 Model Evaluation Results**: Comprehensive evaluation results
+- **🎯 Feature Selection Results**: Feature selection validation outputs
+- **📊 Stratified Sampling Results**: Sampling validation outputs
+- **🔄 Box-Cox Pipeline Results**: Box-Cox transformation results
+- **📝 Processed Features**: Generated feature files
+- **🎯 Selected Features**: LASSO-selected feature files
+- **📈 Saved Model Files**: Individual model pickle files
+
+### Safety Features
+
+- **Size reporting**: Shows disk space that will be freed
+- **Confirmation prompts**: Prevents accidental deletion
+- **Dry-run mode**: Preview changes without deleting
+- **Selective cleaning**: Choose specific items to clean
+- **Error handling**: Graceful handling of permission issues
+
+### Examples
+
+```bash
+# Before implementing categorical features (clean everything)
+python clean_outputs.py --confirm
+
+# After a failed run (clean just outputs, keep models)
+python clean_outputs.py --selective
+# Then select: "📊 All Output Results"
+
+# Check what would be cleaned
+python clean_outputs.py --dry-run
+```
+
+This ensures you start each pipeline run with a clean slate, avoiding conflicts from previous runs.
