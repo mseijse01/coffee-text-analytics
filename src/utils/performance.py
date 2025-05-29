@@ -241,7 +241,7 @@ class DataFrameBenchmark:
             "polars_avg_time": polars_avg_time,
             "pandas_avg_time": pandas_avg_time,
             "speedup_factor": speedup,
-            "polars_faster": speedup > 1,
+            "polars_faster": bool(speedup > 1),
             "detailed_measurements": summary["measurements"],
         }
 

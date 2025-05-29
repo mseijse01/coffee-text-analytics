@@ -281,10 +281,10 @@ class DataTypeOptimizer:
 
 # Convenience functions for common operations
 def efficient_pandas_apply(
-    df: pl.DataFrame, column: str, func: callable
+    df: pl.DataFrame, column: str, func: callable, new_column: str = None
 ) -> pl.DataFrame:
     """Convenience function for efficient apply operations."""
-    return PolarsOptimizer.efficient_apply(df, column, func)
+    return PolarsOptimizer.efficient_apply(df, column, func, new_column)
 
 
 def prepare_for_sklearn(df: pl.DataFrame, features: List[str], target: str = None):

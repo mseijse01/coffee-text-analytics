@@ -198,15 +198,15 @@ class TestCachingSystem(unittest.TestCase):
 
         # Test set and get
         test_data = {"test": "value"}
-        cache_manager.set("test_key", test_data, "general")
+        cache_manager.set("test_key", test_data, "features")
 
-        retrieved_data = cache_manager.get("test_key", "general")
+        retrieved_data = cache_manager.get("test_key", "features")
         self.assertEqual(retrieved_data, test_data)
 
         # Test cache info
         info = cache_manager.cache_info()
         self.assertIn("cache_types", info)
-        self.assertIn("general", info["cache_types"])
+        self.assertIn("features", info["cache_types"])
 
     def test_cache_get_or_compute(self):
         """Test get_or_compute functionality."""
@@ -219,14 +219,14 @@ class TestCachingSystem(unittest.TestCase):
         # First call should compute
         start_time = time.time()
         result1 = cache_manager.get_or_compute(
-            "test_compute", expensive_computation, "general", 5
+            "test_compute", expensive_computation, "features", 5
         )
         first_call_time = time.time() - start_time
 
         # Second call should use cache
         start_time = time.time()
         result2 = cache_manager.get_or_compute(
-            "test_compute", expensive_computation, "general", 5
+            "test_compute", expensive_computation, "features", 5
         )
         second_call_time = time.time() - start_time
 
