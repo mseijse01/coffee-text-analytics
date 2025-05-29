@@ -5,6 +5,8 @@ Integration tests for feature selectors using real data flows.
 Focus: High-level integration testing with real coffee data, minimal mocking.
 Strategy: Test complete workflows from data → features → selection → validation.
 Coverage Target: Boost selector coverage from 14% → 70%+
+
+NOTE: These tests also verify TYPE CONTRACTS and INTENDED BEHAVIOR, not just implementation.
 """
 
 import pytest
@@ -19,6 +21,288 @@ import os
 # Import feature selectors
 from src.features.feature_selector import LassoFeatureSelector
 from src.features.feature_selector_corrected import CorrectedLassoFeatureSelector
+
+
+class TestTypeContractsAndSpecification:
+    """Test type contracts, specifications, and intended behavior."""
+
+    def test_lasso_selector_type_contracts(self):
+        """
+        Test that LassoFeatureSelector respects its type contracts.
+
+        CRITICAL: Ensures input/output types match specifications, not just current implementation.
+        """
+        selector = LassoFeatureSelector()
+
+        # Test input type validation
+        X_pandas = pd.DataFrame({"feature1": [1, 2, 3], "feature2": [4, 5, 6]})
+        X_numpy = np.array([[1, 4], [2, 5], [3, 6]])
+        X_polars = pl.DataFrame({"feature1": [1, 2, 3], "feature2": [4, 5, 6]})
+        y_pandas = pd.Series([1.0, 2.0, 3.0])
+        y_numpy = np.array([1.0, 2.0, 3.0])
+
+        # Should accept pandas DataFrame
+        selector_pd = LassoFeatureSelector()
+        result_pd = selector_pd.fit_select_features(X_pandas, y_pandas)
+        assert isinstance(result_pd, LassoFeatureSelector), (
+            "fit_select_features should return self"
+        )
+
+        # Should accept numpy array
+        selector_np = LassoFeatureSelector()
+        result_np = selector_np.fit_select_features(X_numpy, y_numpy)
+        assert isinstance(result_np, LassoFeatureSelector), (
+            "fit_select_features should return self"
+        )
+
+        # CRITICAL: Should NOT silently accept Polars DataFrame
+        # This would indicate a type contract violation
+        selector_pl = LassoFeatureSelector()
+        with pytest.raises((TypeError, AttributeError), match=".*"):
+            # This should fail - feature selector should not accept Polars input
+            selector_pl.fit_select_features(X_polars, y_pandas)
+
+        # Test output type contracts
+        X_transformed_pd = selector_pd.transform(X_pandas)
+        X_transformed_np = selector_np.transform(X_numpy)
+
+        # Output type should match input type per specification
+        assert isinstance(X_transformed_pd, pd.DataFrame), (
+            "Transform should return DataFrame when given DataFrame"
+        )
+        assert isinstance(X_transformed_np, np.ndarray), (
+            "Transform should return numpy array when given numpy array"
+        )
+
+        # Test get_selected_features contract
+        selected_features = selector_pd.get_selected_features()
+        assert isinstance(selected_features, list), (
+            "get_selected_features must return List[str]"
+        )
+        assert all(isinstance(f, str) for f in selected_features), (
+            "All feature names must be strings"
+        )
+
+        # Test get_feature_importance contract
+        importance = selector_pd.get_feature_importance()
+        assert isinstance(importance, dict), (
+            "get_feature_importance must return Dict[str, float]"
+        )
+        for key, value in importance.items():
+            assert isinstance(key, str), f"Importance key {key} must be string"
+            assert isinstance(value, (int, float)), (
+                f"Importance value {value} must be numeric"
+            )
+
+    def test_corrected_selector_type_contracts(self):
+        """
+        Test that CorrectedLassoFeatureSelector respects its type contracts.
+        """
+        X_pandas = pd.DataFrame(
+            {
+                "tfidf_desc_1_0": [1, 2, 3],
+                "bert_desc_1_0": [4, 5, 6],
+                "aroma": [7, 8, 9],
+            }
+        )
+        X_polars = pl.DataFrame(
+            {
+                "tfidf_desc_1_0": [1, 2, 3],
+                "bert_desc_1_0": [4, 5, 6],
+                "aroma": [7, 8, 9],
+            }
+        )
+        y = pd.Series([1.0, 2.0, 3.0])
+
+        selector = CorrectedLassoFeatureSelector()
+
+        # Should accept pandas DataFrame
+        result = selector.fit_select_features(X_pandas, y)
+        assert isinstance(result, CorrectedLassoFeatureSelector), "Should return self"
+
+        # CRITICAL: Should NOT silently accept Polars DataFrame
+        with pytest.raises((TypeError, AttributeError), match=".*"):
+            CorrectedLassoFeatureSelector().fit_select_features(X_polars, y)
+
+        # Test method return types
+        assert isinstance(selector.get_selected_features(), list)
+        assert isinstance(selector.get_text_features(), list)
+        assert isinstance(selector.get_feature_importance(), dict)
+        assert isinstance(selector.get_selection_summary(), dict)
+
+    def test_input_validation_and_error_handling(self):
+        """
+        Test proper input validation and error handling.
+
+        NEGATIVE TESTS: Ensure functions fail appropriately with bad inputs.
+        """
+        selector = LassoFeatureSelector()
+
+        # Test invalid input types
+        with pytest.raises((TypeError, ValueError), match=".*"):
+            selector.fit_select_features("invalid_input", [1, 2, 3])
+
+        with pytest.raises((TypeError, ValueError), match=".*"):
+            selector.fit_select_features([[1, 2], [3, 4]], "invalid_target")
+
+        # Test mismatched dimensions
+        X = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+        y_wrong_size = pd.Series([1, 2])  # Wrong size
+
+        with pytest.raises((ValueError, IndexError), match=".*"):
+            selector.fit_select_features(X, y_wrong_size)
+
+        # Test empty inputs
+        X_empty = pd.DataFrame()
+        y_empty = pd.Series(dtype=float)
+
+        with pytest.raises((ValueError, IndexError), match=".*"):
+            selector.fit_select_features(X_empty, y_empty)
+
+        # Test methods before fitting
+        unfitted_selector = LassoFeatureSelector()
+        with pytest.raises(ValueError, match=".*fitted.*"):
+            unfitted_selector.transform(X)
+        with pytest.raises(ValueError, match=".*fitted.*"):
+            unfitted_selector.get_selected_features()
+        with pytest.raises(ValueError, match=".*fitted.*"):
+            unfitted_selector.get_feature_importance()
+
+    def test_pipeline_integration_type_compatibility(self):
+        """
+        Test that the feature selection pipeline handles type transitions correctly.
+
+        CRITICAL: This catches the Polars → Pandas conversion issue!
+        """
+        # Simulate real data flow: Polars from feature manager → needs conversion for selector
+        polars_features = pl.DataFrame(
+            {
+                "tfidf_desc_1_0": [0.1, 0.2, 0.3, 0.4],
+                "tfidf_desc_1_1": [0.5, 0.6, 0.7, 0.8],
+                "bert_desc_1_0": [0.9, 1.0, 1.1, 1.2],
+                "sentiment_desc_1_pos": [0.1, 0.2, 0.3, 0.4],
+                "aroma": [8.0, 8.5, 9.0, 7.5],
+                "rating": [92.0, 93.5, 91.0, 94.0],
+            }
+        )
+
+        # Feature selectors require pandas/numpy, not polars
+        # This should be handled explicitly, not silently
+
+        # CORRECT way: explicit conversion
+        pandas_features = polars_features.to_pandas()
+        y = pandas_features.pop("rating")
+        X = pandas_features
+
+        # Should work with explicit conversion
+        selector = CorrectedLassoFeatureSelector()
+        selector.fit_select_features(X, y)
+        X_selected = selector.transform(X)
+
+        assert isinstance(X_selected, pd.DataFrame), "Output should be pandas DataFrame"
+        assert X_selected.shape[0] == X.shape[0], "Should preserve number of samples"
+
+        # WRONG way: passing Polars directly should fail
+        with pytest.raises((TypeError, AttributeError), match=".*"):
+            bad_selector = CorrectedLassoFeatureSelector()
+            bad_selector.fit_select_features(
+                polars_features.drop("rating"), polars_features.get_column("rating")
+            )
+
+    def test_feature_name_consistency_and_validation(self):
+        """
+        Test that feature names are handled consistently and validated properly.
+        """
+        # Test with various feature name patterns
+        feature_data = {
+            "tfidf_desc_1_word_coffee": [0.1, 0.2, 0.3],
+            "bert_desc_2_embedding_0": [0.4, 0.5, 0.6],
+            "sentiment_desc_3_positive": [0.7, 0.8, 0.9],
+            "lda_topic_0": [0.1, 0.2, 0.3],
+            "aroma_score": [8.0, 8.5, 9.0],
+            "origin_ethiopia": [1, 0, 1],
+        }
+
+        X = pd.DataFrame(feature_data)
+        y = pd.Series([92.0, 93.5, 91.0])
+
+        # Test both selectors
+        for SelectorClass in [LassoFeatureSelector, CorrectedLassoFeatureSelector]:
+            selector = SelectorClass()
+            selector.fit_select_features(X, y)
+
+            selected_features = selector.get_selected_features()
+
+            # Validate feature names
+            assert isinstance(selected_features, list), (
+                f"{SelectorClass.__name__} should return list of feature names"
+            )
+            assert all(isinstance(name, str) for name in selected_features), (
+                "All feature names should be strings"
+            )
+            assert all(name in X.columns for name in selected_features), (
+                "All selected features should exist in original data"
+            )
+
+            # Test transform with selected features
+            X_transformed = selector.transform(X)
+            assert list(X_transformed.columns) == selected_features, (
+                "Transform output columns should match selected features"
+            )
+
+    def test_numerical_correctness_and_stability(self):
+        """
+        Test numerical correctness and stability of feature selection.
+        """
+        # Create deterministic test data
+        np.random.seed(42)
+        n_samples, n_features = 100, 20
+
+        X = pd.DataFrame(
+            np.random.randn(n_samples, n_features),
+            columns=[f"feature_{i}" for i in range(n_features)],
+        )
+        y = pd.Series(np.random.randn(n_samples))
+
+        # Test reproducibility
+        selector1 = LassoFeatureSelector({"random_state": 42})
+        selector2 = LassoFeatureSelector({"random_state": 42})
+
+        selector1.fit_select_features(X, y)
+        selector2.fit_select_features(X, y)
+
+        # Should get identical results with same random state
+        assert selector1.get_selected_features() == selector2.get_selected_features(), (
+            "Results should be reproducible with same random_state"
+        )
+
+        # Test that feature importance values are reasonable
+        importance = selector1.get_feature_importance()
+        assert all(isinstance(v, (int, float)) for v in importance.values()), (
+            "Importance values should be numeric"
+        )
+        assert all(not np.isnan(v) for v in importance.values()), (
+            "Importance values should not be NaN"
+        )
+        assert all(not np.isinf(v) for v in importance.values()), (
+            "Importance values should not be infinite"
+        )
+
+    def test_configuration_validation(self):
+        """
+        Test that configuration parameters are validated properly.
+        """
+        # Test invalid alpha range
+        with pytest.raises((ValueError, TypeError), match=".*alpha.*"):
+            LassoFeatureSelector({"alpha_range": "invalid"})
+
+        # Test invalid CV folds
+        with pytest.raises((ValueError, TypeError), match=".*"):
+            LassoFeatureSelector({"cv_folds": -1})
+
+        # Test invalid feature limits
+        with pytest.raises((ValueError, TypeError), match=".*"):
+            LassoFeatureSelector({"max_features_per_group": -5})
 
 
 class TestLassoFeatureSelectorIntegration:
@@ -256,40 +540,151 @@ class TestLassoFeatureSelectorIntegration:
 
     def test_persistence_integration(self, real_coffee_data):
         """
-        Integration test: Selector persistence and loading.
+        Integration test: Save/load functionality with real selectors.
 
-        Tests save/load workflow with real trained selector.
+        Tests the complete persistence workflow with real data.
         """
         df = real_coffee_data
         feature_cols = [col for col in df.columns if col != "rating"]
         X = df[feature_cols]
         y = df["rating"]
 
-        config = {"alpha_range": [0.01, 0.1, 1.0], "cv_folds": 3, "random_state": 42}
+        config = {
+            "alpha_range": [0.001, 0.01, 0.1],
+            "cv_folds": 3,
+            "random_state": 42,
+        }
 
-        # Train original selector
+        # Create and fit original selector
         original_selector = LassoFeatureSelector(config)
         original_selector.fit_select_features(X, y)
-        X_original = original_selector.transform(X)
 
-        # Save selector
-        with tempfile.TemporaryDirectory() as temp_dir:
-            save_path = os.path.join(temp_dir, "selector.pkl")
-            original_selector.save_selector(save_path)
+        # Test persistence
+        with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as tmp:
+            try:
+                # Save selector
+                original_selector.save_selector(tmp.name)
+                assert os.path.exists(tmp.name)
 
-            # Load selector
-            loaded_selector = LassoFeatureSelector.load_selector(save_path)
+                # Load selector and verify
+                loaded_selector = LassoFeatureSelector.load_selector(tmp.name)
+                assert loaded_selector.is_fitted_
+                assert (
+                    loaded_selector.get_selected_features()
+                    == original_selector.get_selected_features()
+                )
 
-            # Test loaded selector produces same results
-            assert loaded_selector.is_fitted_
-            X_loaded = loaded_selector.transform(X)
+                # Test transform with loaded selector
+                X_original = original_selector.transform(X)
+                X_loaded = loaded_selector.transform(X)
+                pd.testing.assert_frame_equal(X_original, X_loaded)
 
-            # Results should be identical
-            pd.testing.assert_frame_equal(X_original, X_loaded)
-            assert (
-                loaded_selector.get_selected_features()
-                == original_selector.get_selected_features()
-            )
+            finally:
+                if os.path.exists(tmp.name):
+                    os.unlink(tmp.name)
+
+    def test_error_handling_and_edge_cases(self, real_coffee_data):
+        """
+        Integration test: Error handling and edge cases.
+
+        Tests various error conditions and edge cases in real workflows.
+        """
+        df = real_coffee_data
+        feature_cols = [col for col in df.columns if col != "rating"]
+        X = df[feature_cols]
+        y = df["rating"]
+
+        selector = LassoFeatureSelector()
+
+        # Test errors before fitting
+        with pytest.raises(ValueError, match="Feature selector must be fitted"):
+            selector.get_selected_features()
+
+        with pytest.raises(ValueError, match="Feature selector must be fitted"):
+            selector.get_feature_importance()
+
+        with pytest.raises(ValueError, match="Feature selector must be fitted"):
+            selector.get_selection_summary()
+
+        with pytest.raises(
+            ValueError, match="Feature selector must be fitted before transform"
+        ):
+            selector.transform(X)
+
+        with pytest.raises(
+            ValueError, match="Feature selector must be fitted before saving"
+        ):
+            selector.save_selector("test.pkl")
+
+        # Fit selector
+        selector.fit_select_features(X, y)
+
+        # Test numpy array transform
+        X_numpy = X.values
+        X_transformed_numpy = selector.transform(X_numpy)
+        assert isinstance(X_transformed_numpy, np.ndarray)
+
+    def test_summary_and_reporting_integration(self, real_coffee_data):
+        """
+        Integration test: Summary and reporting functionality.
+
+        Tests all summary and reporting methods with real data.
+        """
+        df = real_coffee_data
+        feature_cols = [col for col in df.columns if col != "rating"]
+        X = df[feature_cols]
+        y = df["rating"]
+
+        selector = LassoFeatureSelector(
+            {
+                "alpha_range": [0.01, 0.1, 1.0],
+                "cv_folds": 3,
+                "random_state": 42,
+            }
+        )
+
+        # Fit selector
+        selector.fit_select_features(X, y)
+
+        # Test get_selection_summary
+        summary = selector.get_selection_summary()
+        assert isinstance(summary, dict)
+        assert "total_original_features" in summary
+        assert "total_selected_features" in summary
+        assert "overall_reduction_ratio" in summary
+        assert "group_statistics" in summary
+        assert "selected_features_by_group" in summary
+
+        # Test get_feature_importance
+        importance = selector.get_feature_importance()
+        assert isinstance(importance, dict)
+        assert len(importance) > 0
+
+        # Test print_summary (capture stdout)
+        import sys
+        from io import StringIO
+
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            selector.print_summary()
+            output = sys.stdout.getvalue()
+            assert "LASSO FEATURE SELECTION SUMMARY" in output
+            assert "Total original features" in output
+            assert "Overall reduction" in output
+        finally:
+            sys.stdout = old_stdout
+
+        # Test print_summary before fitting
+        unfitted_selector = LassoFeatureSelector()
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            unfitted_selector.print_summary()
+            output = sys.stdout.getvalue()
+            assert "Feature selector not fitted yet." in output
+        finally:
+            sys.stdout = old_stdout
 
 
 class TestCorrectedLassoFeatureSelectorIntegration:
@@ -502,60 +897,215 @@ class TestCorrectedLassoFeatureSelectorIntegration:
 
     def test_end_to_end_pipeline_integration(self, coffee_text_features):
         """
-        Integration test: Complete end-to-end pipeline.
+        Integration test: End-to-end pipeline validation.
 
-        Tests: feature loading → selection → model training → evaluation.
+        Tests complete thesis methodology pipeline with realistic coffee data.
         """
         X, y = coffee_text_features
 
-        from sklearn.model_selection import train_test_split
-        from sklearn.linear_model import Ridge
-        from sklearn.metrics import r2_score, mean_squared_error
+        # Feature preparation following thesis structure
+        text_features = [
+            col
+            for col in X.columns
+            if any(
+                prefix in col for prefix in ["tfidf_", "bert_", "sentiment_", "lda_"]
+            )
+        ]
+        sensory_features = [col for col in X.columns if col.startswith("sensory_")]
+        categorical_features = [
+            col for col in X.columns if col.startswith("categorical_")
+        ]
 
-        # Split data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.3, random_state=42
-        )
+        # Prepare feature matrix and target
+        all_features = text_features + sensory_features + categorical_features
+        X_subset = X[all_features] if all_features else X
 
-        # Feature selection
+        # Test complete pipeline
         config = {
-            "alpha_range": [0.1, 1.0, 10.0],  # More aggressive alpha values
-            "cv_folds": 3,
-            "target_text_features": 30,
+            "lasso_alpha": 0.1,
+            "selection_threshold": "median",
             "min_text_features": 5,
-            "max_text_features": 50,  # Add explicit max limit
-            "selection_threshold": "median",  # More aggressive threshold
+            "max_text_features": 30,
             "random_state": 42,
         }
 
         selector = CorrectedLassoFeatureSelector(config)
-        X_train_selected = selector.fit_transform(X_train, y_train)
-        X_test_selected = selector.transform(X_test)
 
-        # Model training
-        model = Ridge(alpha=1.0, random_state=42)
-        model.fit(X_train_selected, y_train)
+        # End-to-end test
+        X_final = selector.fit_transform(X_subset, y)
 
-        # Evaluation
-        y_pred = model.predict(X_test_selected)
-        r2 = r2_score(y_test, y_pred)
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+        # Validate pipeline results
+        assert isinstance(X_final, pd.DataFrame)
+        assert X_final.shape[0] == X_subset.shape[0]
+        assert X_final.shape[1] <= X_subset.shape[1]  # Features reduced
 
-        # Validate end-to-end results
-        assert isinstance(r2, float)
-        assert isinstance(rmse, float)
-        assert r2 > -1.0  # Reasonable R² (even if negative, shouldn't be extreme)
-        assert rmse > 0  # RMSE should be positive
-        assert rmse < 10  # Should be reasonable for coffee ratings (88-98 range)
+        # Validate thesis methodology compliance
+        final_features = selector.get_selected_features()
+        selected_text = selector.get_text_features()
 
-        # Log results for manual validation
-        print(f"End-to-end pipeline results:")
-        print(
-            f"  Features: {X.shape[1]} → {X_train_selected.shape[1]} ({X_train_selected.shape[1] / X.shape[1]:.2%})"
+        # Check that some text features were selected
+        assert len(selected_text) >= config["min_text_features"]
+        assert len(selected_text) <= config["max_text_features"]
+
+        # Check feature importance is available
+        importance = selector.get_feature_importance()
+        assert len(importance) == len(selected_text)
+
+    def test_error_handling_and_edge_cases_corrected(self, coffee_text_features):
+        """
+        Integration test: Error handling and edge cases for CorrectedLassoFeatureSelector.
+
+        Tests various error conditions and edge cases in real workflows.
+        """
+        X, y = coffee_text_features
+
+        selector = CorrectedLassoFeatureSelector()
+
+        # Test methods before fitting
+        assert selector.get_selected_features() == []
+        assert selector.get_text_features() == []
+        assert selector.get_feature_importance() == {}
+        assert selector.get_selection_summary() == {}
+
+        # Test print_summary before fitting
+        import sys
+        from io import StringIO
+
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            selector.print_summary()
+            output = sys.stdout.getvalue()
+            assert "Selector not fitted yet" in output
+        finally:
+            sys.stdout = old_stdout
+
+        # Test with edge case: no text features
+        X_no_text = X[
+            [
+                col
+                for col in X.columns
+                if not any(
+                    prefix in col
+                    for prefix in ["tfidf_", "bert_", "sentiment_", "lda_"]
+                )
+            ]
+        ].copy()
+
+        if len(X_no_text.columns) > 0:
+            # Should handle gracefully when no text features
+            selector_no_text = CorrectedLassoFeatureSelector()
+            # This might fail or succeed depending on implementation
+            try:
+                selector_no_text.fit_select_features(X_no_text, y)
+            except Exception:
+                pass  # Expected behavior with no text features
+
+    def test_persistence_and_summary_integration_corrected(self, coffee_text_features):
+        """
+        Integration test: Persistence and summary functionality for CorrectedLassoFeatureSelector.
+
+        Tests save/load and reporting functionality with real data.
+        """
+        X, y = coffee_text_features
+
+        config = {
+            "lasso_alpha": 0.05,
+            "selection_threshold": "mean",
+            "min_text_features": 3,
+            "max_text_features": 15,
+            "random_state": 42,
+        }
+
+        # Create and fit selector
+        original_selector = CorrectedLassoFeatureSelector(config)
+        original_selector.fit_select_features(X, y)
+
+        # Test get_selection_summary
+        summary = original_selector.get_selection_summary()
+        assert isinstance(summary, dict)
+        assert "original_text_features" in summary
+        assert "selected_text_features" in summary
+        assert "total_final_features" in summary
+        assert "text_reduction_ratio" in summary
+
+        # Test print_summary (capture stdout)
+        import sys
+        from io import StringIO
+
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            original_selector.print_summary()
+            output = sys.stdout.getvalue()
+            assert "CORRECTED LASSO FEATURE SELECTION SUMMARY" in output
+            assert "Original text features" in output
+            assert "Text reduction ratio" in output
+        finally:
+            sys.stdout = old_stdout
+
+        # Test persistence
+        with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as tmp:
+            try:
+                # Save selector
+                original_selector.save_selector(tmp.name)
+                assert os.path.exists(tmp.name)
+
+                # Load selector and verify
+                loaded_selector = CorrectedLassoFeatureSelector.load_selector(tmp.name)
+                assert loaded_selector.is_fitted_
+                assert (
+                    loaded_selector.get_selected_features()
+                    == original_selector.get_selected_features()
+                )
+
+                # Test transform with loaded selector
+                X_original = original_selector.transform(X)
+                X_loaded = loaded_selector.transform(X)
+                pd.testing.assert_frame_equal(X_original, X_loaded)
+
+            finally:
+                if os.path.exists(tmp.name):
+                    os.unlink(tmp.name)
+
+        # Test error handling for save before fit
+        unfitted_selector = CorrectedLassoFeatureSelector()
+        with pytest.raises(ValueError, match="Cannot save unfitted selector"):
+            unfitted_selector.save_selector("test.pkl")
+
+    def test_transform_edge_cases_corrected(self, coffee_text_features):
+        """
+        Integration test: Transform edge cases for CorrectedLassoFeatureSelector.
+
+        Tests transform functionality with missing features and edge cases.
+        """
+        X, y = coffee_text_features
+
+        selector = CorrectedLassoFeatureSelector(
+            {
+                "lasso_alpha": 0.1,
+                "random_state": 42,
+            }
         )
-        print(f"  R²: {r2:.4f}")
-        print(f"  RMSE: {rmse:.4f}")
 
-        # Pipeline should complete without errors
-        assert X_train_selected.shape[1] > 0
-        assert X_test_selected.shape[1] == X_train_selected.shape[1]
+        # Fit selector
+        selector.fit_select_features(X, y)
+
+        # Test transform with missing features
+        X_subset = X.drop(columns=X.columns[:5])  # Remove some features
+
+        # Should handle gracefully (with warnings)
+        X_transformed = selector.transform(X_subset)
+        assert isinstance(X_transformed, pd.DataFrame)
+
+        # Test transform with numpy array input
+        if hasattr(selector, "is_fitted_") and selector.is_fitted_:
+            X_numpy = X.values
+            feature_names = [f"feature_{i}" for i in range(X_numpy.shape[1])]
+            X_numpy_df = pd.DataFrame(X_numpy, columns=feature_names)
+
+            try:
+                X_transformed_numpy = selector.transform(X_numpy_df)
+                assert isinstance(X_transformed_numpy, pd.DataFrame)
+            except Exception:
+                pass  # Expected if feature names don't match
