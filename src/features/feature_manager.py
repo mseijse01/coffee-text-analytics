@@ -227,10 +227,23 @@ class CoffeeFeatureManager:
         logger.info(f"Total texts for fitting: {len(all_texts)}")
 
         # Fit each configured extractor
-        for extractor_name, extractor_config in self.config.items():
-            if extractor_name in ["tfidf", "bert", "topics", "sentiment", "glove"]:
+        extractors_config = self.config.get("extractors", {})
+        for extractor_name in ["tfidf", "bert", "topics", "sentiment", "glove"]:
+            # Only process if extractor is enabled
+            if extractors_config.get(extractor_name, False):
                 logger.info(f"Fitting {extractor_name} extractor")
-                extractor = self._create_extractor(extractor_name, extractor_config)
+                extractor_specific_config = self.config.get(extractor_name, {})
+                extractor = self._create_extractor(
+                    extractor_name, extractor_specific_config
+                )
+
+                # Skip if extractor creation failed (e.g., GloVe not available)
+                if extractor is None:
+                    logger.warning(
+                        f"Skipping {extractor_name} extractor - not available"
+                    )
+                    continue
+
                 extractor.fit(all_texts)
                 self.extractors[extractor_name] = extractor
                 logger.info(f"✅ {extractor_name} extractor fitted")

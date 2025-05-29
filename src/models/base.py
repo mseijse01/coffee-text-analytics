@@ -181,7 +181,13 @@ class BaseModel(ABC, BaseEstimator):
         """
         validate_not_none(X, "X", context={"model": self.__class__.__name__})
 
-        if isinstance(X, (pd.DataFrame, pl.DataFrame)) and X.is_empty():
+        # Check if DataFrame is empty - different methods for pandas vs polars
+        if isinstance(X, pl.DataFrame) and X.is_empty():
+            raise ModelError(
+                "Input features cannot be empty",
+                context={"model": self.__class__.__name__, "X_shape": X.shape},
+            )
+        elif isinstance(X, pd.DataFrame) and X.empty:
             raise ModelError(
                 "Input features cannot be empty",
                 context={"model": self.__class__.__name__, "X_shape": X.shape},

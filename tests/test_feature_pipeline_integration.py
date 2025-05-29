@@ -80,6 +80,7 @@ def full_config():
 class TestFeatureEngineeringPipelineIntegration:
     """Integration tests for complete feature engineering pipeline."""
 
+    @pytest.mark.integration
     def test_complete_feature_extraction_pipeline(
         self, polars_sample_data, text_columns, minimal_config
     ):
@@ -119,6 +120,9 @@ class TestFeatureEngineeringPipelineIntegration:
                     f"No features found for {extractor_name}_{col}"
                 )
 
+    @pytest.mark.slow
+    @pytest.mark.heavy_ml
+    @pytest.mark.integration
     @patch("src.features.bert_extractor.BertExtractor.extract_features")
     @patch("src.features.topic_extractor.TopicExtractor.extract_features")
     def test_heavyweight_ml_operations_mocked(
@@ -180,6 +184,7 @@ class TestFeatureEngineeringPipelineIntegration:
         assert len(bert_features) > 0, "BERT features not found in output"
         assert len(topic_features) > 0, "Topic features not found in output"
 
+    @pytest.mark.integration
     @pytest.mark.parametrize("data_format", ["polars", "pandas"])
     def test_polars_vs_pandas_consistency(
         self, sample_data, polars_sample_data, text_columns, minimal_config, data_format
@@ -254,6 +259,7 @@ class TestFeatureEngineeringPipelineIntegration:
             ]
             assert len(encoded_cols) > 0, f"No encoded features found for {col}"
 
+    @pytest.mark.integration
     @pytest.mark.parametrize("extractor_type", ["tfidf"])  # Only test TF-IDF for now
     def test_individual_extractor_integration(
         self, polars_sample_data, text_columns, extractor_type
