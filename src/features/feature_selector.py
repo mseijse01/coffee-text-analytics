@@ -162,9 +162,9 @@ class LassoFeatureSelector:
         lasso_cv.fit(X_group_scaled, y)
 
         # Create feature selector based on LASSO coefficients
-        # Adapt max_features to group size
+        # Adapt max_features to group size and ensure it's positive
         max_features_for_group = min(
-            self.config["max_features_per_group"], X_group.shape[1]
+            max(1, self.config["max_features_per_group"]), X_group.shape[1]
         )
 
         selector = SelectFromModel(
@@ -235,6 +235,17 @@ class LassoFeatureSelector:
         """
         logger.info("Starting LASSO-based feature selection")
 
+        # Validate input types first
+        if not isinstance(X, (np.ndarray, pd.DataFrame, pl.DataFrame)):
+            raise TypeError(
+                f"X must be numpy array, pandas DataFrame, or Polars DataFrame, got {type(X)}"
+            )
+
+        if not isinstance(y, (np.ndarray, pd.Series, pl.Series, list)):
+            raise TypeError(
+                f"y must be numpy array, pandas Series, Polars Series, or list, got {type(y)}"
+            )
+
         # Convert inputs to appropriate format for sklearn
         if isinstance(X, pd.DataFrame):
             feature_names = list(X.columns)
@@ -243,15 +254,31 @@ class LassoFeatureSelector:
             feature_names = list(X.columns)
             X_array = X.to_numpy()  # Convert Polars to numpy for sklearn
         else:
-            feature_names = [f"feature_{i}" for i in range(X.shape[1])]
-            X_array = X
+            # For numpy arrays and other array-like objects
+            try:
+                X_array = np.asarray(X)
+                if X_array.ndim != 2:
+                    raise ValueError(
+                        f"X must be 2-dimensional, got {X_array.ndim} dimensions"
+                    )
+                feature_names = [f"feature_{i}" for i in range(X_array.shape[1])]
+            except Exception as e:
+                raise TypeError(f"Could not convert X to numpy array: {e}")
 
         if isinstance(y, pd.Series):
             y_array = y.values
         elif isinstance(y, pl.Series):
             y_array = y.to_numpy()  # Convert Polars to numpy for sklearn
         else:
-            y_array = y
+            # For numpy arrays and other array-like objects
+            try:
+                y_array = np.asarray(y)
+                if y_array.ndim != 1:
+                    raise ValueError(
+                        f"y must be 1-dimensional, got {y_array.ndim} dimensions"
+                    )
+            except Exception as e:
+                raise TypeError(f"Could not convert y to numpy array: {e}")
 
         logger.info(f"Input shape: {X_array.shape}, Target shape: {y_array.shape}")
 
