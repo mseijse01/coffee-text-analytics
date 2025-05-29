@@ -135,9 +135,19 @@ class TestCategoricalFeatureEncoder:
         assert len(result) == len(sample_data)
 
         # Check that we have encoded features (should also keep original columns)
-        roast_cols = [col for col in result.columns if col.startswith("roast_")]
-        country_cols = [col for col in result.columns if col.startswith("country_")]
-        roaster_cols = [col for col in result.columns if col.startswith("roaster_")]
+        roast_cols = [
+            col for col in result.columns if col.startswith("roast_") and col != "roast"
+        ]
+        country_cols = [
+            col
+            for col in result.columns
+            if col.startswith("country_") and col != "country_of_origin"
+        ]
+        roaster_cols = [
+            col
+            for col in result.columns
+            if col.startswith("roaster_") and col != "roaster"
+        ]
 
         assert len(roast_cols) > 0
         assert len(country_cols) > 0
