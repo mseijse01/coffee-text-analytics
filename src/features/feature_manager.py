@@ -7,6 +7,8 @@ for extracting comprehensive features following the thesis methodology.
 
 import polars as pl
 import numpy as np
+import pickle
+import os
 import logging
 from typing import List, Dict, Optional, Any, Union
 from pathlib import Path
@@ -16,6 +18,12 @@ from .tfidf_extractor import TfidfExtractor
 from .bert_extractor import BertExtractor
 from .topic_extractor import TopicExtractor
 from .sentiment_extractor import SentimentExtractor
+
+# Import specialized preprocessing functions
+from ..data.preprocessing import (
+    preprocess_text_for_embeddings,
+    preprocess_text_for_topics,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -355,6 +363,11 @@ class CoffeeFeatureManager:
         """
         Extract features from texts for a specific column with proper naming.
 
+        Following thesis methodology, applies specialized preprocessing:
+        - Topic modeling: Retain stopwords, remove punctuation
+        - Embeddings/Sentiment: Remove stopwords, retain punctuation
+        - TF-IDF: Remove stopwords, retain punctuation
+
         Args:
             texts: List of texts from the column
             column_name: Name of the source column (e.g., 'desc_1')
@@ -365,16 +378,22 @@ class CoffeeFeatureManager:
         logger.info(
             f"Extracting features for column '{column_name}' from {len(texts)} texts"
         )
+        logger.info(
+            "Following thesis methodology: specialized preprocessing per extractor type"
+        )
 
         feature_dfs = []
 
-        # Extract features using each extractor
+        # Extract features using each extractor with specialized preprocessing
         for name, extractor in self.extractors.items():
             try:
                 logger.info(f"Extracting {name} features for {column_name}")
 
-                # Extract features
-                features_df = extractor.extract_features(texts)
+                # Apply specialized preprocessing based on extractor type (thesis methodology)
+                preprocessed_texts = self._apply_specialized_preprocessing(texts, name)
+
+                # Extract features using preprocessed texts
+                features_df = extractor.extract_features(preprocessed_texts)
 
                 if not features_df.is_empty():
                     # Rename columns to include source column (thesis naming convention)
@@ -583,3 +602,48 @@ class CoffeeFeatureManager:
                 print(f"  {name}: {count} features ({percentage:.1f}%)")
 
         print("=" * 40)
+
+    def _apply_specialized_preprocessing(
+        self, texts: List[str], extractor_name: str
+    ) -> List[str]:
+        """
+        Apply specialized preprocessing based on extractor type.
+
+        Following thesis methodology:
+        - Topic modeling: Retain stopwords, remove punctuation
+        - Embeddings/TF-IDF/Sentiment: Remove stopwords, retain punctuation
+
+        Args:
+            texts: List of texts to preprocess
+            extractor_name: Name of the extractor (e.g., 'topics', 'tfidf', 'bert', 'sentiment')
+
+        Returns:
+            List of preprocessed texts
+        """
+        logger.debug(f"Applying specialized preprocessing for {extractor_name}")
+
+        preprocessed_texts = []
+
+        # Determine preprocessing type based on extractor
+        if extractor_name in ["topics", "topic"]:
+            # Topic modeling: retain stopwords, remove punctuation
+            for text in texts:
+                if isinstance(text, str) and text.strip():
+                    preprocessed_texts.append(preprocess_text_for_topics(text))
+                else:
+                    preprocessed_texts.append("")
+            logger.debug(
+                f"Applied topic modeling preprocessing (retain stopwords, remove punctuation)"
+            )
+        else:
+            # Embeddings/TF-IDF/Sentiment: remove stopwords, retain punctuation
+            for text in texts:
+                if isinstance(text, str) and text.strip():
+                    preprocessed_texts.append(preprocess_text_for_embeddings(text))
+                else:
+                    preprocessed_texts.append("")
+            logger.debug(
+                f"Applied embeddings/TF-IDF/sentiment preprocessing (remove stopwords, retain punctuation)"
+            )
+
+        return preprocessed_texts
