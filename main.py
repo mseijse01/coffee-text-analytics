@@ -356,8 +356,8 @@ def select_features(args):
             logger.error(f"Target column '{target_column}' not found in data")
             return False
 
-        # Exclude non-feature columns (same logic as in train_models)
-        potential_exclude_columns = (
+        # Exclude non-feature columns
+        exclude_columns = (
             config.models.text_columns
             + [target_column]
             + [
@@ -386,12 +386,13 @@ def select_features(args):
                 "processed_text",
                 "url",
                 "loc",
+                "roaster",  # Exclude categorical columns (encoded versions are used)
+                "roast",
+                "country_of_origin",
             ]
         )
         # Only exclude columns that actually exist in the dataframe
-        exclude_columns = [
-            col for col in potential_exclude_columns if col in df.columns
-        ]
+        exclude_columns = [col for col in exclude_columns if col in df.columns]
         feature_columns = [col for col in df.columns if col not in exclude_columns]
 
         X = df[feature_columns]
@@ -522,6 +523,9 @@ def train_models(args):
                 "processed_text",
                 "url",
                 "loc",
+                "roaster",  # Exclude categorical columns (encoded versions are used)
+                "roast",
+                "country_of_origin",
             ]
         )
         feature_columns = [col for col in df.columns if col not in exclude_columns]
