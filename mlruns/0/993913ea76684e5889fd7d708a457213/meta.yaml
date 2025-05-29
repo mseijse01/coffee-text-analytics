@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/993913ea76684e5889fd7d708a457213/artifacts
+end_time: 1748528441563
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 993913ea76684e5889fd7d708a457213
+run_name: fearless-eel-340
+run_uuid: 993913ea76684e5889fd7d708a457213
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748528441502
+status: 3
+tags: []
+user_id: seijas

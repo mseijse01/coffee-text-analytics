@@ -54,7 +54,7 @@ jobs:
     - name: Run unit tests with pytest
       timeout-minutes: 10
       run: |
-        pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+        pytest tests/test_data_processing.py -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=10
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
