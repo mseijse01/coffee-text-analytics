@@ -20,7 +20,7 @@ from .topic_extractor import TopicExtractor
 from .sentiment_extractor import SentimentExtractor
 
 # Import specialized preprocessing functions
-from ..data.preprocessing import (
+from data.preprocessing import (
     preprocess_text_for_embeddings,
     preprocess_text_for_topics,
 )
