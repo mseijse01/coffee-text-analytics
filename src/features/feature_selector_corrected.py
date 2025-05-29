@@ -215,11 +215,16 @@ class CorrectedLassoFeatureSelector:
 
         self.text_selector_.fit(X_text_scaled, y)
 
-        # Select features based on LASSO coefficients
+        # Apply LASSO feature selection to text features (thesis step 2)
+        # Adapt max_features to actual number of text features available
+        max_text_features_adapted = min(
+            self.config["max_text_features"], len(self.text_features_)
+        )
+
         selector = SelectFromModel(
             self.text_selector_,
             threshold=self.config["selection_threshold"],
-            max_features=self.config["max_text_features"],
+            max_features=max_text_features_adapted,
         )
 
         selector.fit(X_text_scaled, y)
