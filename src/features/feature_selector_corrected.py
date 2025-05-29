@@ -11,6 +11,7 @@ exact thesis methodology:
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import logging
 from typing import Dict, List, Optional, Tuple, Union, Any
 from sklearn.linear_model import LassoCV
@@ -25,6 +26,8 @@ logger = logging.getLogger(__name__)
 class CorrectedLassoFeatureSelector:
     """
     Corrected LASSO-based feature selector following exact thesis methodology.
+
+    Supports Polars-first architecture with pandas/numpy fallback support.
 
     Thesis approach:
     1. Identify text features (all TF-IDF, BERT, GloVe, topics, sentiment from all desc columns)
@@ -157,14 +160,16 @@ class CorrectedLassoFeatureSelector:
         return text_features, sensory_features, categorical_features
 
     def fit_select_features(
-        self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+        self,
+        X: Union[np.ndarray, pd.DataFrame, pl.DataFrame],
+        y: Union[np.ndarray, pd.Series, pl.Series],
     ) -> "CorrectedLassoFeatureSelector":
         """
         Fit LASSO feature selector following thesis methodology.
 
         Args:
-            X: Feature matrix
-            y: Target variable
+            X: Feature matrix (Polars DataFrame preferred, pandas DataFrame or numpy array supported)
+            y: Target variable (Polars Series preferred, pandas Series or numpy array supported)
 
         Returns:
             Self for method chaining
@@ -175,7 +180,12 @@ class CorrectedLassoFeatureSelector:
         if isinstance(X, np.ndarray):
             feature_names = [f"feature_{i}" for i in range(X.shape[1])]
             X_df = pd.DataFrame(X, columns=feature_names)
+        elif isinstance(X, pl.DataFrame):
+            # For Polars, convert to pandas for sklearn compatibility but preserve original
+            feature_names = X.columns
+            X_df = X.to_pandas()  # Convert to pandas for sklearn operations
         else:
+            # For pandas, use copy
             X_df = X.copy()
             feature_names = X_df.columns.tolist()
 
@@ -299,25 +309,32 @@ class CorrectedLassoFeatureSelector:
         return self
 
     def transform(
-        self, X: Union[np.ndarray, pd.DataFrame]
-    ) -> Union[np.ndarray, pd.DataFrame]:
+        self, X: Union[np.ndarray, pd.DataFrame, pl.DataFrame]
+    ) -> Union[np.ndarray, pd.DataFrame, pl.DataFrame]:
         """
         Transform features using fitted selector.
 
         Args:
-            X: Feature matrix to transform
+            X: Feature matrix to transform (Polars DataFrame preferred, pandas DataFrame or numpy array supported)
 
         Returns:
-            Transformed feature matrix with selected features only
+            Transformed feature matrix with selected features only (maintains input type when possible)
         """
         if not self.is_fitted_:
             raise ValueError("Selector must be fitted before transformation")
+
+        # Remember input type for output
+        input_type = type(X)
 
         # Convert to DataFrame if needed
         if isinstance(X, np.ndarray):
             feature_names = [f"feature_{i}" for i in range(X.shape[1])]
             X_df = pd.DataFrame(X, columns=feature_names)
+        elif isinstance(X, pl.DataFrame):
+            # For Polars, convert to pandas for processing
+            X_df = X.to_pandas()
         else:
+            # For pandas, use copy
             X_df = X.copy()
 
         # Select final features
@@ -328,18 +345,26 @@ class CorrectedLassoFeatureSelector:
 
         X_selected = X_df[available_features]
 
+        # Convert back to original type if needed
+        if input_type == pl.DataFrame:
+            X_selected = pl.from_pandas(X_selected)
+        elif input_type == np.ndarray:
+            X_selected = X_selected.values
+
         logger.info(f"Transformed features: {X_selected.shape}")
         return X_selected
 
     def fit_transform(
-        self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]
-    ) -> Union[np.ndarray, pd.DataFrame]:
+        self,
+        X: Union[np.ndarray, pd.DataFrame, pl.DataFrame],
+        y: Union[np.ndarray, pd.Series, pl.Series],
+    ) -> Union[np.ndarray, pd.DataFrame, pl.DataFrame]:
         """
         Fit selector and transform features in one step.
 
         Args:
-            X: Feature matrix
-            y: Target variable
+            X: Feature matrix (Polars DataFrame preferred, pandas DataFrame or numpy array supported)
+            y: Target variable (Polars Series preferred, pandas Series or numpy array supported)
 
         Returns:
             Transformed feature matrix
