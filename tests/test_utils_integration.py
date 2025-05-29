@@ -300,6 +300,283 @@ class TestCachingSystemIntegration:
         assert cache_manager.get("features1", "features") is None
         assert cache_manager.get("model1", "models") is None
 
+    @pytest.mark.unit
+    def test_cache_exception_handling(self, cache_manager, temp_cache_dir):
+        """Test cache exception handling scenarios."""
+        # Test get method with corrupted cache file
+        cache_dir = cache_manager.cache_dir / "general"
+        cache_dir.mkdir(exist_ok=True)
+
+        # Create a corrupted cache file
+        corrupted_file = cache_dir / "corrupted_key.pkl"
+        with open(corrupted_file, "w") as f:
+            f.write("invalid pickle data")
+
+        # Should return None for corrupted cache
+        result = cache_manager.get("corrupted_key")
+        assert result is None
+
+        # Test set method with permission error (simulate by making directory read-only)
+        import os
+        import stat
+
+        # Create a test key that should fail to write
+        test_dir = cache_manager.cache_dir / "readonly_test"
+        test_dir.mkdir(exist_ok=True)
+
+        # Make directory read-only (this should cause set to fail gracefully)
+        try:
+            os.chmod(test_dir, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+            # This should not raise an exception, just log a warning
+            cache_manager.set("test_key", {"data": "test"}, "readonly_test")
+
+        finally:
+            # Restore permissions for cleanup
+            os.chmod(test_dir, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    @pytest.mark.unit
+    def test_feature_cache_exception_handling(self, cache_manager):
+        """Test FeatureCache exception handling."""
+        feature_cache = FeatureCache(cache_manager)
+
+        # Test with compute function that raises an exception
+        def failing_compute_func(*args, **kwargs):
+            raise ValueError("Computation failed")
+
+        # Should propagate the exception from compute function
+        with pytest.raises(ValueError, match="Computation failed"):
+            feature_cache.get_tfidf_features(
+                ["test text"], {"max_features": 100}, failing_compute_func
+            )
+
+    @pytest.mark.unit
+    def test_model_cache_exception_handling(self, cache_manager):
+        """Test ModelCache exception handling."""
+        model_cache = ModelCache(cache_manager)
+
+        # Test with compute function that raises an exception
+        def failing_model_func(**kwargs):
+            raise RuntimeError("Model training failed")
+
+        # Should propagate the exception from compute function
+        with pytest.raises(RuntimeError, match="Model training failed"):
+            model_cache.get_trained_model(
+                "test_model", "x_hash", "y_hash", {"param": "value"}, failing_model_func
+            )
+
+    @pytest.mark.unit
+    def test_cached_function_decorator_comprehensive(self, temp_cache_dir):
+        """Test cached_function decorator with various scenarios."""
+        call_count = 0
+
+        @cached_function(cache_type="test_decorator", max_age_hours=1)
+        def expensive_function(x, y, multiplier=2):
+            nonlocal call_count
+            call_count += 1
+            return x * y * multiplier
+
+        # First call should execute function
+        result1 = expensive_function(3, 4, multiplier=2)
+        assert result1 == 24
+        assert call_count == 1
+
+        # Second call with same args should use cache
+        result2 = expensive_function(3, 4, multiplier=2)
+        assert result2 == 24
+        assert call_count == 1  # Should not increment
+
+        # Call with different args should execute function again
+        result3 = expensive_function(5, 6, multiplier=3)
+        assert result3 == 90
+        assert call_count == 2
+
+        # Test with keyword arguments in different order (should still cache)
+        result4 = expensive_function(y=4, x=3, multiplier=2)
+        assert result4 == 24
+        assert call_count == 2  # Should still use cache
+
+    @pytest.mark.unit
+    def test_global_cache_manager_functions(self):
+        """Test global cache manager utility functions."""
+        from src.utils.cache import get_cache_manager, clear_all_cache, cache_info
+
+        # Test get_cache_manager returns same instance
+        manager1 = get_cache_manager()
+        manager2 = get_cache_manager()
+        assert manager1 is manager2
+
+        # Test cache_info function
+        info = cache_info()
+        assert isinstance(info, dict)
+        assert "cache_dir" in info
+        assert "max_age_hours" in info
+        assert "cache_types" in info
+
+        # Add some data to cache
+        manager1.set("test_global", {"data": "test"}, "general")
+
+        # Test clear_all_cache function
+        clear_all_cache()
+
+        # Verify cache was cleared
+        result = manager1.get("test_global", "general")
+        assert result is None
+
+    @pytest.mark.unit
+    def test_cache_directory_creation_edge_cases(self, temp_cache_dir):
+        """Test cache directory creation in edge cases."""
+        # Test with nested cache type
+        cache_manager = CacheManager(cache_dir=temp_cache_dir)
+
+        # Test setting cache with nested directory structure
+        cache_manager.set("test_key", {"data": "test"}, "nested/deep/cache")
+
+        # Verify the nested directory was created
+        nested_dir = cache_manager.cache_dir / "nested" / "deep" / "cache"
+        assert nested_dir.exists()
+
+        # Verify we can retrieve the cached item
+        result = cache_manager.get("test_key", "nested/deep/cache")
+        assert result == {"data": "test"}
+
+    @pytest.mark.unit
+    def test_cache_key_generation_edge_cases(self, cache_manager):
+        """Test cache key generation with edge cases."""
+        # Test with complex nested data structures
+        complex_args = [
+            {"nested": {"dict": [1, 2, 3]}},
+            ("tuple", "data"),
+            frozenset([1, 2, 3]),
+        ]
+        complex_kwargs = {
+            "param1": {"nested": "value"},
+            "param2": [1, 2, {"inner": "dict"}],
+        }
+
+        key1 = cache_manager._generate_key(*complex_args, **complex_kwargs)
+        key2 = cache_manager._generate_key(*complex_args, **complex_kwargs)
+
+        # Same inputs should generate same key
+        assert key1 == key2
+
+        # Different inputs should generate different keys
+        different_kwargs = complex_kwargs.copy()
+        different_kwargs["param2"] = [1, 2, {"inner": "different"}]
+        key3 = cache_manager._generate_key(*complex_args, **different_kwargs)
+        assert key1 != key3
+
+    @pytest.mark.unit
+    def test_cache_info_detailed(self, cache_manager, sample_data):
+        """Test detailed cache info functionality."""
+        # Add data to different cache types
+        cache_manager.set("features_1", sample_data, "features")
+        cache_manager.set("features_2", {"more": "data"}, "features")
+        cache_manager.set("model_1", {"model": "data"}, "models")
+        cache_manager.set("data_1", sample_data, "data")
+
+        info = cache_manager.cache_info()
+
+        # Verify structure
+        assert "cache_dir" in info
+        assert "max_age_hours" in info
+        assert "cache_types" in info
+
+        cache_types = info["cache_types"]
+
+        # Verify features cache info
+        assert "features" in cache_types
+        features_info = cache_types["features"]
+        assert features_info["file_count"] == 2
+        assert features_info["total_size_mb"] > 0
+        assert len(features_info["files"]) == 2
+
+        # Verify models cache info
+        assert "models" in cache_types
+        models_info = cache_types["models"]
+        assert models_info["file_count"] == 1
+
+        # Verify data cache info
+        assert "data" in cache_types
+        data_info = cache_types["data"]
+        assert data_info["file_count"] == 1
+
+    @pytest.mark.unit
+    def test_cache_clear_selective(self, cache_manager):
+        """Test selective cache clearing functionality."""
+        # Add data to multiple cache types
+        cache_manager.set("item1", {"data": "features"}, "features")
+        cache_manager.set("item2", {"data": "models"}, "models")
+        cache_manager.set("item3", {"data": "general"}, "general")
+
+        # Clear only features cache
+        cache_manager.clear_cache("features")
+
+        # Verify features cache is cleared but others remain
+        assert cache_manager.get("item1", "features") is None
+        assert cache_manager.get("item2", "models") is not None
+        assert cache_manager.get("item3", "general") is not None
+
+        # Clear all cache
+        cache_manager.clear_cache()
+
+        # Verify all caches are cleared
+        assert cache_manager.get("item2", "models") is None
+        assert cache_manager.get("item3", "general") is None
+
+    @pytest.mark.unit
+    def test_feature_cache_hash_generation_coverage(self, cache_manager):
+        """Test FeatureCache hash generation to ensure full line coverage."""
+        feature_cache = FeatureCache(cache_manager)
+
+        def mock_compute_func(*args, **kwargs):
+            return {"computed": "features"}
+
+        # Test all FeatureCache methods to ensure hash generation lines are covered
+        texts = ["sample text 1", "sample text 2"]
+        config = {"max_features": 100, "ngram_range": (1, 2)}
+
+        # Test TF-IDF features (covers lines around 262-266)
+        result1 = feature_cache.get_tfidf_features(texts, config, mock_compute_func)
+        assert result1 == {"computed": "features"}
+
+        # Test BERT features (covers hash generation lines)
+        result2 = feature_cache.get_bert_features(
+            texts, "bert-base-uncased", mock_compute_func
+        )
+        assert result2 == {"computed": "features"}
+
+        # Test topic features (covers hash generation lines)
+        result3 = feature_cache.get_topic_features(texts, 5, mock_compute_func)
+        assert result3 == {"computed": "features"}
+
+    @pytest.mark.unit
+    def test_model_cache_hash_generation_coverage(self, cache_manager):
+        """Test ModelCache hash generation to ensure full line coverage."""
+        model_cache = ModelCache(cache_manager)
+
+        def mock_train_func(**kwargs):
+            return {"trained": "model"}
+
+        # Test model cache with complex config to ensure hash generation lines are covered (284-287)
+        complex_config = {
+            "learning_rate": 0.01,
+            "batch_size": 32,
+            "epochs": 10,
+            "optimizer": "adam",
+            "nested": {"param": "value"},
+        }
+
+        result = model_cache.get_trained_model(
+            "random_forest",
+            "x_hash_123",
+            "y_hash_456",
+            complex_config,
+            mock_train_func,
+            extra_param="test",
+        )
+        assert result == {"trained": "model"}
+
 
 class TestPolarsOptimizationIntegration:
     """Integration tests for Polars optimization utilities."""
