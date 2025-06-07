@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database for MLflow backend
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: mlflow
+      POSTGRES_USER: mlflow
+      POSTGRES_PASSWORD: mlflow_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mlflow_network
+    restart: unless-stopped
+
+  # MinIO for S3-compatible artifact storage
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: minio_access_key
+      MINIO_ROOT_PASSWORD: minio_secret_key
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - mlflow_network
+    restart: unless-stopped
+
+  # MLflow tracking server
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=postgresql://mlflow:mlflow_password@postgres:5432/mlflow
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=s3://mlflow-artifacts/
+      - AWS_ACCESS_KEY_ID=minio_access_key
+      - AWS_SECRET_ACCESS_KEY=minio_secret_key
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - MLFLOW_S3_IGNORE_TLS=true
+    ports:
+      - "5555:5000"
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      - mlflow_network
+    restart: unless-stopped
+    volumes:
+      - ./mlflow_artifacts:/mlflow/artifacts
+    command: >
+      mlflow server 
+      --backend-store-uri postgresql://mlflow:mlflow_password@postgres:5432/mlflow
+      --default-artifact-root s3://mlflow-artifacts/
+      --host 0.0.0.0
+      --port 5000
+
+  # MLflow Model Registry UI (optional - advanced model management)
+  mlflow-registry:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=postgresql://mlflow:mlflow_password@postgres:5432/mlflow
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=s3://mlflow-artifacts/
+      - AWS_ACCESS_KEY_ID=minio_access_key
+      - AWS_SECRET_ACCESS_KEY=minio_secret_key
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - MLFLOW_S3_IGNORE_TLS=true
+    ports:
+      - "5556:5001"
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      - mlflow_network
+    restart: unless-stopped
+    command: >
+      mlflow ui 
+      --backend-store-uri postgresql://mlflow:mlflow_password@postgres:5432/mlflow
+      --default-artifact-root s3://mlflow-artifacts/
+      --host 0.0.0.0
+      --port 5001
+
+volumes:
+  postgres_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  mlflow_network:
+    driver: bridge 
