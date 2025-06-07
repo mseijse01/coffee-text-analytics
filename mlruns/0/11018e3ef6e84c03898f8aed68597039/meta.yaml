@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/11018e3ef6e84c03898f8aed68597039/artifacts
+end_time: 1748620200761
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 11018e3ef6e84c03898f8aed68597039
+run_name: delightful-deer-156
+run_uuid: 11018e3ef6e84c03898f8aed68597039
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620200620
+status: 3
+tags: []
+user_id: seijas

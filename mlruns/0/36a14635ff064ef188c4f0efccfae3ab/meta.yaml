@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/36a14635ff064ef188c4f0efccfae3ab/artifacts
+end_time: 1748620190197
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 36a14635ff064ef188c4f0efccfae3ab
+run_name: loud-ox-712
+run_uuid: 36a14635ff064ef188c4f0efccfae3ab
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620189712
+status: 3
+tags: []
+user_id: seijas

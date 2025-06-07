@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/c09fba1b840f447692e9f7643645a039/artifacts
+end_time: 1748624504215
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: c09fba1b840f447692e9f7643645a039
+run_name: efficient-mole-152
+run_uuid: c09fba1b840f447692e9f7643645a039
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624456491
+status: 3
+tags: []
+user_id: seijas

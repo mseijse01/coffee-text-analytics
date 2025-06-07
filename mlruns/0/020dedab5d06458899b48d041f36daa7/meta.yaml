@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/020dedab5d06458899b48d041f36daa7/artifacts
+end_time: 1748624549557
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 020dedab5d06458899b48d041f36daa7
+run_name: thoughtful-moth-297
+run_uuid: 020dedab5d06458899b48d041f36daa7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624504288
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/e007dcb287af4d97be1ee37c66d34324/artifacts
+end_time: 1748620525803
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e007dcb287af4d97be1ee37c66d34324
+run_name: honorable-goose-894
+run_uuid: e007dcb287af4d97be1ee37c66d34324
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620499183
+status: 3
+tags: []
+user_id: seijas

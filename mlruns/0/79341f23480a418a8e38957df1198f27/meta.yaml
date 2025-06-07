@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/79341f23480a418a8e38957df1198f27/artifacts
+end_time: 1748620197507
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 79341f23480a418a8e38957df1198f27
+run_name: righteous-slug-233
+run_uuid: 79341f23480a418a8e38957df1198f27
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620197137
+status: 3
+tags: []
+user_id: seijas

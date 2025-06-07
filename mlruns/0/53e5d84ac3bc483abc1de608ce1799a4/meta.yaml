@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/53e5d84ac3bc483abc1de608ce1799a4/artifacts
+end_time: 1748624708062
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 53e5d84ac3bc483abc1de608ce1799a4
+run_name: rogue-penguin-659
+run_uuid: 53e5d84ac3bc483abc1de608ce1799a4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624680074
+status: 3
+tags: []
+user_id: seijas

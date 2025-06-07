@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/8e0eed37b5e9480d9a65698c0e32dc90/artifacts
+end_time: 1748620193977
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8e0eed37b5e9480d9a65698c0e32dc90
+run_name: colorful-rook-396
+run_uuid: 8e0eed37b5e9480d9a65698c0e32dc90
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620193392
+status: 3
+tags: []
+user_id: seijas

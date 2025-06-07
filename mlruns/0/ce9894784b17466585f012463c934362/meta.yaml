@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/ce9894784b17466585f012463c934362/artifacts
+end_time: 1748619998681
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ce9894784b17466585f012463c934362
+run_name: handsome-yak-881
+run_uuid: ce9894784b17466585f012463c934362
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619998672
+status: 3
+tags: []
+user_id: seijas

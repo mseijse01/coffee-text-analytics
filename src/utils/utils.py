@@ -6,7 +6,7 @@ import pandas as pd
 from typing import Union
 
 # Import consolidated data quality functions
-from utils.data_quality import (
+from .data_quality import (
     analyze_data_quality,
     get_data_overview,
     calculate_sensory_stats,

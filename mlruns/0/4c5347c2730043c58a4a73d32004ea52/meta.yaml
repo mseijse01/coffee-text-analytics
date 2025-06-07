@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/4c5347c2730043c58a4a73d32004ea52/artifacts
+end_time: 1748621279203
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4c5347c2730043c58a4a73d32004ea52
+run_name: painted-elk-745
+run_uuid: 4c5347c2730043c58a4a73d32004ea52
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621279045
+status: 3
+tags: []
+user_id: seijas

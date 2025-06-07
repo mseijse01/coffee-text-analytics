@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/52ee9eefc8f744db84fc7d131d6d2933/artifacts
+end_time: 1748620709756
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 52ee9eefc8f744db84fc7d131d6d2933
+run_name: bittersweet-crab-791
+run_uuid: 52ee9eefc8f744db84fc7d131d6d2933
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620685063
+status: 3
+tags: []
+user_id: seijas

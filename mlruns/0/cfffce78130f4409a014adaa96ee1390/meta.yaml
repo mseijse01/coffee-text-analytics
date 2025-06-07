@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/cfffce78130f4409a014adaa96ee1390/artifacts
+end_time: 1748624595080
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: cfffce78130f4409a014adaa96ee1390
+run_name: rogue-gnat-974
+run_uuid: cfffce78130f4409a014adaa96ee1390
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624549645
+status: 3
+tags: []
+user_id: seijas

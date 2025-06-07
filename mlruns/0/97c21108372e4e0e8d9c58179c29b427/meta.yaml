@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/97c21108372e4e0e8d9c58179c29b427/artifacts
+end_time: 1748622345072
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 97c21108372e4e0e8d9c58179c29b427
+run_name: omniscient-shad-916
+run_uuid: 97c21108372e4e0e8d9c58179c29b427
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748622261300
+status: 3
+tags: []
+user_id: seijas

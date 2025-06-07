@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/8d7c305b9c3a4160b97cf86e990de88f/artifacts
+end_time: 1748621260815
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8d7c305b9c3a4160b97cf86e990de88f
+run_name: amazing-croc-710
+run_uuid: 8d7c305b9c3a4160b97cf86e990de88f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621260635
+status: 3
+tags: []
+user_id: seijas

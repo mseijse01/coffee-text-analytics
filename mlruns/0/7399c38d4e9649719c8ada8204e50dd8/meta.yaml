@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/7399c38d4e9649719c8ada8204e50dd8/artifacts
+end_time: 1748528172105
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 7399c38d4e9649719c8ada8204e50dd8
+run_name: peaceful-fish-786
+run_uuid: 7399c38d4e9649719c8ada8204e50dd8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748528171611
+status: 3
+tags: []
+user_id: seijas

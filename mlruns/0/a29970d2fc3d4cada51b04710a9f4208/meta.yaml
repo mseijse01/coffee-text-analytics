@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/a29970d2fc3d4cada51b04710a9f4208/artifacts
+end_time: 1748624652387
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a29970d2fc3d4cada51b04710a9f4208
+run_name: sneaky-stag-148
+run_uuid: a29970d2fc3d4cada51b04710a9f4208
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624624554
+status: 3
+tags: []
+user_id: seijas

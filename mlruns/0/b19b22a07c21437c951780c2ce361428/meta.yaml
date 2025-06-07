@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/b19b22a07c21437c951780c2ce361428/artifacts
+end_time: 1748621279846
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: b19b22a07c21437c951780c2ce361428
+run_name: hilarious-rook-757
+run_uuid: b19b22a07c21437c951780c2ce361428
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621279674
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/2e9f8af8435c46728c22184de05f4046/artifacts
+end_time: 1748620199037
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 2e9f8af8435c46728c22184de05f4046
+run_name: exultant-shark-830
+run_uuid: 2e9f8af8435c46728c22184de05f4046
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620198878
+status: 3
+tags: []
+user_id: seijas

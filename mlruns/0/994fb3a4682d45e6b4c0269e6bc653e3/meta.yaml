@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/994fb3a4682d45e6b4c0269e6bc653e3/artifacts
+end_time: 1748621263609
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 994fb3a4682d45e6b4c0269e6bc653e3
+run_name: clean-frog-604
+run_uuid: 994fb3a4682d45e6b4c0269e6bc653e3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621263308
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/665f63d4448e46af86c76231908a9d96/artifacts
+end_time: 1748620606774
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 665f63d4448e46af86c76231908a9d96
+run_name: angry-grub-693
+run_uuid: 665f63d4448e46af86c76231908a9d96
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620580186
+status: 3
+tags: []
+user_id: seijas

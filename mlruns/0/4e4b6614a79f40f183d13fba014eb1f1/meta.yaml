@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/4e4b6614a79f40f183d13fba014eb1f1/artifacts
+end_time: 1748620762346
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4e4b6614a79f40f183d13fba014eb1f1
+run_name: skillful-newt-329
+run_uuid: 4e4b6614a79f40f183d13fba014eb1f1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620755498
+status: 3
+tags: []
+user_id: seijas

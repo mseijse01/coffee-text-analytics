@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/4da10afa18b049658be6ba6abfc65200/artifacts
+end_time: 1748621260217
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4da10afa18b049658be6ba6abfc65200
+run_name: thundering-ox-149
+run_uuid: 4da10afa18b049658be6ba6abfc65200
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621259915
+status: 3
+tags: []
+user_id: seijas

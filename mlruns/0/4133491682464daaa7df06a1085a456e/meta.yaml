@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/4133491682464daaa7df06a1085a456e/artifacts
+end_time: 1748621266976
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4133491682464daaa7df06a1085a456e
+run_name: receptive-elk-52
+run_uuid: 4133491682464daaa7df06a1085a456e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621266516
+status: 3
+tags: []
+user_id: seijas

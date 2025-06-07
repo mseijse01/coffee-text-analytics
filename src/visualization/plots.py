@@ -7,13 +7,16 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import polars as pl
 
-from config.settings import PATHS
+from src.config.settings import Config
+
+# Get paths from config
+config = Config()
 
 
 def save_figure(
     fig: go.Figure,
     filename: str,
-    path: Path = PATHS["figures"],
+    path: Path = None,
 ) -> None:
     """
     Save a plotly figure to the figures directory.
@@ -21,8 +24,12 @@ def save_figure(
     Args:
         fig: Plotly figure object
         filename: Name for the saved figure
-        path: Directory to save figure
+        path: Directory to save figure (defaults to config.paths.figures)
     """
+    if path is None:
+        path = config.paths.output / "figures"
+        path.mkdir(exist_ok=True)
+
     fig.write_html(path / f"{filename}.html")
     fig.write_image(path / f"{filename}.png")
 

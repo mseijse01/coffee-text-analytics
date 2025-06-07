@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/f860d5e6a0f7402497a9c53d770ce250/artifacts
+end_time: 1748620392836
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f860d5e6a0f7402497a9c53d770ce250
+run_name: tasteful-stoat-619
+run_uuid: f860d5e6a0f7402497a9c53d770ce250
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620367502
+status: 3
+tags: []
+user_id: seijas

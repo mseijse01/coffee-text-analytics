@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/0db34fc81ea34301adb19e426fed37ff/artifacts
+end_time: 1748621270707
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 0db34fc81ea34301adb19e426fed37ff
+run_name: nebulous-owl-661
+run_uuid: 0db34fc81ea34301adb19e426fed37ff
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621270278
+status: 3
+tags: []
+user_id: seijas

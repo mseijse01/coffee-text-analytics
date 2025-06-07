@@ -198,15 +198,15 @@ class TestCachingSystem(unittest.TestCase):
 
         # Test set and get
         test_data = {"test": "value"}
-        cache_manager.set("test_key", test_data, "general")
+        cache_manager.set("test_key", test_data, "features")
 
-        retrieved_data = cache_manager.get("test_key", "general")
+        retrieved_data = cache_manager.get("test_key", "features")
         self.assertEqual(retrieved_data, test_data)
 
         # Test cache info
         info = cache_manager.cache_info()
         self.assertIn("cache_types", info)
-        self.assertIn("general", info["cache_types"])
+        self.assertIn("features", info["cache_types"])
 
     def test_cache_get_or_compute(self):
         """Test get_or_compute functionality."""
@@ -219,14 +219,14 @@ class TestCachingSystem(unittest.TestCase):
         # First call should compute
         start_time = time.time()
         result1 = cache_manager.get_or_compute(
-            "test_compute", expensive_computation, "general", 5
+            "test_compute", expensive_computation, "features", 5
         )
         first_call_time = time.time() - start_time
 
         # Second call should use cache
         start_time = time.time()
         result2 = cache_manager.get_or_compute(
-            "test_compute", expensive_computation, "general", 5
+            "test_compute", expensive_computation, "features", 5
         )
         second_call_time = time.time() - start_time
 
@@ -507,3 +507,301 @@ if __name__ == "__main__":
     print("=" * 60)
 
     unittest.main(verbosity=2)
+
+    def test_performance_monitor_edge_cases(self):
+        """Test PerformanceMonitor edge cases and error handling."""
+        from utils.performance import PerformanceMonitor
+
+        monitor = PerformanceMonitor()
+
+        # Test with exception in context manager
+        try:
+            with monitor.time_operation("failing_operation"):
+                raise ValueError("Test exception")
+        except ValueError:
+            pass  # Expected
+
+        # Verify metrics were still recorded despite exception
+        metrics = monitor.get_metrics()
+        self.assertIn("failing_operation", metrics)
+        self.assertEqual(metrics["failing_operation"]["count"], 1)
+
+        # Test multiple operations with same name
+        with monitor.time_operation("repeated_op"):
+            time.sleep(0.01)
+
+        with monitor.time_operation("repeated_op"):
+            time.sleep(0.02)
+
+        metrics = monitor.get_metrics()
+        repeated_metrics = metrics["repeated_op"]
+        self.assertEqual(repeated_metrics["count"], 2)
+        self.assertGreater(repeated_metrics["avg_time"], 0)
+        self.assertGreater(repeated_metrics["max_time"], repeated_metrics["min_time"])
+
+        # Test clear_metrics
+        monitor.clear_metrics()
+        self.assertEqual(len(monitor.get_metrics()), 0)
+
+    def test_performance_profiler_edge_cases(self):
+        """Test PerformanceProfiler edge cases."""
+        profiler = PerformanceProfiler()
+
+        # Test empty profiler summary
+        empty_summary = profiler.get_summary()
+        self.assertEqual(empty_summary["total_measurements"], 0)
+
+        # Test with context information
+        context = {"data_size": 1000, "algorithm": "test"}
+        with profiler.measure("context_operation", context):
+            time.sleep(0.01)
+
+        summary = profiler.get_summary()
+        measurement = summary["measurements"][0]
+        self.assertEqual(measurement["context"], context)
+        self.assertGreater(measurement["duration_seconds"], 0)
+        self.assertIsInstance(measurement["memory_delta_mb"], float)
+
+        # Test clear functionality
+        profiler.clear()
+        self.assertEqual(len(profiler.measurements), 0)
+
+    def test_benchmark_function_comprehensive(self):
+        """Test benchmark_function with various scenarios."""
+
+        def simple_function(x, y, multiplier=1):
+            return (x + y) * multiplier
+
+        def function_with_exception():
+            raise RuntimeError("Test error")
+
+        # Test successful function benchmark
+        result = benchmark_function(simple_function, 5, 10, multiplier=2)
+
+        self.assertIn("total_measurements", result)
+        self.assertIn("result", result)
+        self.assertEqual(result["result"], 30)  # (5 + 10) * 2
+        self.assertGreater(result["total_duration_seconds"], 0)
+
+        # Test function that raises exception
+        with self.assertRaises(RuntimeError):
+            benchmark_function(function_with_exception)
+
+    def test_dataframe_benchmark_comprehensive(self):
+        """Test comprehensive DataFrame benchmarking functionality."""
+        # Test with different data sizes
+        small_df_polars = pl.DataFrame({"values": range(10)})
+        small_df_pandas = small_df_polars.to_pandas()
+
+        large_df_polars = pl.DataFrame({"values": range(1000)})
+        large_df_pandas = large_df_polars.to_pandas()
+
+        def sum_operation_polars(df):
+            return df["values"].sum()
+
+        def sum_operation_pandas(df):
+            return df["values"].sum()
+
+        # Test small data comparison
+        small_result = DataFrameBenchmark.compare_polars_pandas(
+            "sum_small",
+            sum_operation_polars,
+            sum_operation_pandas,
+            small_df_polars,
+            small_df_pandas,
+            iterations=2,
+        )
+
+        self.assertIn("polars_avg_time", small_result)
+        self.assertIn("pandas_avg_time", small_result)
+        self.assertIn("speedup_factor", small_result)
+
+        # Test large data comparison
+        large_result = DataFrameBenchmark.compare_polars_pandas(
+            "sum_large",
+            sum_operation_polars,
+            sum_operation_pandas,
+            large_df_polars,
+            large_df_pandas,
+            iterations=2,
+        )
+
+        self.assertIn("polars_avg_time", large_result)
+        self.assertIn("pandas_avg_time", large_result)
+
+    def test_feature_extraction_benchmark_tfidf(self):
+        """Test TF-IDF extraction benchmarking."""
+        texts = [
+            "coffee with great flavor",
+            "excellent taste and aroma",
+            "smooth balanced profile",
+            "rich complex notes",
+        ] * 5  # 20 texts
+
+        configs = [
+            {"max_features": 10, "ngram_range": (1, 1)},
+            {"max_features": 20, "ngram_range": (1, 2)},
+        ]
+
+        result = FeatureExtractionBenchmark.benchmark_tfidf_extraction(
+            texts, configs, iterations=2
+        )
+
+        self.assertIn("config_results", result)
+        self.assertIn("best_config", result)
+        self.assertIn("worst_config", result)
+        self.assertEqual(len(result["config_results"]), 2)
+
+        # Verify each config result has required fields
+        for config_result in result["config_results"]:
+            self.assertIn("config", config_result)
+            self.assertIn("avg_time", config_result)
+            self.assertIn("feature_count", config_result)
+
+    def test_feature_extraction_benchmark_caching(self):
+        """Test caching impact benchmarking."""
+        texts = ["test text"] * 10
+        config = {"max_features": 5}
+
+        result = FeatureExtractionBenchmark.benchmark_caching_impact(
+            texts, config, iterations=2
+        )
+
+        self.assertIn("without_cache", result)
+        self.assertIn("with_cache", result)
+        self.assertIn("cache_speedup", result)
+        self.assertIn("cache_hit_ratio", result)
+
+        # Cache should provide some speedup
+        self.assertGreaterEqual(result["cache_speedup"], 1.0)
+
+    def test_pipeline_performance_profiling(self):
+        """Test pipeline performance profiling."""
+        # Create a temporary test data file
+        import tempfile
+        import csv
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
+            writer = csv.writer(f)
+            writer.writerow(["desc_1", "rating"])
+            for i in range(50):
+                writer.writerow([f"coffee description {i}", 80 + i % 15])
+            temp_path = f.name
+
+        try:
+            from utils.performance import profile_pipeline_performance
+
+            # Test with small sample
+            result = profile_pipeline_performance(temp_path, sample_size=20)
+
+            self.assertIn("data_loading", result)
+            self.assertIn("preprocessing", result)
+            self.assertIn("feature_extraction", result)
+            self.assertIn("total_pipeline_time", result)
+            self.assertIn("sample_size", result)
+            self.assertEqual(result["sample_size"], 20)
+
+        finally:
+            # Clean up temp file
+            import os
+
+            os.unlink(temp_path)
+
+    def test_performance_report_generation(self):
+        """Test performance report generation."""
+        from utils.performance import generate_performance_report
+
+        # Create mock benchmark results
+        benchmark_results = {
+            "polars_vs_pandas": {
+                "operation": "groupby_mean",
+                "polars_avg_time": 0.05,
+                "pandas_avg_time": 0.15,
+                "speedup_factor": 3.0,
+                "polars_faster": True,
+            },
+            "caching_impact": {
+                "without_cache": 0.5,
+                "with_cache": 0.1,
+                "cache_speedup": 5.0,
+            },
+            "memory_optimization": {
+                "before_mb": 100.0,
+                "after_mb": 60.0,
+                "reduction_percent": 40.0,
+            },
+        }
+
+        # Test report generation without file output
+        report = generate_performance_report(benchmark_results)
+
+        self.assertIsInstance(report, str)
+        self.assertIn("PERFORMANCE BENCHMARK REPORT", report)
+        self.assertIn("Polars vs Pandas", report)
+        self.assertIn("Caching Impact", report)
+        self.assertIn("Memory Optimization", report)
+        self.assertIn("3.0x faster", report)
+
+        # Test with file output
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            temp_path = f.name
+
+        try:
+            report_with_file = generate_performance_report(benchmark_results, temp_path)
+
+            # Verify file was created and contains report
+            with open(temp_path, "r") as f:
+                file_content = f.read()
+
+            self.assertEqual(report_with_file, file_content)
+            self.assertIn("PERFORMANCE BENCHMARK REPORT", file_content)
+
+        finally:
+            import os
+
+            os.unlink(temp_path)
+
+    def test_performance_decorator(self):
+        """Test performance measurement decorator."""
+        from utils.performance import measure_performance, get_profiler
+
+        # Clear any existing measurements
+        profiler = get_profiler()
+        profiler.clear()
+
+        @measure_performance("decorated_function", {"test": True})
+        def test_function(x, y):
+            time.sleep(0.01)
+            return x + y
+
+        # Call decorated function
+        result = test_function(5, 10)
+        self.assertEqual(result, 15)
+
+        # Verify measurement was recorded
+        summary = profiler.get_summary()
+        self.assertEqual(summary["total_measurements"], 1)
+
+        measurement = summary["measurements"][0]
+        self.assertEqual(measurement["operation"], "decorated_function")
+        self.assertEqual(measurement["context"], {"test": True})
+        self.assertGreater(measurement["duration_seconds"], 0.009)
+
+    def test_global_profiler_singleton(self):
+        """Test global profiler singleton behavior."""
+        from utils.performance import get_profiler
+
+        profiler1 = get_profiler()
+        profiler2 = get_profiler()
+
+        # Should return same instance
+        self.assertIs(profiler1, profiler2)
+
+        # Test that measurements persist across calls
+        with profiler1.measure("test_singleton"):
+            time.sleep(0.01)
+
+        summary = profiler2.get_summary()
+        self.assertEqual(summary["total_measurements"], 1)

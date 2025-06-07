@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/74df6a83ebbc4ddaa86dc1987a0ae104/artifacts
+end_time: 1748621268332
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 74df6a83ebbc4ddaa86dc1987a0ae104
+run_name: mercurial-dog-48
+run_uuid: 74df6a83ebbc4ddaa86dc1987a0ae104
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621267949
+status: 3
+tags: []
+user_id: seijas

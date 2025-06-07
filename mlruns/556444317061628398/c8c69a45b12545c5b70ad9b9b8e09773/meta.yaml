@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/556444317061628398/c8c69a45b12545c5b70ad9b9b8e09773/artifacts
+end_time: 1748619826175
+entry_point_name: ''
+experiment_id: '556444317061628398'
+lifecycle_stage: active
+run_id: c8c69a45b12545c5b70ad9b9b8e09773
+run_name: 15_percent_methodology_validation
+run_uuid: c8c69a45b12545c5b70ad9b9b8e09773
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619825887
+status: 3
+tags: []
+user_id: seijas

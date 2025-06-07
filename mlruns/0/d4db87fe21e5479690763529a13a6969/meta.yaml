@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/d4db87fe21e5479690763529a13a6969/artifacts
+end_time: 1748621259525
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: d4db87fe21e5479690763529a13a6969
+run_name: nimble-colt-484
+run_uuid: d4db87fe21e5479690763529a13a6969
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621259297
+status: 3
+tags: []
+user_id: seijas

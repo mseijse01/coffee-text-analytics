@@ -1,0 +1,122 @@
+name: Coffee Analytics CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-mock pytest-timeout
+        pip install flake8 black isort
+    
+    - name: Lint with flake8
+      run: |
+        # Stop build if there are Python syntax errors or undefined names
+        flake8 src/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings
+        flake8 src/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+    
+    - name: Check code formatting with black
+      run: |
+        black --check src/ tests/
+    
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only src/ tests/
+    
+    - name: Run unit tests with pytest
+      timeout-minutes: 10
+      run: |
+        pytest tests/test_data_processing.py -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=10
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-timeout
+    
+    - name: Run integration tests
+      timeout-minutes: 30
+      run: |
+        pytest tests/test_integration_*.py -v --timeout=1800
+    
+    - name: Run methodology validation
+      timeout-minutes: 20
+      run: |
+        python validate_stratified_sampling.py --sample_fraction 0.05
+        python validate_feature_selection.py --sample_fraction 0.05
+
+  mlflow-validation:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Test MLflow integration
+      timeout-minutes: 15
+      run: |
+        python src/experiment/mlflow_integration.py
+        
+    - name: Validate MLflow tracking
+      timeout-minutes: 25
+      run: |
+        python main.py --sample_fraction 0.05 --steps features train --models linear --mlflow_tracking true 

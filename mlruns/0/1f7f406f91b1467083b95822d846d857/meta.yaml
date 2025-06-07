@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/1f7f406f91b1467083b95822d846d857/artifacts
+end_time: 1748619998621
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 1f7f406f91b1467083b95822d846d857
+run_name: redolent-stoat-601
+run_uuid: 1f7f406f91b1467083b95822d846d857
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619998611
+status: 3
+tags: []
+user_id: seijas

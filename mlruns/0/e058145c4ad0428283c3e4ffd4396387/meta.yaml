@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/e058145c4ad0428283c3e4ffd4396387/artifacts
+end_time: 1748621273488
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e058145c4ad0428283c3e4ffd4396387
+run_name: righteous-fowl-848
+run_uuid: e058145c4ad0428283c3e4ffd4396387
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621272952
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/f282ae7ee5e24c5f82caf5db3849237b/artifacts
+end_time: 1748621279022
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f282ae7ee5e24c5f82caf5db3849237b
+run_name: silent-smelt-909
+run_uuid: f282ae7ee5e24c5f82caf5db3849237b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621278881
+status: 3
+tags: []
+user_id: seijas

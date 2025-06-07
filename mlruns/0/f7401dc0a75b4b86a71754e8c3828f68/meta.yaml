@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/f7401dc0a75b4b86a71754e8c3828f68/artifacts
+end_time: 1748621278433
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f7401dc0a75b4b86a71754e8c3828f68
+run_name: merciful-goat-352
+run_uuid: f7401dc0a75b4b86a71754e8c3828f68
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621278227
+status: 3
+tags: []
+user_id: seijas

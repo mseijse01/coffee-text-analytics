@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/ce58b0d278bf406290a53c68b80b0591/artifacts
+end_time: 1748620201264
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ce58b0d278bf406290a53c68b80b0591
+run_name: loud-smelt-163
+run_uuid: ce58b0d278bf406290a53c68b80b0591
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620201104
+status: 3
+tags: []
+user_id: seijas

@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 # Import test modules
 from tests.test_data_processing import *
-from tests.test_integration_new import *
+# from tests.test_integration_new import *  # This module doesn't exist
 
 
 class ColoredTextTestResult(unittest.TextTestResult):

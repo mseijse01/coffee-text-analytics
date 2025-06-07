@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/3dd026fec9bc462d9f927ac234b4494a/artifacts
+end_time: 1748620811249
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 3dd026fec9bc462d9f927ac234b4494a
+run_name: intrigued-carp-453
+run_uuid: 3dd026fec9bc462d9f927ac234b4494a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620805435
+status: 3
+tags: []
+user_id: seijas

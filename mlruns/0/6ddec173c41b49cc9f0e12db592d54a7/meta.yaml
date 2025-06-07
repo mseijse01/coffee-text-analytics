@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/6ddec173c41b49cc9f0e12db592d54a7/artifacts
+end_time: 1748618223913
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 6ddec173c41b49cc9f0e12db592d54a7
+run_name: bald-bear-845
+run_uuid: 6ddec173c41b49cc9f0e12db592d54a7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748618223834
+status: 3
+tags: []
+user_id: seijas

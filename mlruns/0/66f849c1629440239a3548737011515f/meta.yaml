@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/66f849c1629440239a3548737011515f/artifacts
+end_time: 1748621617318
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 66f849c1629440239a3548737011515f
+run_name: auspicious-ray-967
+run_uuid: 66f849c1629440239a3548737011515f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621540725
+status: 3
+tags: []
+user_id: seijas

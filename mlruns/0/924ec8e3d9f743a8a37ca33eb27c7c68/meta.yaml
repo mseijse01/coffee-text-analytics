@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/924ec8e3d9f743a8a37ca33eb27c7c68/artifacts
+end_time: 1748620499100
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 924ec8e3d9f743a8a37ca33eb27c7c68
+run_name: rebellious-yak-182
+run_uuid: 924ec8e3d9f743a8a37ca33eb27c7c68
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620469470
+status: 3
+tags: []
+user_id: seijas

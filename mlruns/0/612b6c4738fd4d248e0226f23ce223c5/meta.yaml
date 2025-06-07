@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/612b6c4738fd4d248e0226f23ce223c5/artifacts
+end_time: 1748620285508
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 612b6c4738fd4d248e0226f23ce223c5
+run_name: mysterious-eel-97
+run_uuid: 612b6c4738fd4d248e0226f23ce223c5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620259680
+status: 3
+tags: []
+user_id: seijas

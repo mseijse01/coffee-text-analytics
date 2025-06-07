@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/78d57b6edae64bb9b6fc263428654b0d/artifacts
+end_time: 1748620768683
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 78d57b6edae64bb9b6fc263428654b0d
+run_name: funny-eel-430
+run_uuid: 78d57b6edae64bb9b6fc263428654b0d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620762416
+status: 3
+tags: []
+user_id: seijas

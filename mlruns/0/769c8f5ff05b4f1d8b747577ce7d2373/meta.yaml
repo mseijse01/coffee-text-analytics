@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/769c8f5ff05b4f1d8b747577ce7d2373/artifacts
+end_time: 1748621921882
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 769c8f5ff05b4f1d8b747577ce7d2373
+run_name: omniscient-carp-215
+run_uuid: 769c8f5ff05b4f1d8b747577ce7d2373
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621845563
+status: 3
+tags: []
+user_id: seijas

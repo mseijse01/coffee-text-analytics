@@ -114,7 +114,9 @@ class CacheManager:
             value: Item to cache
             cache_type: Type of cache (features, models, data, preprocessing)
         """
-        cache_file = self.cache_dir / cache_type / f"{key}.pkl"
+        cache_dir = self.cache_dir / cache_type
+        cache_dir.mkdir(exist_ok=True)  # Ensure directory exists
+        cache_file = cache_dir / f"{key}.pkl"
 
         try:
             with open(cache_file, "wb") as f:
@@ -308,6 +310,7 @@ class ModelCache:
         y_hash: str,
         config: dict,
         compute_func: Callable,
+        **compute_kwargs,
     ) -> Any:
         """
         Get or compute trained model.
@@ -318,6 +321,7 @@ class ModelCache:
             y_hash: Hash of training targets
             config: Model configuration
             compute_func: Function to train model
+            **compute_kwargs: Additional arguments for compute function
 
         Returns:
             Trained model
@@ -326,7 +330,7 @@ class ModelCache:
         cache_key = f"{model_type}_{X_hash}_{y_hash}_{config_hash}"
 
         return self.cache_manager.get_or_compute(
-            cache_key, compute_func, "models", config
+            cache_key, compute_func, "models", **compute_kwargs
         )
 
 

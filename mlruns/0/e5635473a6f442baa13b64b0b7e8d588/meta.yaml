@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/e5635473a6f442baa13b64b0b7e8d588/artifacts
+end_time: 1748620185696
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e5635473a6f442baa13b64b0b7e8d588
+run_name: gaudy-goose-540
+run_uuid: e5635473a6f442baa13b64b0b7e8d588
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620185360
+status: 3
+tags: []
+user_id: seijas

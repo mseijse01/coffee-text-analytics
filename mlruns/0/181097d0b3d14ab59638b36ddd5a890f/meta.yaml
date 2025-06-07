@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/181097d0b3d14ab59638b36ddd5a890f/artifacts
+end_time: 1748619906851
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 181097d0b3d14ab59638b36ddd5a890f
+run_name: calm-sloth-51
+run_uuid: 181097d0b3d14ab59638b36ddd5a890f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619906844
+status: 3
+tags: []
+user_id: seijas

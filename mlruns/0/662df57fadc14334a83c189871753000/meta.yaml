@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/662df57fadc14334a83c189871753000/artifacts
+end_time: 1748619906824
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 662df57fadc14334a83c189871753000
+run_name: gaudy-ray-461
+run_uuid: 662df57fadc14334a83c189871753000
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619906814
+status: 3
+tags: []
+user_id: seijas

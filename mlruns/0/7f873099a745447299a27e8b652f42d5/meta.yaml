@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/7f873099a745447299a27e8b652f42d5/artifacts
+end_time: 1748620823299
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 7f873099a745447299a27e8b652f42d5
+run_name: suave-lynx-842
+run_uuid: 7f873099a745447299a27e8b652f42d5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620817143
+status: 3
+tags: []
+user_id: seijas

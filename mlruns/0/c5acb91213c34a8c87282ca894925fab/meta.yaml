@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/c5acb91213c34a8c87282ca894925fab/artifacts
+end_time: 1748621278198
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: c5acb91213c34a8c87282ca894925fab
+run_name: painted-wasp-122
+run_uuid: c5acb91213c34a8c87282ca894925fab
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621277980
+status: 3
+tags: []
+user_id: seijas

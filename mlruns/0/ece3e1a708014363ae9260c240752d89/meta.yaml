@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/ece3e1a708014363ae9260c240752d89/artifacts
+end_time: 1748622620795
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ece3e1a708014363ae9260c240752d89
+run_name: ambitious-fowl-854
+run_uuid: ece3e1a708014363ae9260c240752d89
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748622495089
+status: 3
+tags: []
+user_id: seijas

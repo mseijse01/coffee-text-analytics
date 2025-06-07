@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/c2642aea6b3942558e9dcc6a5dbecba3/artifacts
+end_time: 1748621267930
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: c2642aea6b3942558e9dcc6a5dbecba3
+run_name: adaptable-colt-752
+run_uuid: c2642aea6b3942558e9dcc6a5dbecba3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621267504
+status: 3
+tags: []
+user_id: seijas

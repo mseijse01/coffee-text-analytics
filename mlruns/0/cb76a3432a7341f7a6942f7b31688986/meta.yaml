@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/cb76a3432a7341f7a6942f7b31688986/artifacts
+end_time: 1748618223498
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: cb76a3432a7341f7a6942f7b31688986
+run_name: secretive-steed-577
+run_uuid: cb76a3432a7341f7a6942f7b31688986
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748618223365
+status: 3
+tags: []
+user_id: seijas

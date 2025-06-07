@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/cb5eb5fc8ed64b09864cebd24f5e63cf/artifacts
+end_time: 1748620180784
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: cb5eb5fc8ed64b09864cebd24f5e63cf
+run_name: redolent-whale-194
+run_uuid: cb5eb5fc8ed64b09864cebd24f5e63cf
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620179675
+status: 3
+tags: []
+user_id: seijas

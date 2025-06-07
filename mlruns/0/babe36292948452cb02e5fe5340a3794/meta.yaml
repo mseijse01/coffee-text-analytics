@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/babe36292948452cb02e5fe5340a3794/artifacts
+end_time: 1748624357917
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: babe36292948452cb02e5fe5340a3794
+run_name: resilient-rook-964
+run_uuid: babe36292948452cb02e5fe5340a3794
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624308671
+status: 3
+tags: []
+user_id: seijas

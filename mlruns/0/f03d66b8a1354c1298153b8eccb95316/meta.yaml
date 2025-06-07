@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/f03d66b8a1354c1298153b8eccb95316/artifacts
+end_time: 1748621262973
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f03d66b8a1354c1298153b8eccb95316
+run_name: able-snail-943
+run_uuid: f03d66b8a1354c1298153b8eccb95316
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621262695
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/42b3969334f040e6a3d6461a3bd54d8c/artifacts
+end_time: 1748621274548
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 42b3969334f040e6a3d6461a3bd54d8c
+run_name: invincible-fawn-990
+run_uuid: 42b3969334f040e6a3d6461a3bd54d8c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621274025
+status: 3
+tags: []
+user_id: seijas

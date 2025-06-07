@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/a118dba4b38045a3a6baf836b59afb75/artifacts
+end_time: 1748618224810
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a118dba4b38045a3a6baf836b59afb75
+run_name: aged-rook-105
+run_uuid: a118dba4b38045a3a6baf836b59afb75
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748618224728
+status: 3
+tags: []
+user_id: seijas

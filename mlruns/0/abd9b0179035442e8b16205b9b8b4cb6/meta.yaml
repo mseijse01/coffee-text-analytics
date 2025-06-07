@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/abd9b0179035442e8b16205b9b8b4cb6/artifacts
+end_time: 1748620551396
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: abd9b0179035442e8b16205b9b8b4cb6
+run_name: nimble-squid-809
+run_uuid: abd9b0179035442e8b16205b9b8b4cb6
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620525842
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/912b79f13c38451f9f8d854f38ad34f3/artifacts
+end_time: 1748624456280
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 912b79f13c38451f9f8d854f38ad34f3
+run_name: industrious-rat-161
+run_uuid: 912b79f13c38451f9f8d854f38ad34f3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624407153
+status: 3
+tags: []
+user_id: seijas

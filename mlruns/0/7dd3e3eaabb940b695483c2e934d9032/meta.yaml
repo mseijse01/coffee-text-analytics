@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/7dd3e3eaabb940b695483c2e934d9032/artifacts
+end_time: 1748623578368
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 7dd3e3eaabb940b695483c2e934d9032
+run_name: funny-lamb-77
+run_uuid: 7dd3e3eaabb940b695483c2e934d9032
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748623394788
+status: 3
+tags: []
+user_id: seijas
