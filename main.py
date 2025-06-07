@@ -234,7 +234,7 @@ def apply_cli_overrides(args):
 
 def preprocess_data(args):
     """
-    Preprocess raw coffee review data using Polars-compatible preprocessing.
+    Preprocess raw coffee review data using dual-mode data loading.
 
     Args:
         args: Command-line arguments
@@ -244,16 +244,31 @@ def preprocess_data(args):
     """
     from data.preprocessing import process_raw_data
 
-    logger.info("Starting data preprocessing step with Polars integration")
+    logger.info("Starting data preprocessing step with dual-mode data loading")
 
     try:
-        process_raw_data(
-            input_file=args.input_file,
-            output_file=str(config.paths.get_processed_data_path()),
-            text_columns=config.models.text_columns,
-            sample_fraction=args.sample_fraction,
-            sample_size=args.sample_size,
-        )
+        # Use dual-mode loading if input_file is the default config path
+        # This allows containers to load from MinIO while development uses local files
+        use_dual_mode = args.input_file == str(config.paths.get_raw_data_path())
+
+        if use_dual_mode:
+            logger.info("Using dual-mode data loader (environment-based)")
+            process_raw_data(
+                input_file=None,  # Use dual-mode loader
+                output_file=str(config.paths.get_processed_data_path()),
+                text_columns=config.models.text_columns,
+                sample_fraction=args.sample_fraction,
+                sample_size=args.sample_size,
+            )
+        else:
+            logger.info(f"Using specified input file: {args.input_file}")
+            process_raw_data(
+                input_file=args.input_file,
+                output_file=str(config.paths.get_processed_data_path()),
+                text_columns=config.models.text_columns,
+                sample_fraction=args.sample_fraction,
+                sample_size=args.sample_size,
+            )
         return True
     except Exception as e:
         logger.error(f"Data preprocessing failed: {e}")

@@ -1,0 +1,49 @@
+# Coffee Text Analytics - Training Pipeline Container
+# This container runs the complete ML training pipeline with dual-mode data loading
+
+FROM python:3.9-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY src/ ./src/
+COPY main.py .
+COPY validate_15_percent_methodology.py .
+
+# Create necessary directories
+RUN mkdir -p data/raw data/processed models output/figures
+
+# Set environment variables for container mode
+ENV ENVIRONMENT=container
+ENV S3_ENDPOINT=http://minio:9000
+ENV S3_ACCESS_KEY=minio_access_key
+ENV S3_SECRET_KEY=minio_secret_key
+ENV S3_BUCKET=mlflow
+ENV DATASET_S3_KEY=datasets/coffee_clean.csv
+
+# Set MLflow tracking configuration
+ENV MLFLOW_TRACKING_URI=http://mlflow:5000
+ENV MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+ENV AWS_ACCESS_KEY_ID=minio_access_key
+ENV AWS_SECRET_ACCESS_KEY=minio_secret_key
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.path.insert(0, 'src'); from data.load_data import load_coffee_data; load_coffee_data(); print('Health check passed')" || exit 1
+
+# Default command runs the full training pipeline
+CMD ["python", "main.py", "--steps", "all", "--mlflow_tracking"] 
