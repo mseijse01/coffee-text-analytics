@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/6aa5dc00fd354359af98c061c22098ad/artifacts
+end_time: 1748621271982
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 6aa5dc00fd354359af98c061c22098ad
+run_name: welcoming-mule-234
+run_uuid: 6aa5dc00fd354359af98c061c22098ad
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621271646
+status: 3
+tags: []
+user_id: seijas

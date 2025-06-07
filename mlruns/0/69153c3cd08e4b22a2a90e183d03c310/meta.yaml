@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/69153c3cd08e4b22a2a90e183d03c310/artifacts
+end_time: 1748618224149
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 69153c3cd08e4b22a2a90e183d03c310
+run_name: colorful-mouse-339
+run_uuid: 69153c3cd08e4b22a2a90e183d03c310
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748618224040
+status: 3
+tags: []
+user_id: seijas

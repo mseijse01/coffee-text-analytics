@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/be2d7e7579994997aa46acd08926f199/artifacts
+end_time: 1748621278839
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: be2d7e7579994997aa46acd08926f199
+run_name: charming-worm-4
+run_uuid: be2d7e7579994997aa46acd08926f199
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621278684
+status: 3
+tags: []
+user_id: seijas

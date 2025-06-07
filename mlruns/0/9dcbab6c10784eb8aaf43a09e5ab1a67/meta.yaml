@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/9dcbab6c10784eb8aaf43a09e5ab1a67/artifacts
+end_time: 1748624679987
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 9dcbab6c10784eb8aaf43a09e5ab1a67
+run_name: carefree-tern-589
+run_uuid: 9dcbab6c10784eb8aaf43a09e5ab1a67
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624652453
+status: 3
+tags: []
+user_id: seijas

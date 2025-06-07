@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/4e7ddfb2d949428592f844a37e30855d/artifacts
+end_time: 1748618225435
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4e7ddfb2d949428592f844a37e30855d
+run_name: enchanting-tern-181
+run_uuid: 4e7ddfb2d949428592f844a37e30855d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748618225358
+status: 3
+tags: []
+user_id: seijas

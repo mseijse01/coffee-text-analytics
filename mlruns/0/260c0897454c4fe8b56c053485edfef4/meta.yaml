@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/260c0897454c4fe8b56c053485edfef4/artifacts
+end_time: 1748622177749
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 260c0897454c4fe8b56c053485edfef4
+run_name: fearless-swan-272
+run_uuid: 260c0897454c4fe8b56c053485edfef4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748622086072
+status: 3
+tags: []
+user_id: seijas

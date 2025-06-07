@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/8bc0ce280da2486a835a7f2d8980845a/artifacts
+end_time: 1748620197879
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8bc0ce280da2486a835a7f2d8980845a
+run_name: mysterious-seal-483
+run_uuid: 8bc0ce280da2486a835a7f2d8980845a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620197528
+status: 3
+tags: []
+user_id: seijas

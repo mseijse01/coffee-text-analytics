@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/e4545795b87b40e8aea6916821a6222b/artifacts
+end_time: 1748620183686
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e4545795b87b40e8aea6916821a6222b
+run_name: lyrical-cod-904
+run_uuid: e4545795b87b40e8aea6916821a6222b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620183459
+status: 3
+tags: []
+user_id: seijas

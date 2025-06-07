@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/f2a68ca4baca4c599505b2915205eb5b/artifacts
+end_time: 1748620183058
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f2a68ca4baca4c599505b2915205eb5b
+run_name: ambitious-vole-980
+run_uuid: f2a68ca4baca4c599505b2915205eb5b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620182343
+status: 3
+tags: []
+user_id: seijas

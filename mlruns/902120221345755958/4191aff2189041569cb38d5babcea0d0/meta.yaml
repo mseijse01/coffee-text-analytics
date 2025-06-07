@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/902120221345755958/4191aff2189041569cb38d5babcea0d0/artifacts
+end_time: 1748618183062
+entry_point_name: ''
+experiment_id: '902120221345755958'
+lifecycle_stage: active
+run_id: 4191aff2189041569cb38d5babcea0d0
+run_name: optuna_test_run
+run_uuid: 4191aff2189041569cb38d5babcea0d0
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748618182807
+status: 3
+tags: []
+user_id: seijas

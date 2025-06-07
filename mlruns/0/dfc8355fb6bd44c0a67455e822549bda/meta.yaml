@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/dfc8355fb6bd44c0a67455e822549bda/artifacts
+end_time: 1748619906597
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: dfc8355fb6bd44c0a67455e822549bda
+run_name: auspicious-carp-846
+run_uuid: dfc8355fb6bd44c0a67455e822549bda
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619906591
+status: 3
+tags: []
+user_id: seijas

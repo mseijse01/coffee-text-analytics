@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/5d13445210394123b154d90f742b77bc/artifacts
+end_time: 1748620201076
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 5d13445210394123b154d90f742b77bc
+run_name: charming-carp-70
+run_uuid: 5d13445210394123b154d90f742b77bc
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620200790
+status: 3
+tags: []
+user_id: seijas

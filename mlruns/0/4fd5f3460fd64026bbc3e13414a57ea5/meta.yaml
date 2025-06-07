@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/4fd5f3460fd64026bbc3e13414a57ea5/artifacts
+end_time: 1748620183438
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4fd5f3460fd64026bbc3e13414a57ea5
+run_name: lyrical-moose-383
+run_uuid: 4fd5f3460fd64026bbc3e13414a57ea5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620183124
+status: 3
+tags: []
+user_id: seijas

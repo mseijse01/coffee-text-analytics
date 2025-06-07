@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/ef14e3b514324d9da3c33575be55f8a1/artifacts
+end_time: 1748624407091
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ef14e3b514324d9da3c33575be55f8a1
+run_name: funny-loon-173
+run_uuid: ef14e3b514324d9da3c33575be55f8a1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624357972
+status: 3
+tags: []
+user_id: seijas

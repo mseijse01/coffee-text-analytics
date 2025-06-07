@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/f562f77ca03f429996ebae79c952955b/artifacts
+end_time: 1748620196041
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f562f77ca03f429996ebae79c952955b
+run_name: skillful-panda-239
+run_uuid: f562f77ca03f429996ebae79c952955b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620195599
+status: 3
+tags: []
+user_id: seijas

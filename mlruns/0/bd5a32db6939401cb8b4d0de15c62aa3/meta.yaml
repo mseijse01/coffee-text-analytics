@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/bd5a32db6939401cb8b4d0de15c62aa3/artifacts
+end_time: 1748621262672
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: bd5a32db6939401cb8b4d0de15c62aa3
+run_name: inquisitive-vole-612
+run_uuid: bd5a32db6939401cb8b4d0de15c62aa3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621262496
+status: 3
+tags: []
+user_id: seijas

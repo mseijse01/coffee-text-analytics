@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/85520ae114c34203b43266eaffad109e/artifacts
+end_time: 1748621271621
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 85520ae114c34203b43266eaffad109e
+run_name: learned-shrike-871
+run_uuid: 85520ae114c34203b43266eaffad109e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621271173
+status: 3
+tags: []
+user_id: seijas

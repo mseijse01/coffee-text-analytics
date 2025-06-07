@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/77de47fe659e442c8d7984e25cb38e63/artifacts
+end_time: 1748620179654
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 77de47fe659e442c8d7984e25cb38e63
+run_name: nimble-loon-277
+run_uuid: 77de47fe659e442c8d7984e25cb38e63
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620178470
+status: 3
+tags: []
+user_id: seijas

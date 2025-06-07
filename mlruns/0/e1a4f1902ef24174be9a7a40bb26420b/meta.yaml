@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/e1a4f1902ef24174be9a7a40bb26420b/artifacts
+end_time: 1748624308602
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e1a4f1902ef24174be9a7a40bb26420b
+run_name: unruly-donkey-372
+run_uuid: e1a4f1902ef24174be9a7a40bb26420b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624258560
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/c4f0740ccdc642a49a30b351c63e3209/artifacts
+end_time: 1748621262386
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: c4f0740ccdc642a49a30b351c63e3209
+run_name: traveling-hen-747
+run_uuid: c4f0740ccdc642a49a30b351c63e3209
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621262100
+status: 3
+tags: []
+user_id: seijas

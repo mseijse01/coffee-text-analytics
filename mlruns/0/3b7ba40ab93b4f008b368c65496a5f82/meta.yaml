@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/3b7ba40ab93b4f008b368c65496a5f82/artifacts
+end_time: 1748619906650
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 3b7ba40ab93b4f008b368c65496a5f82
+run_name: fearless-mare-439
+run_uuid: 3b7ba40ab93b4f008b368c65496a5f82
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619906643
+status: 3
+tags: []
+user_id: seijas

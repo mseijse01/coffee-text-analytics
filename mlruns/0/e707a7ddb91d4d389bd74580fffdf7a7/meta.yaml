@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/e707a7ddb91d4d389bd74580fffdf7a7/artifacts
+end_time: 1748619998771
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e707a7ddb91d4d389bd74580fffdf7a7
+run_name: popular-shoat-962
+run_uuid: e707a7ddb91d4d389bd74580fffdf7a7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619998762
+status: 3
+tags: []
+user_id: seijas

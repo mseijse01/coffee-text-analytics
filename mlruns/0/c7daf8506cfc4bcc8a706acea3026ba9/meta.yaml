@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/c7daf8506cfc4bcc8a706acea3026ba9/artifacts
+end_time: 1748624102879
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: c7daf8506cfc4bcc8a706acea3026ba9
+run_name: likeable-snake-473
+run_uuid: c7daf8506cfc4bcc8a706acea3026ba9
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748624048861
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/8e9d580c3fe443adbbf7cdd6d793b78a/artifacts
+end_time: 1748620805379
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8e9d580c3fe443adbbf7cdd6d793b78a
+run_name: sedate-bird-22
+run_uuid: 8e9d580c3fe443adbbf7cdd6d793b78a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620799072
+status: 3
+tags: []
+user_id: seijas

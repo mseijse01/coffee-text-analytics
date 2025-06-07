@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/2a7d92b31391495b82bf6f22a6765bdf/artifacts
+end_time: 1748620787389
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 2a7d92b31391495b82bf6f22a6765bdf
+run_name: nebulous-stag-705
+run_uuid: 2a7d92b31391495b82bf6f22a6765bdf
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620781262
+status: 3
+tags: []
+user_id: seijas

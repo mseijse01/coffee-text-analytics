@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/998081c2ab544291830eea6e5fbf8dd1/artifacts
+end_time: 1748621277956
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 998081c2ab544291830eea6e5fbf8dd1
+run_name: bold-kit-970
+run_uuid: 998081c2ab544291830eea6e5fbf8dd1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621277777
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/c76945d7c9cf4c8da32392abfd8f6f92/artifacts
+end_time: 1748619998379
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: c76945d7c9cf4c8da32392abfd8f6f92
+run_name: legendary-moth-252
+run_uuid: c76945d7c9cf4c8da32392abfd8f6f92
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619998371
+status: 3
+tags: []
+user_id: seijas

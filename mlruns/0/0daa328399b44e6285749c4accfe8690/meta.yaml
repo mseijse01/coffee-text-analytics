@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/0daa328399b44e6285749c4accfe8690/artifacts
+end_time: 1748621769706
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 0daa328399b44e6285749c4accfe8690
+run_name: popular-skink-989
+run_uuid: 0daa328399b44e6285749c4accfe8690
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621693978
+status: 3
+tags: []
+user_id: seijas

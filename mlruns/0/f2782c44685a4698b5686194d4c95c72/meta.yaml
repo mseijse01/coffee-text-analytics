@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/f2782c44685a4698b5686194d4c95c72/artifacts
+end_time: 1748620864976
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f2782c44685a4698b5686194d4c95c72
+run_name: wise-doe-950
+run_uuid: f2782c44685a4698b5686194d4c95c72
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620858938
+status: 3
+tags: []
+user_id: seijas

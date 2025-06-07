@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/8dc43622217c48f6896baaafcfbe6433/artifacts
+end_time: 1748620174881
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8dc43622217c48f6896baaafcfbe6433
+run_name: unruly-ray-524
+run_uuid: 8dc43622217c48f6896baaafcfbe6433
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620173224
+status: 3
+tags: []
+user_id: seijas

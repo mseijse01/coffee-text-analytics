@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/1d699b97ec9642eb8f31a4f1699caf6d/artifacts
+end_time: 1748620231935
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 1d699b97ec9642eb8f31a4f1699caf6d
+run_name: bright-worm-168
+run_uuid: 1d699b97ec9642eb8f31a4f1699caf6d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620203568
+status: 3
+tags: []
+user_id: seijas

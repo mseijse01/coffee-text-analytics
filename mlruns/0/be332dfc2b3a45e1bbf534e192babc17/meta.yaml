@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/be332dfc2b3a45e1bbf534e192babc17/artifacts
+end_time: 1748621277564
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: be332dfc2b3a45e1bbf534e192babc17
+run_name: agreeable-roo-65
+run_uuid: be332dfc2b3a45e1bbf534e192babc17
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621277417
+status: 3
+tags: []
+user_id: seijas

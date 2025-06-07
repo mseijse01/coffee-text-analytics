@@ -24,6 +24,16 @@ tensorflow>=2.8.0
 xgboost>=1.5.0
 shap>=0.40.0
 
+# Experiment tracking and optimization
+mlflow>=2.0.0
+optuna>=3.0.0
+optuna-integration>=3.0.0  # For MLflow integration
+hyperopt>=0.2.7  # Alternative optimization framework
+hydra-core>=1.3.0  # Configuration management (optional)
+
+# Database support for Optuna studies
+sqlalchemy>=1.4.0
+
 # Utilities
 tqdm>=4.64.0
 polars>=0.15.0

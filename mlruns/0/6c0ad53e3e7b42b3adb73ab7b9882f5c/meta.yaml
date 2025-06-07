@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/6c0ad53e3e7b42b3adb73ab7b9882f5c/artifacts
+end_time: 1748618157579
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 6c0ad53e3e7b42b3adb73ab7b9882f5c
+run_name: bald-skunk-41
+run_uuid: 6c0ad53e3e7b42b3adb73ab7b9882f5c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748618157460
+status: 3
+tags: []
+user_id: seijas

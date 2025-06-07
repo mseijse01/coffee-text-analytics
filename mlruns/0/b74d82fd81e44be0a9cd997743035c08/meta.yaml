@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/b74d82fd81e44be0a9cd997743035c08/artifacts
+end_time: 1748620443880
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: b74d82fd81e44be0a9cd997743035c08
+run_name: defiant-stoat-191
+run_uuid: b74d82fd81e44be0a9cd997743035c08
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620418816
+status: 3
+tags: []
+user_id: seijas

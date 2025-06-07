@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/80707d87ca7f4b29abb6306cf03d5c4c/artifacts
+end_time: 1748622086016
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 80707d87ca7f4b29abb6306cf03d5c4c
+run_name: blushing-squid-355
+run_uuid: 80707d87ca7f4b29abb6306cf03d5c4c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621998074
+status: 3
+tags: []
+user_id: seijas

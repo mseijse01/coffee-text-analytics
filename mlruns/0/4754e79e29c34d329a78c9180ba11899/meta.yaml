@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/4754e79e29c34d329a78c9180ba11899/artifacts
+end_time: 1748620197116
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4754e79e29c34d329a78c9180ba11899
+run_name: resilient-tern-616
+run_uuid: 4754e79e29c34d329a78c9180ba11899
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620196628
+status: 3
+tags: []
+user_id: seijas

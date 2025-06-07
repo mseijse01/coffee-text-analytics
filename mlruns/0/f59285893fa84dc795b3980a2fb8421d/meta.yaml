@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/f59285893fa84dc795b3980a2fb8421d/artifacts
+end_time: 1748620469387
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f59285893fa84dc795b3980a2fb8421d
+run_name: beautiful-bee-949
+run_uuid: f59285893fa84dc795b3980a2fb8421d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620443906
+status: 3
+tags: []
+user_id: seijas

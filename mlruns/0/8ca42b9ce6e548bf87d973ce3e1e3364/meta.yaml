@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/8ca42b9ce6e548bf87d973ce3e1e3364/artifacts
+end_time: 1748621260512
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8ca42b9ce6e548bf87d973ce3e1e3364
+run_name: colorful-pig-170
+run_uuid: 8ca42b9ce6e548bf87d973ce3e1e3364
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621260241
+status: 3
+tags: []
+user_id: seijas

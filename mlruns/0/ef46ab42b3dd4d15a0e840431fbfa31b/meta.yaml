@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/ef46ab42b3dd4d15a0e840431fbfa31b/artifacts
+end_time: 1748621271143
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ef46ab42b3dd4d15a0e840431fbfa31b
+run_name: unequaled-elk-15
+run_uuid: ef46ab42b3dd4d15a0e840431fbfa31b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621270782
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,6 @@
+artifact_location: file:///Users/seijas/Code/coffee-text-analytics/mlruns/902120221345755958
+creation_time: 1748618156250
+experiment_id: '902120221345755958'
+last_update_time: 1748618156250
+lifecycle_stage: active
+name: coffee-optuna-test

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/48284119eacf4b4a90b47955f3b046f8/artifacts
+end_time: 1748622779613
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 48284119eacf4b4a90b47955f3b046f8
+run_name: bedecked-fish-550
+run_uuid: 48284119eacf4b4a90b47955f3b046f8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748622620842
+status: 3
+tags: []
+user_id: seijas

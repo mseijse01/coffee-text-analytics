@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/c8cfebc640b7448f87f8621034b4638d/artifacts
+end_time: 1748619906906
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: c8cfebc640b7448f87f8621034b4638d
+run_name: funny-grub-146
+run_uuid: c8cfebc640b7448f87f8621034b4638d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619906898
+status: 3
+tags: []
+user_id: seijas

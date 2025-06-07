@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/2780ac53eab748a69cc2703bcce7239c/artifacts
+end_time: 1748619998800
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 2780ac53eab748a69cc2703bcce7239c
+run_name: efficient-sloth-161
+run_uuid: 2780ac53eab748a69cc2703bcce7239c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619998791
+status: 3
+tags: []
+user_id: seijas

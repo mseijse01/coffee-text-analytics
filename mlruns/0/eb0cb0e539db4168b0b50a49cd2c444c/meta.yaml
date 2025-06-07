@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/eb0cb0e539db4168b0b50a49cd2c444c/artifacts
+end_time: 1748621259858
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: eb0cb0e539db4168b0b50a49cd2c444c
+run_name: secretive-ram-382
+run_uuid: eb0cb0e539db4168b0b50a49cd2c444c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621259602
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/fcf32eee76294f3f968a6a1ba9fa89b9/artifacts
+end_time: 1748621262081
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: fcf32eee76294f3f968a6a1ba9fa89b9
+run_name: adventurous-squid-1
+run_uuid: fcf32eee76294f3f968a6a1ba9fa89b9
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621261834
+status: 3
+tags: []
+user_id: seijas

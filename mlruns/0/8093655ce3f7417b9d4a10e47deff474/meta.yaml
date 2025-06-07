@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/8093655ce3f7417b9d4a10e47deff474/artifacts
+end_time: 1748620315031
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8093655ce3f7417b9d4a10e47deff474
+run_name: bemused-wren-561
+run_uuid: 8093655ce3f7417b9d4a10e47deff474
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620285541
+status: 3
+tags: []
+user_id: seijas

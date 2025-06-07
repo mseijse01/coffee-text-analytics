@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/ec58b4d779c34944aff27e1a4ab01637/artifacts
+end_time: 1748619906624
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ec58b4d779c34944aff27e1a4ab01637
+run_name: capable-roo-616
+run_uuid: ec58b4d779c34944aff27e1a4ab01637
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619906616
+status: 3
+tags: []
+user_id: seijas

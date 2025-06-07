@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/ed585eb0e39d438fbbaab6a73a139a60/artifacts
+end_time: 1748619998742
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ed585eb0e39d438fbbaab6a73a139a60
+run_name: silent-dove-72
+run_uuid: ed585eb0e39d438fbbaab6a73a139a60
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748619998732
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/c267a4a9e214491488c19cf27792f8b4/artifacts
+end_time: 1748620193316
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: c267a4a9e214491488c19cf27792f8b4
+run_name: agreeable-worm-486
+run_uuid: c267a4a9e214491488c19cf27792f8b4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620192780
+status: 3
+tags: []
+user_id: seijas

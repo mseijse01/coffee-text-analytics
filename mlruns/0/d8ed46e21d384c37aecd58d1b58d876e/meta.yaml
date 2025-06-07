@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/d8ed46e21d384c37aecd58d1b58d876e/artifacts
+end_time: 1748621270250
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: d8ed46e21d384c37aecd58d1b58d876e
+run_name: thundering-lynx-613
+run_uuid: d8ed46e21d384c37aecd58d1b58d876e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621269767
+status: 3
+tags: []
+user_id: seijas

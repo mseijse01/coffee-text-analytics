@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/3fd4f0240fff41ccb1e85785321d3869/artifacts
+end_time: 1748621259186
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 3fd4f0240fff41ccb1e85785321d3869
+run_name: selective-cow-351
+run_uuid: 3fd4f0240fff41ccb1e85785321d3869
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621258524
+status: 3
+tags: []
+user_id: seijas

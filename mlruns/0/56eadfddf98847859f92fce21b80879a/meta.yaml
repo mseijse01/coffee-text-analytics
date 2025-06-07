@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/56eadfddf98847859f92fce21b80879a/artifacts
+end_time: 1748618224017
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 56eadfddf98847859f92fce21b80879a
+run_name: shivering-skunk-282
+run_uuid: 56eadfddf98847859f92fce21b80879a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748618223938
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/8aa3d2e3711948c59190cfafb137cc72/artifacts
+end_time: 1748621261163
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8aa3d2e3711948c59190cfafb137cc72
+run_name: gifted-doe-93
+run_uuid: 8aa3d2e3711948c59190cfafb137cc72
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621260833
+status: 3
+tags: []
+user_id: seijas

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/a9e0987c353649189ff686d9b6000208/artifacts
+end_time: 1748620199879
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a9e0987c353649189ff686d9b6000208
+run_name: abrasive-gnat-334
+run_uuid: a9e0987c353649189ff686d9b6000208
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620199700
+status: 3
+tags: []
+user_id: seijas

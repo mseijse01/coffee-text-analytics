@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/bbf55937b1b44a5899b48e2e417ad64a/artifacts
+end_time: 1748620173184
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: bbf55937b1b44a5899b48e2e417ad64a
+run_name: bald-shrew-938
+run_uuid: bbf55937b1b44a5899b48e2e417ad64a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620172240
+status: 3
+tags: []
+user_id: seijas

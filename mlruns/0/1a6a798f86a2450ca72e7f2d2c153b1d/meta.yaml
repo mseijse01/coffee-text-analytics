@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/1a6a798f86a2450ca72e7f2d2c153b1d/artifacts
+end_time: 1748620196592
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 1a6a798f86a2450ca72e7f2d2c153b1d
+run_name: puzzled-grouse-69
+run_uuid: 1a6a798f86a2450ca72e7f2d2c153b1d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620196063
+status: 3
+tags: []
+user_id: seijas

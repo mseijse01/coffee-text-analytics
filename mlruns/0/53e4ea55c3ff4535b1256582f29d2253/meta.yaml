@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/53e4ea55c3ff4535b1256582f29d2253/artifacts
+end_time: 1748620184074
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 53e4ea55c3ff4535b1256582f29d2253
+run_name: enthused-snipe-243
+run_uuid: 53e4ea55c3ff4535b1256582f29d2253
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620183709
+status: 3
+tags: []
+user_id: seijas

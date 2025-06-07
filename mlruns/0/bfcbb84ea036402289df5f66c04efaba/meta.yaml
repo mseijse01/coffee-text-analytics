@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/bfcbb84ea036402289df5f66c04efaba/artifacts
+end_time: 1748621261748
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: bfcbb84ea036402289df5f66c04efaba
+run_name: receptive-hog-401
+run_uuid: bfcbb84ea036402289df5f66c04efaba
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748621261463
+status: 3
+tags: []
+user_id: seijas

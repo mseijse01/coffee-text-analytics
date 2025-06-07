@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/seijas/Code/coffee-text-analytics/mlruns/0/5cfbd15fea244b7783954b3976813514/artifacts
+end_time: 1748620834920
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 5cfbd15fea244b7783954b3976813514
+run_name: gaudy-shrimp-431
+run_uuid: 5cfbd15fea244b7783954b3976813514
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748620829196
+status: 3
+tags: []
+user_id: seijas
