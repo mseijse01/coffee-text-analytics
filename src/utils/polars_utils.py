@@ -237,8 +237,9 @@ class DataTypeOptimizer:
         memory_info = {
             "total_rows": len(df),
             "total_columns": len(df.columns),
-            "column_memory": {},
+            "column_info": {},
             "total_memory_mb": 0,
+            "recommendations": [],
         }
 
         for col in df.columns:
@@ -260,21 +261,30 @@ class DataTypeOptimizer:
                 bytes_per_value = 8  # Default estimate
 
             col_memory_mb = (len(df) * bytes_per_value) / (1024 * 1024)
-            memory_info["column_memory"][col] = {
+            memory_info["column_info"][col] = {
                 "dtype": str(dtype),
                 "memory_mb": col_memory_mb,
             }
             memory_info["total_memory_mb"] += col_memory_mb
+
+            # Add recommendations for optimization
+            if dtype == pl.Int64:
+                col_min = df[col].min()
+                col_max = df[col].max()
+                if col_min >= 0 and col_max <= 255:
+                    memory_info["recommendations"].append(
+                        f"Column '{col}' can be optimized from Int64 to UInt8"
+                    )
 
         return memory_info
 
 
 # Convenience functions for common operations
 def efficient_pandas_apply(
-    df: pl.DataFrame, column: str, func: callable
+    df: pl.DataFrame, column: str, func: callable, new_column: str = None
 ) -> pl.DataFrame:
     """Convenience function for efficient apply operations."""
-    return PolarsOptimizer.efficient_apply(df, column, func)
+    return PolarsOptimizer.efficient_apply(df, column, func, new_column)
 
 
 def prepare_for_sklearn(df: pl.DataFrame, features: List[str], target: str = None):

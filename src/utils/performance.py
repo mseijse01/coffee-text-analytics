@@ -19,6 +19,65 @@ from contextlib import contextmanager
 logger = logging.getLogger(__name__)
 
 
+class PerformanceMonitor:
+    """
+    Performance monitor for tracking operation timing and metrics.
+
+    Simplified interface for performance measurement used in integration tests.
+    """
+
+    def __init__(self):
+        """Initialize performance monitor."""
+        self.metrics = {}
+        self.current_operations = {}
+
+    @contextmanager
+    def time_operation(self, operation_name: str):
+        """
+        Context manager for timing operations.
+
+        Args:
+            operation_name: Name of the operation to time
+        """
+        start_time = time.time()
+
+        try:
+            yield
+        finally:
+            end_time = time.time()
+            duration = end_time - start_time
+
+            if operation_name not in self.metrics:
+                self.metrics[operation_name] = {
+                    "count": 0,
+                    "total_time": 0.0,
+                    "avg_time": 0.0,
+                    "min_time": float("inf"),
+                    "max_time": 0.0,
+                }
+
+            metrics = self.metrics[operation_name]
+            metrics["count"] += 1
+            metrics["total_time"] += duration
+            metrics["avg_time"] = metrics["total_time"] / metrics["count"]
+            metrics["min_time"] = min(metrics["min_time"], duration)
+            metrics["max_time"] = max(metrics["max_time"], duration)
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """
+        Get all collected metrics.
+
+        Returns:
+            Dictionary with performance metrics for all operations
+        """
+        return self.metrics.copy()
+
+    def clear_metrics(self):
+        """Clear all collected metrics."""
+        self.metrics.clear()
+        self.current_operations.clear()
+
+
 class PerformanceProfiler:
     """
     Performance profiler for measuring execution time and memory usage.
@@ -182,7 +241,7 @@ class DataFrameBenchmark:
             "polars_avg_time": polars_avg_time,
             "pandas_avg_time": pandas_avg_time,
             "speedup_factor": speedup,
-            "polars_faster": speedup > 1,
+            "polars_faster": bool(speedup > 1),
             "detailed_measurements": summary["measurements"],
         }
 

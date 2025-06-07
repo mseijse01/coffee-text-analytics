@@ -7,7 +7,98 @@ that work with both Pandas and Polars DataFrames.
 
 import polars as pl
 import pandas as pd
-from typing import Union
+from typing import Union, Dict, Any
+
+
+class DataQualityChecker:
+    """
+    Class-based interface for data quality analysis.
+
+    Provides object-oriented wrapper around data quality functions
+    for use in integration tests and more complex workflows.
+    """
+
+    def check_missing_values(
+        self, df: Union[pd.DataFrame, pl.DataFrame]
+    ) -> Dict[str, Any]:
+        """
+        Check for missing values and return detailed report.
+
+        Args:
+            df: Input DataFrame (Pandas or Polars)
+
+        Returns:
+            Dictionary with missing values report
+        """
+        # Convert to Polars if it's a Pandas DataFrame
+        if hasattr(df, "isnull"):  # Pandas DataFrame
+            df_polars = pl.from_pandas(df)
+        else:  # Already Polars DataFrame
+            df_polars = df
+
+        missing_values = df_polars.null_count()
+        total_rows = len(df_polars)
+
+        report = {
+            "total_rows": total_rows,
+            "columns_with_missing": {},
+            "total_missing_values": 0,
+        }
+
+        for col, count in zip(df_polars.columns, missing_values.row(0)):
+            if count > 0:
+                percentage = (count / total_rows) * 100
+                report["columns_with_missing"][col] = {
+                    "count": count,
+                    "percentage": percentage,
+                }
+                report["total_missing_values"] += count
+
+        return report
+
+    def check_data_types(self, df: Union[pd.DataFrame, pl.DataFrame]) -> Dict[str, Any]:
+        """
+        Check data types and return detailed report.
+
+        Args:
+            df: Input DataFrame (Pandas or Polars)
+
+        Returns:
+            Dictionary with data types report
+        """
+        # Convert to Polars if it's a Pandas DataFrame
+        if hasattr(df, "isnull"):  # Pandas DataFrame
+            df_polars = pl.from_pandas(df)
+        else:  # Already Polars DataFrame
+            df_polars = df
+
+        report = {
+            "column_types": {},
+            "numeric_columns": [],
+            "text_columns": [],
+            "categorical_columns": [],
+        }
+
+        for col in df_polars.columns:
+            dtype = df_polars[col].dtype
+            report["column_types"][col] = str(dtype)
+
+            if dtype in [
+                pl.Float64,
+                pl.Float32,
+                pl.Int64,
+                pl.Int32,
+                pl.UInt64,
+                pl.UInt32,
+            ]:
+                report["numeric_columns"].append(col)
+            elif dtype in [pl.Utf8, pl.Categorical]:
+                if dtype == pl.Categorical:
+                    report["categorical_columns"].append(col)
+                else:
+                    report["text_columns"].append(col)
+
+        return report
 
 
 def analyze_data_quality(df: Union[pd.DataFrame, pl.DataFrame]) -> None:

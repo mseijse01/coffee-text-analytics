@@ -7,6 +7,8 @@ for extracting comprehensive features following the thesis methodology.
 
 import polars as pl
 import numpy as np
+import pickle
+import os
 import logging
 from typing import List, Dict, Optional, Any, Union
 from pathlib import Path
@@ -16,6 +18,13 @@ from .tfidf_extractor import TfidfExtractor
 from .bert_extractor import BertExtractor
 from .topic_extractor import TopicExtractor
 from .sentiment_extractor import SentimentExtractor
+
+# Import specialized preprocessing functions
+from data.preprocessing import (
+    preprocess_text_for_embeddings,
+    preprocess_text_for_topics,
+)
+from .categorical_encoder import CategoricalFeatureEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -139,18 +148,23 @@ class CoffeeFeatureManager:
     interface for comprehensive feature extraction following thesis methodology.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Dict[str, Any]):
         """
-        Initialize feature manager.
+        Initialize the Coffee Feature Manager.
 
         Args:
-            config: Configuration dictionary with extractor settings
+            config: Configuration dictionary containing parameters for each extractor
         """
-        self.config = config or {}
-
-        # Initialize extractors
+        self.config = config
         self.extractors = {}
         self.is_fitted = False
+
+        # Initialize categorical encoder with thesis-compliant configuration
+        self.categorical_encoder = CategoricalFeatureEncoder()
+
+        logger.info("Initialized CoffeeFeatureManager")
+        logger.info(f"Configuration: {config}")
+        logger.info("Categorical encoder initialized with thesis methodology")
 
         # Default extractor configurations
         default_extractors = {
@@ -188,60 +202,90 @@ class CoffeeFeatureManager:
             f"Initialized feature manager with extractors: {list(self.extractors.keys())}"
         )
 
-    def fit(
-        self, df: pl.DataFrame, text_columns: List[str] = ["desc_1", "desc_2", "desc_3"]
-    ) -> "CoffeeFeatureManager":
+    def fit(self, df: pl.DataFrame, text_columns: List[str]) -> None:
         """
-        Fit all extractors to training texts from multiple columns (thesis methodology).
-
-        Following thesis methodology, extractors are fitted on combined text from all
-        description columns to learn comprehensive vocabulary and patterns.
+        Fit all feature extractors on the dataset including categorical encoder.
 
         Args:
-            df: Training DataFrame with text columns
-            text_columns: List of text column names to use for fitting
-
-        Returns:
-            Self for method chaining
+            df: Input DataFrame
+            text_columns: List of text column names to process
         """
-        logger.info(f"Fitting feature extractors on text from columns: {text_columns}")
-        logger.info(
-            "Following thesis methodology: fitting on combined text from all columns"
-        )
+        logger.info("Fitting CoffeeFeatureManager on dataset")
+        logger.info(f"Dataset shape: {df.shape}")
+        logger.info(f"Text columns: {text_columns}")
 
-        # Collect all texts from all columns for fitting
+        # Convert polars to pandas for sklearn compatibility
+        df_pandas = df.to_pandas()
+
+        # Combine all text for fitting extractors
         all_texts = []
-
         for col_name in text_columns:
-            if col_name not in df.columns:
-                logger.warning(f"Column '{col_name}' not found in DataFrame")
-                continue
+            if col_name in df.columns:
+                column_texts = df[col_name].to_list()
+                all_texts.extend([str(text) if text else "" for text in column_texts])
 
-            logger.info(f"Collecting texts from column: {col_name}")
+        logger.info(f"Total texts for fitting: {len(all_texts)}")
 
-            # Extract texts from this column
-            for i in range(len(df)):
-                text_value = df[col_name][i]
-                if text_value and isinstance(text_value, str):
-                    all_texts.append(text_value.strip())
+        # Fit each configured extractor
+        extractors_config = self.config.get("extractors", {})
+        for extractor_name in ["tfidf", "bert", "topics", "sentiment", "glove"]:
+            # Only process if extractor is enabled
+            if extractors_config.get(extractor_name, False):
+                logger.info(f"Fitting {extractor_name} extractor")
+                extractor_specific_config = self.config.get(extractor_name, {})
+                extractor = self._create_extractor(
+                    extractor_name, extractor_specific_config
+                )
 
-        logger.info(
-            f"Collected {len(all_texts)} texts from {len(text_columns)} columns for fitting"
-        )
+                # Skip if extractor creation failed (e.g., GloVe not available)
+                if extractor is None:
+                    logger.warning(
+                        f"Skipping {extractor_name} extractor - not available"
+                    )
+                    continue
 
-        # Fit all extractors on combined texts
-        for name, extractor in self.extractors.items():
-            try:
-                logger.info(f"Fitting {name} extractor on combined texts")
                 extractor.fit(all_texts)
-                logger.info(f"{name} extractor fitted successfully")
-            except Exception as e:
-                logger.error(f"Failed to fit {name} extractor: {e}")
-                # Continue with other extractors
+                self.extractors[extractor_name] = extractor
+                logger.info(f"✅ {extractor_name} extractor fitted")
+
+        # Fit categorical encoder
+        logger.info("Fitting categorical encoder")
+        self.categorical_encoder.fit(df_pandas)
+        logger.info("✅ Categorical encoder fitted")
 
         self.is_fitted = True
-        logger.info("All extractors fitted successfully on combined text data")
-        return self
+        logger.info("✅ All extractors fitted successfully")
+
+    def _create_extractor(self, extractor_name: str, extractor_config: Dict[str, Any]):
+        """
+        Create an extractor instance based on name and configuration.
+
+        Args:
+            extractor_name: Name of the extractor (tfidf, bert, topics, sentiment, glove)
+            extractor_config: Configuration dictionary for the extractor
+
+        Returns:
+            Initialized extractor instance
+        """
+        if extractor_name == "tfidf":
+            return TfidfExtractor(extractor_config)
+        elif extractor_name == "bert":
+            return BertExtractor(extractor_config)
+        elif extractor_name == "topics":
+            return TopicExtractor(extractor_config)
+        elif extractor_name == "sentiment":
+            return SentimentExtractor(extractor_config)
+        elif extractor_name == "glove":
+            # Handle GloVe extractor if available
+            try:
+                from .glove_extractor import GloVeExtractor
+
+                return GloVeExtractor(extractor_config)
+            except ImportError:
+                logger.warning("GloVe extractor not available - skipping")
+                return None
+        else:
+            raise ValueError(f"Unknown extractor type: {extractor_name}")
 
     def extract_features(self, texts: List[str]) -> pl.DataFrame:
         """
@@ -293,13 +337,18 @@ class CoffeeFeatureManager:
         self, df: pl.DataFrame, text_columns: List[str] = ["desc_1", "desc_2", "desc_3"]
     ) -> pl.DataFrame:
         """
-        Extract features from multiple text columns separately (thesis methodology).
+        Extract features from multiple text columns separately plus categorical features.
 
         Following thesis methodology, each description column is processed separately
         to capture distinct semantic content:
         - desc_1: Tasting notes (flavor descriptors)
         - desc_2: Contextual information (brewing, origin details)
         - desc_3: Reviewer's conclusion ("bottom line")
+
+        Additionally includes categorical features:
+        - roast: One-hot encoded roast levels
+        - country_of_origin: Top-K countries + Other
+        - roaster: Frequency-grouped roasters + Other
 
         Args:
             df: Input DataFrame with text columns
@@ -310,6 +359,7 @@ class CoffeeFeatureManager:
         """
         logger.info(f"Extracting features separately from columns: {text_columns}")
         logger.info("Following thesis methodology: separate processing per desc column")
+        logger.info("Including categorical features: roast, country_of_origin, roaster")
 
         # Start with original data
         result_df = df
@@ -320,7 +370,7 @@ class CoffeeFeatureManager:
                 logger.warning(f"Column '{col_name}' not found in DataFrame")
                 continue
 
-            logger.info(f"Processing column: {col_name}")
+            logger.info(f"Processing text column: {col_name}")
 
             # Extract texts from this column
             column_texts = []
@@ -345,6 +395,36 @@ class CoffeeFeatureManager:
             else:
                 logger.warning(f"No features extracted from {col_name}")
 
+        # Extract categorical features
+        logger.info("Extracting categorical features")
+        try:
+            # Convert to pandas for categorical encoder
+            df_pandas = df.to_pandas()
+
+            # Apply categorical encoding
+            df_with_categorical = self.categorical_encoder.transform(df_pandas)
+
+            # Get only the new categorical features (exclude original columns)
+            categorical_feature_names = []
+            for col_features in self.categorical_encoder.get_feature_names().values():
+                categorical_feature_names.extend(col_features)
+
+            # Extract only the categorical feature columns
+            categorical_features_df = df_with_categorical[categorical_feature_names]
+
+            # Convert back to polars
+            categorical_features_pl = pl.from_pandas(categorical_features_df)
+
+            # Add to result
+            result_df = result_df.hstack(categorical_features_pl)
+
+            logger.info(f"Added {len(categorical_feature_names)} categorical features")
+            logger.info(f"Categorical features: {categorical_feature_names}")
+
+        except Exception as e:
+            logger.error(f"Failed to extract categorical features: {e}")
+            logger.warning("Continuing without categorical features")
+
         logger.info(f"Final DataFrame shape: {result_df.shape}")
         logger.info(f"Total features added: {result_df.shape[1] - df.shape[1]}")
         return result_df
@@ -354,6 +434,11 @@ class CoffeeFeatureManager:
     ) -> pl.DataFrame:
         """
         Extract features from texts for a specific column with proper naming.
+
+        Following thesis methodology, applies specialized preprocessing:
+        - Topic modeling: Retain stopwords, remove punctuation
+        - Embeddings/Sentiment: Remove stopwords, retain punctuation
+        - TF-IDF: Remove stopwords, retain punctuation
 
         Args:
             texts: List of texts from the column
@@ -365,16 +450,22 @@ class CoffeeFeatureManager:
         logger.info(
             f"Extracting features for column '{column_name}' from {len(texts)} texts"
         )
+        logger.info(
+            "Following thesis methodology: specialized preprocessing per extractor type"
+        )
 
         feature_dfs = []
 
-        # Extract features using each extractor
+        # Extract features using each extractor with specialized preprocessing
         for name, extractor in self.extractors.items():
             try:
                 logger.info(f"Extracting {name} features for {column_name}")
 
-                # Extract features
-                features_df = extractor.extract_features(texts)
+                # Apply specialized preprocessing based on extractor type (thesis methodology)
+                preprocessed_texts = self._apply_specialized_preprocessing(texts, name)
+
+                # Extract features using preprocessed texts
+                features_df = extractor.extract_features(preprocessed_texts)
 
                 if not features_df.is_empty():
                     # Rename columns to include source column (thesis naming convention)
@@ -583,3 +674,48 @@ class CoffeeFeatureManager:
                 print(f"  {name}: {count} features ({percentage:.1f}%)")
 
         print("=" * 40)
+
+    def _apply_specialized_preprocessing(
+        self, texts: List[str], extractor_name: str
+    ) -> List[str]:
+        """
+        Apply specialized preprocessing based on extractor type.
+
+        Following thesis methodology:
+        - Topic modeling: Retain stopwords, remove punctuation
+        - Embeddings/TF-IDF/Sentiment: Remove stopwords, retain punctuation
+
+        Args:
+            texts: List of texts to preprocess
+            extractor_name: Name of the extractor (e.g., 'topics', 'tfidf', 'bert', 'sentiment')
+
+        Returns:
+            List of preprocessed texts
+        """
+        logger.debug(f"Applying specialized preprocessing for {extractor_name}")
+
+        preprocessed_texts = []
+
+        # Determine preprocessing type based on extractor
+        if extractor_name in ["topics", "topic"]:
+            # Topic modeling: retain stopwords, remove punctuation
+            for text in texts:
+                if isinstance(text, str) and text.strip():
+                    preprocessed_texts.append(preprocess_text_for_topics(text))
+                else:
+                    preprocessed_texts.append("")
+            logger.debug(
+                f"Applied topic modeling preprocessing (retain stopwords, remove punctuation)"
+            )
+        else:
+            # Embeddings/TF-IDF/Sentiment: remove stopwords, retain punctuation
+            for text in texts:
+                if isinstance(text, str) and text.strip():
+                    preprocessed_texts.append(preprocess_text_for_embeddings(text))
+                else:
+                    preprocessed_texts.append("")
+            logger.debug(
+                f"Applied embeddings/TF-IDF/sentiment preprocessing (remove stopwords, retain punctuation)"
+            )
+
+        return preprocessed_texts

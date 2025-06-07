@@ -1,13 +1,13 @@
 """
 LASSO-based Feature Selection for Coffee Text Analytics
 
-This module implements LASSO-based feature selection that reduces dimensionality
-from ~6,000 to ~500-1,000 features using cross-validation and group-wise selection.
-Follows thesis methodology for independent group-wise selection.
+This module implements group-wise LASSO feature selection optimized for coffee
+text analytics data with support for Polars-first architecture.
 """
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import logging
 from typing import Dict, List, Optional, Tuple, Union, Any
 from sklearn.linear_model import LassoCV
@@ -22,14 +22,11 @@ logger = logging.getLogger(__name__)
 
 class LassoFeatureSelector:
     """
-    LASSO-based feature selector that performs group-wise feature selection
-    using cross-validation to reduce dimensionality while maintaining predictive power.
+    Group-wise LASSO feature selector with Polars-first support.
 
-    This implementation follows the thesis methodology:
-    - Independent selection per feature group (TF-IDF, BERT, topics, etc.)
-    - Cross-validation for optimal alpha selection
-    - Configurable selection thresholds
-    - Maintains interpretability through group structure
+    Performs LASSO feature selection on feature groups (TF-IDF, BERT, sensory, etc.)
+    with cross-validation for optimal regularization. Supports Polars DataFrames
+    as the preferred input type with pandas/numpy fallback support.
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -165,9 +162,9 @@ class LassoFeatureSelector:
         lasso_cv.fit(X_group_scaled, y)
 
         # Create feature selector based on LASSO coefficients
-        # Adapt max_features to group size
+        # Adapt max_features to group size and ensure it's positive
         max_features_for_group = min(
-            self.config["max_features_per_group"], X_group.shape[1]
+            max(1, self.config["max_features_per_group"]), X_group.shape[1]
         )
 
         selector = SelectFromModel(
@@ -222,37 +219,87 @@ class LassoFeatureSelector:
         return selected_mask, selected_indices, selection_stats
 
     def fit_select_features(
-        self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+        self,
+        X: Union[np.ndarray, pd.DataFrame, pl.DataFrame],
+        y: Union[np.ndarray, pd.Series, pl.Series],
     ) -> "LassoFeatureSelector":
         """
         Fit the feature selector and select features using group-wise LASSO.
 
         Args:
-            X: Feature matrix
-            y: Target variable
+            X: Feature matrix (Polars DataFrame preferred, pandas DataFrame or numpy array supported)
+            y: Target variable (Polars Series preferred, pandas Series or numpy array supported)
 
         Returns:
             Self for method chaining
         """
         logger.info("Starting LASSO-based feature selection")
 
-        # Convert inputs to appropriate format
+        # Validate input types first
+        if not isinstance(X, (np.ndarray, pd.DataFrame, pl.DataFrame)):
+            raise TypeError(
+                f"X must be numpy array, pandas DataFrame, or Polars DataFrame, got {type(X)}"
+            )
+
+        if not isinstance(y, (np.ndarray, pd.Series, pl.Series, list)):
+            raise TypeError(
+                f"y must be numpy array, pandas Series, Polars Series, or list, got {type(y)}"
+            )
+
+        # Convert inputs to appropriate format for sklearn
         if isinstance(X, pd.DataFrame):
             feature_names = list(X.columns)
             X_array = X.values
+        elif isinstance(X, pl.DataFrame):
+            feature_names = list(X.columns)
+            X_array = X.to_numpy()  # Convert Polars to numpy for sklearn
         else:
-            feature_names = [f"feature_{i}" for i in range(X.shape[1])]
-            X_array = X
+            # For numpy arrays and other array-like objects
+            try:
+                X_array = np.asarray(X)
+                if X_array.ndim != 2:
+                    raise ValueError(
+                        f"X must be 2-dimensional, got {X_array.ndim} dimensions"
+                    )
+                feature_names = [f"feature_{i}" for i in range(X_array.shape[1])]
+            except Exception as e:
+                raise TypeError(f"Could not convert X to numpy array: {e}")
 
         if isinstance(y, pd.Series):
             y_array = y.values
+        elif isinstance(y, pl.Series):
+            y_array = y.to_numpy()  # Convert Polars to numpy for sklearn
         else:
-            y_array = y
+            # For numpy arrays and other array-like objects
+            try:
+                y_array = np.asarray(y)
+                if y_array.ndim != 1:
+                    raise ValueError(
+                        f"y must be 1-dimensional, got {y_array.ndim} dimensions"
+                    )
+            except Exception as e:
+                raise TypeError(f"Could not convert y to numpy array: {e}")
 
         logger.info(f"Input shape: {X_array.shape}, Target shape: {y_array.shape}")
 
+        # Validate inputs
+        if X_array.shape[0] == 0 or X_array.shape[1] == 0:
+            raise ValueError("Input feature matrix cannot be empty")
+        if y_array.shape[0] == 0:
+            raise ValueError("Target variable cannot be empty")
+        if X_array.shape[0] != y_array.shape[0]:
+            raise ValueError(
+                f"Number of samples in X ({X_array.shape[0]}) must match number of samples in y ({y_array.shape[0]})"
+            )
+
         # Identify feature groups
         self.feature_groups_ = self._identify_feature_groups(feature_names)
+
+        # Validate that we have feature groups
+        if not self.feature_groups_:
+            raise ValueError(
+                "No feature groups identified - check feature naming conventions"
+            )
 
         # Select features for each group
         all_selected_indices = []
@@ -294,7 +341,11 @@ class LassoFeatureSelector:
         # Log summary
         total_original = len(feature_names)
         total_selected = len(self.selected_features_)
-        reduction_ratio = (total_original - total_selected) / total_original
+        reduction_ratio = (
+            (total_original - total_selected) / total_original
+            if total_original > 0
+            else 0.0
+        )
 
         logger.info(f"Feature selection completed:")
         logger.info(f"  Original features: {total_original}")
@@ -304,37 +355,44 @@ class LassoFeatureSelector:
         return self
 
     def transform(
-        self, X: Union[np.ndarray, pd.DataFrame]
-    ) -> Union[np.ndarray, pd.DataFrame]:
+        self, X: Union[np.ndarray, pd.DataFrame, pl.DataFrame]
+    ) -> Union[np.ndarray, pd.DataFrame, pl.DataFrame]:
         """
         Transform feature matrix by selecting only the chosen features.
 
         Args:
-            X: Feature matrix to transform
+            X: Feature matrix to transform (Polars DataFrame preferred, pandas DataFrame or numpy array supported)
 
         Returns:
-            Transformed feature matrix with selected features only
+            Transformed feature matrix with selected features only (maintains input type when possible)
         """
         if not self.is_fitted_:
             raise ValueError("Feature selector must be fitted before transform")
 
         if isinstance(X, pd.DataFrame):
             return X.iloc[:, self.selected_features_]
+        elif isinstance(X, pl.DataFrame):
+            # For Polars, select columns by index (convert to column names first)
+            all_columns = X.columns
+            selected_columns = [all_columns[i] for i in self.selected_features_]
+            return X.select(selected_columns)
         else:
             return X[:, self.selected_features_]
 
     def fit_transform(
-        self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]
-    ) -> Union[np.ndarray, pd.DataFrame]:
+        self,
+        X: Union[np.ndarray, pd.DataFrame, pl.DataFrame],
+        y: Union[np.ndarray, pd.Series, pl.Series],
+    ) -> Union[np.ndarray, pd.DataFrame, pl.DataFrame]:
         """
         Fit the selector and transform the data in one step.
 
         Args:
-            X: Feature matrix
-            y: Target variable
+            X: Feature matrix (Polars DataFrame preferred, pandas DataFrame or numpy array supported)
+            y: Target variable (Polars Series preferred, pandas Series or numpy array supported)
 
         Returns:
-            Transformed feature matrix
+            Transformed feature matrix (maintains input type when possible)
         """
         return self.fit_select_features(X, y).transform(X)
 
