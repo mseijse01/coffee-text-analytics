@@ -64,20 +64,12 @@
   - [x] Create hyperparameter optimization logging (GridSearchCV/RandomizedSearchCV integration)
   - [x] Implement experiment comparison automation (compare methodology variations)
 
-- [x] **Optuna Integration (Day 2)** ✅ **COMPLETED**
+- [ ] **Optuna Integration (Day 2)**
   - [x] Install and integrate Optuna with enhanced MLflow tracker ✅
   - [x] Create Optuna study management with database persistence ✅
   - [x] Implement intelligent hyperparameter optimization (TPE + pruning) ✅
+  - [ ] Add multi-objective optimization (R² vs overfitting vs training time)
   - [x] Create automated hyperparameter importance analysis ✅
-  - [ ] **FUTURE ENHANCEMENT: Advanced Hyperparameter Optimization** 🔮
-    - [ ] Multi-objective optimization (R² vs overfitting vs training time)
-    - [ ] Research-grade trial counts (50-200 trials vs current 2-10)
-    - [ ] Expanded hyperparameter spaces (XGBoost: 20+ params, RF: 15+ params)
-    - [ ] Advanced Optuna features (pruning algorithms, distributed optimization)
-    - [ ] Hyperparameter importance analysis and visualization
-    - **Expected Gains**: 2-5% R² improvement, publication-quality optimization
-    - **Time Cost**: 15-60 minutes additional per run
-    - **Status**: Infrastructure ready, enhancement available on demand
 
 **Expected Results**:
 - **Hyperparameter optimization time**: 2-3 hours → 30-60 minutes (5x speedup) ✅ **DEMONSTRATED**
@@ -127,11 +119,10 @@
 - Model training: Each model on 3,888 features (should be ~300-500 selected features) ❌
 
 **Required Fix**:
-- ✅ Update CorrectedLassoFeatureSelector to recognize our feature naming convention
-- ✅ Ensure LASSO selects ~300-500 features from the 3,889 available
-- ✅ Train ALL models on the SAME LASSO-selected feature subset
-- **Status**: ✅ **RESOLVED** - Critical thesis compliance achieved
-- **Evidence**: 279 text features selected (92.7% reduction), all models use same 327 features
+- Update CorrectedLassoFeatureSelector to recognize our feature naming convention
+- Ensure LASSO selects ~300-500 features from the 3,889 available
+- Train ALL models on the SAME LASSO-selected feature subset
+- Status: 🔄 **NEXT PRIORITY** - Critical for thesis compliance
 
 #### **2.2 Comprehensive Model Training Pipeline (Days 3-4)**
 **Target**: Complete paper model training with full MLflow integration
@@ -160,13 +151,11 @@
   - [x] Comprehensive methodology compliance validation
   - [x] MNIR implementation integration (sensory → text relationship analysis)
 
-- [x] **Execute 15% Sample Validation (Day 3)** ✅ **COMPLETED**
-  - [x] Run complete methodology validation on real coffee data (15% sample) ✅
-  - [x] Validate all models with basic hyperparameter optimization ✅
-  - [x] Generate publication-quality results and methodology compliance report ✅
-  - [x] Validate thesis methodology implementation on real data ✅
-  - **Results**: XGBoost R²=0.9453, Ridge R²=0.9259, 327 features selected, MNIR completed
-  - **Status**: ✅ **THESIS METHODOLOGY FULLY VALIDATED**
+- [ ] **Execute 15% Sample Validation (Day 3)**
+  - [ ] Run complete methodology validation on real coffee data (15% sample)
+  - [ ] Validate all models with Optuna hyperparameter optimization  
+  - [ ] Generate publication-quality results and methodology compliance report
+  - [ ] Validate thesis methodology implementation on real data
 
 - [ ] **Scale to Full Dataset (Day 4) - OPTIONAL**
   - [ ] If 15% validation successful, scale to larger samples (50%, 100%)
