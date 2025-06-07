@@ -45,6 +45,13 @@ services:
       - AWS_SECRET_ACCESS_KEY=minio_secret_key
       - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
       - MLFLOW_S3_IGNORE_TLS=true
+      # Dual-mode data loading configuration
+      - ENVIRONMENT=container
+      - S3_ENDPOINT=http://minio:9000
+      - S3_ACCESS_KEY=minio_access_key
+      - S3_SECRET_KEY=minio_secret_key
+      - S3_BUCKET=mlflow
+      - DATASET_S3_KEY=datasets/coffee_clean.csv
     ports:
       - "5555:5000"
     depends_on:
@@ -89,10 +96,47 @@ services:
       --host 0.0.0.0
       --port 5001
 
+  # Coffee Text Analytics Training Pipeline
+  coffee-training:
+    build:
+      context: ..
+      dockerfile: Dockerfile.training
+    environment:
+      # Dual-mode data loading configuration
+      - ENVIRONMENT=container
+      - S3_ENDPOINT=http://minio:9000
+      - S3_ACCESS_KEY=minio_access_key
+      - S3_SECRET_KEY=minio_secret_key
+      - S3_BUCKET=mlflow
+      - DATASET_S3_KEY=datasets/coffee_clean.csv
+      # MLflow tracking configuration
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=minio_access_key
+      - AWS_SECRET_ACCESS_KEY=minio_secret_key
+      - MLFLOW_S3_IGNORE_TLS=true
+    depends_on:
+      - postgres
+      - minio
+      - mlflow
+    networks:
+      - mlflow_network
+    volumes:
+      - training_output:/app/output
+      - training_models:/app/models
+    # Run once and exit (not a service)
+    restart: "no"
+    profiles:
+      - training  # Only start when explicitly requested
+
 volumes:
   postgres_data:
     driver: local
   minio_data:
+    driver: local
+  training_output:
+    driver: local
+  training_models:
     driver: local
 
 networks:
