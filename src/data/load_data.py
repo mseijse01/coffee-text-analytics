@@ -21,14 +21,32 @@ import tempfile
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+logger = logging.getLogger(__name__)
+
 # Import from the configuration system
 try:
+    # Try importing from the correct location
     from config import config
-except ImportError:
-    # Fallback for when config is not available
-    config = None
 
-logger = logging.getLogger(__name__)
+    # Verify the config is working correctly by checking if the path exists
+    if config and not config.paths.get_raw_data_path().exists():
+        logger.warning(
+            "Config imported but path doesn't exist, falling back to manual resolution"
+        )
+        config = None
+except ImportError:
+    try:
+        # Try importing from parent directory
+        from ..config import config
+
+        if config and not config.paths.get_raw_data_path().exists():
+            logger.warning(
+                "Config imported but path doesn't exist, falling back to manual resolution"
+            )
+            config = None
+    except ImportError:
+        # Fallback for when config is not available
+        config = None
 
 
 class CoffeeDataLoader:
@@ -44,8 +62,8 @@ class CoffeeDataLoader:
         """Initialize the data loader with environment-based configuration."""
         self.environment = os.getenv("ENVIRONMENT", "local").lower()
         self.s3_endpoint = os.getenv("S3_ENDPOINT", "http://localhost:9000")
-        self.s3_access_key = os.getenv("S3_ACCESS_KEY", "minioadmin")
-        self.s3_secret_key = os.getenv("S3_SECRET_KEY", "minioadmin")
+        self.s3_access_key = os.getenv("S3_ACCESS_KEY", "minio_access_key")
+        self.s3_secret_key = os.getenv("S3_SECRET_KEY", "minio_secret_key")
         self.s3_bucket = os.getenv("S3_BUCKET", "mlflow")
         self.dataset_s3_key = os.getenv("DATASET_S3_KEY", "datasets/coffee_clean.csv")
 
@@ -54,7 +72,21 @@ class CoffeeDataLoader:
             self.local_data_path = config.paths.get_raw_data_path()
         else:
             # Use current working directory as project root
-            self.local_data_path = Path("data/raw/coffee_clean.csv").resolve()
+            # Check if we're running from project root or from src/data
+            cwd = Path.cwd()
+            if cwd.name == "coffee-text-analytics":
+                # Running from project root
+                self.local_data_path = cwd / "data" / "raw" / "coffee_clean.csv"
+            else:
+                # Try to find project root
+                project_root = cwd
+                while project_root.parent != project_root:
+                    if (project_root / "data" / "raw" / "coffee_clean.csv").exists():
+                        break
+                    project_root = project_root.parent
+                self.local_data_path = (
+                    project_root / "data" / "raw" / "coffee_clean.csv"
+                )
 
         logger.info(f"CoffeeDataLoader initialized in {self.environment} mode")
 

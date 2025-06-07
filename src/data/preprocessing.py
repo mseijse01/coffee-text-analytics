@@ -447,15 +447,19 @@ def merge_text_columns(df, columns, output_col="merged_text"):
     return result
 
 
-def load_csv_for_preprocessing(file_path: str) -> pd.DataFrame:
+def load_csv_for_preprocessing(file_path: str = None) -> pd.DataFrame:
     """
-    Load CSV data for text preprocessing operations.
+    Load CSV data for text preprocessing operations with dual-mode support.
 
     This function loads CSV data specifically for text preprocessing operations.
     Uses pandas for easier text manipulation and sklearn compatibility.
 
+    Supports dual-mode loading:
+    - If file_path is provided: Load from specified file (legacy mode)
+    - If file_path is None: Use environment-based dual-mode loader
+
     Args:
-        file_path (str): Path to CSV file
+        file_path (str, optional): Path to CSV file. If None, uses dual-mode loader.
 
     Returns:
         pd.DataFrame: Data optimized for text preprocessing operations
@@ -465,8 +469,27 @@ def load_csv_for_preprocessing(file_path: str) -> pd.DataFrame:
         Use convert_pandas_to_polars() if you need Polars format afterward.
     """
     try:
-        logger.info(f"Loading data from {file_path}")
-        data = pd.read_csv(file_path)
+        if file_path is not None:
+            # Legacy mode: load from specified file path
+            logger.info(f"Loading data from specified file: {file_path}")
+            data = pd.read_csv(file_path)
+        else:
+            # Dual-mode: use environment-based loader
+            logger.info("Using dual-mode data loader based on ENVIRONMENT variable")
+            try:
+                from .load_data import load_coffee_data
+
+                # Load with Polars and convert to pandas
+                polars_df = load_coffee_data()
+                data = polars_df.to_pandas()
+                logger.info("Successfully loaded data using dual-mode loader")
+            except ImportError as e:
+                logger.error(f"Failed to import dual-mode loader: {e}")
+                raise
+            except Exception as e:
+                logger.error(f"Failed to load data using dual-mode loader: {e}")
+                raise
+
         logger.info(f"Loaded {data.shape[0]} rows and {data.shape[1]} columns")
         return data
     except Exception as e:
@@ -475,26 +498,36 @@ def load_csv_for_preprocessing(file_path: str) -> pd.DataFrame:
 
 
 def process_raw_data(
-    input_file, output_file, text_columns=None, sample_fraction=None, sample_size=None
+    input_file=None,
+    output_file=None,
+    text_columns=None,
+    sample_fraction=None,
+    sample_size=None,
 ):
     """
-    Process raw coffee review data and save processed version.
+    Process raw coffee review data and save processed version with dual-mode support.
 
     Args:
-        input_file (str): Path to input file
+        input_file (str, optional): Path to input file. If None, uses dual-mode loader.
         output_file (str): Path to output file
         text_columns (list): List of text columns to process
         sample_fraction (float): Fraction of data to sample (e.g., 0.1 for 10%)
         sample_size (int): Absolute number of samples to use
     """
     # Ensure output directory exists
-    output_dir = os.path.dirname(output_file)
-    os.makedirs(output_dir, exist_ok=True)
+    if output_file:
+        output_dir = os.path.dirname(output_file)
+        os.makedirs(output_dir, exist_ok=True)
 
-    # Load data
+    # Load data using dual-mode loader
     df = load_csv_for_preprocessing(input_file)
     if df.empty:
-        raise ValueError(f"Failed to load data from {input_file}")
+        error_msg = (
+            f"Failed to load data from {input_file}"
+            if input_file
+            else "Failed to load data using dual-mode loader"
+        )
+        raise ValueError(error_msg)
 
     original_size = len(df)
     logger.info(f"Original dataset size: {original_size} rows")
