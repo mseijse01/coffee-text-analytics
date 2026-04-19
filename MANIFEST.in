@@ -1,0 +1,16 @@
+include README.md
+include LICENSE
+include CLAUDE.md
+include requirements.txt
+include requirements-lock.txt
+recursive-include docs *.md
+recursive-include mlflow_setup *.yml *.yaml
+exclude mlruns
+exclude cache
+exclude output
+exclude models/*.pkl
+exclude data/processed
+recursive-exclude .github *
+recursive-exclude .mypy_cache *
+recursive-exclude .pytest_cache *
+recursive-exclude __pycache__ *
