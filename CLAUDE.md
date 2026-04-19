@@ -50,6 +50,40 @@ pip install -r requirements-lock.txt
 # Runs: black, isort, mypy (5 core modules), trailing-whitespace, end-of-file-fixer, check-yaml
 ```
 
+### Examples & Demos
+
+**Optuna Hyperparameter Optimization Demos** (`examples/`):
+
+```bash
+# Quick demo (~5-10 min, 25 trials, good for testing)
+python examples/research_optuna_quick_demo.py
+
+# Full demo (~20-30 min, 50+ trials, production-grade optimization)
+python examples/research_optuna_demo.py
+```
+
+**When to use each:**
+- `quick_demo.py` — Test changes, verify pipeline works, quick iteration
+- `demo.py` — Full research-grade optimization, portfolio showcase, publication quality
+
+### Utilities & Maintenance Scripts
+
+**Available in `scripts/`:**
+
+```bash
+# Clean output directories before fresh pipeline run
+python scripts/clean_outputs.py --dry-run     # Preview what will be deleted
+python scripts/clean_outputs.py --confirm     # Clean without prompting
+
+# Generate/update API documentation
+python scripts/generate_docs.py
+```
+
+**Historical Run Data:**
+- Keep `mlruns/` locally for experiment benchmarking (gitignored, not in repo)
+- Keep past model artifacts in `models/` — useful for comparing old vs. new performance
+- Use `mlflow ui` to browse and compare historical runs
+
 ### Other Utilities
 ```bash
 python validate_15_percent_methodology.py              # Thesis compliance validation (~4 min)
