@@ -6,30 +6,31 @@ following the thesis methodology with robust error handling.
 """
 
 import logging
-import pickle
 import os
-from typing import List, Dict, Any, Optional
-import polars as pl
+import pickle
+
+# Import centralized exceptions using absolute import
+import sys
+from typing import Any, Dict, List, Optional
+
 import numpy as np
+import polars as pl
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from .base import BaseSparseExtractor
 
-# Import centralized exceptions using absolute import
-import sys
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from exceptions import (
-    TfidfExtractionError,
-    ExtractorNotFittedError,
     ExtractorConfigError,
-    ModelSaveError,
+    ExtractorNotFittedError,
     ModelLoadError,
+    ModelSaveError,
+    TfidfExtractionError,
     handle_exception,
-    validate_not_none,
-    validate_not_empty,
     require_dependency,
+    validate_not_empty,
+    validate_not_none,
 )
 
 logger = logging.getLogger(__name__)
@@ -409,18 +410,26 @@ class TfidfExtractor(BaseSparseExtractor):
         if self.vectorizer_:
             stats.update(
                 {
-                    "stop_words_count": len(self.vectorizer_.stop_words_)
-                    if self.vectorizer_.stop_words_
-                    else 0,
-                    "idf_min": float(np.min(self.vectorizer_.idf_))
-                    if hasattr(self.vectorizer_, "idf_")
-                    else None,
-                    "idf_max": float(np.max(self.vectorizer_.idf_))
-                    if hasattr(self.vectorizer_, "idf_")
-                    else None,
-                    "idf_mean": float(np.mean(self.vectorizer_.idf_))
-                    if hasattr(self.vectorizer_, "idf_")
-                    else None,
+                    "stop_words_count": (
+                        len(self.vectorizer_.stop_words_)
+                        if self.vectorizer_.stop_words_
+                        else 0
+                    ),
+                    "idf_min": (
+                        float(np.min(self.vectorizer_.idf_))
+                        if hasattr(self.vectorizer_, "idf_")
+                        else None
+                    ),
+                    "idf_max": (
+                        float(np.max(self.vectorizer_.idf_))
+                        if hasattr(self.vectorizer_, "idf_")
+                        else None
+                    ),
+                    "idf_mean": (
+                        float(np.mean(self.vectorizer_.idf_))
+                        if hasattr(self.vectorizer_, "idf_")
+                        else None
+                    ),
                 }
             )
 

@@ -8,15 +8,16 @@ This module provides data loading functionality that can work in two modes:
 The mode is controlled by the ENVIRONMENT environment variable.
 """
 
+import logging
 import os
 import sys
-import logging
+import tempfile
 from pathlib import Path
 from typing import Optional
-import polars as pl
+
 import boto3
+import polars as pl
 from botocore.exceptions import ClientError, NoCredentialsError
-import tempfile
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -281,7 +282,7 @@ def upload_dataset_to_minio(local_path: Optional[str] = None) -> bool:
 if __name__ == "__main__":
     """
     Command-line interface for testing the data loader.
-    
+
     Examples:
         python -m src.data.load_data                    # Load data in current environment
         ENVIRONMENT=local python -m src.data.load_data  # Force local mode

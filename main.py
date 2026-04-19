@@ -18,8 +18,8 @@ from config import config
 from config.environments import apply_environment_config
 from config.validation import check_dependencies, print_config_summary, validate_config
 from experiment.mlflow_integration import CoffeeMLflowTracker
-from src.pipeline.preprocess import run_preprocessing
 from src.pipeline.features import run_feature_extraction
+from src.pipeline.preprocess import run_preprocessing
 from src.pipeline.selection import run_feature_selection
 from src.pipeline.training import run_training
 from src.pipeline.visualization import run_visualization
@@ -149,9 +149,7 @@ def _setup_mlflow(args):
             sample_tag = (
                 f"_sample{int(args.sample_fraction * 100)}pct"
                 if args.sample_fraction
-                else f"_sample{args.sample_size}"
-                if args.sample_size
-                else ""
+                else f"_sample{args.sample_size}" if args.sample_size else ""
             )
             run_name = f"pipeline_run_{ts}{sample_tag}"
 
@@ -174,7 +172,9 @@ def _setup_mlflow(args):
             methodology_params=methodology_params,
             tags={
                 "pipeline_version": "thesis_methodology_compliant",
-                "execution_mode": "full_pipeline" if "all" in args.steps else "partial_pipeline",
+                "execution_mode": (
+                    "full_pipeline" if "all" in args.steps else "partial_pipeline"
+                ),
             },
         )
         logger.info(f"MLflow run started: {run_name} (ID: {run_id})")
@@ -243,7 +243,9 @@ def main() -> None:
     if mlflow_tracker and mlflow_run_id:
         try:
             for step, ok in step_results.items():
-                mlflow_tracker.log_methodology_compliance({f"step_{step}_completed": ok})
+                mlflow_tracker.log_methodology_compliance(
+                    {f"step_{step}_completed": ok}
+                )
             mlflow_tracker.log_methodology_compliance(
                 {
                     "pipeline_completed_successfully": success,

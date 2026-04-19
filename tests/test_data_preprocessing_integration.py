@@ -5,31 +5,32 @@ Tests the complete end-to-end data preprocessing workflow using real sample data
 focusing on pipeline behavior and output validation rather than implementation details.
 """
 
-import pytest
-import pandas as pd
-import polars as pl
-import numpy as np
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pandas as pd
+import polars as pl
+import pytest
 
 # Import modules under test
 from src.data.preprocessing import (
     clean_text,
-    tokenize_text,
-    remove_stopwords,
+    create_specialized_datasets,
+    ensure_nltk_data,
+    extract_country_info,
     lemmatize_text,
+    load_csv_for_preprocessing,
+    merge_text_columns,
     preprocess_text,
     preprocess_text_for_embeddings,
     preprocess_text_for_topics,
-    extract_country_info,
-    standardize_prices,
-    merge_text_columns,
-    load_csv_for_preprocessing,
     process_raw_data,
-    create_specialized_datasets,
-    ensure_nltk_data,
+    remove_stopwords,
+    standardize_prices,
+    tokenize_text,
 )
 
 
@@ -106,9 +107,9 @@ class TestDataProcessingPipelineIntegration:
                         processed_non_empty = (
                             processed_col[non_empty_original].str.len() > 0
                         )
-                        assert processed_non_empty.any(), (
-                            f"Preprocessing of {col} produced no valid output"
-                        )
+                        assert (
+                            processed_non_empty.any()
+                        ), f"Preprocessing of {col} produced no valid output"
 
     @pytest.mark.parametrize("data_format", ["pandas"])
     def test_polars_vs_pandas_consistency(self, sample_data, data_format):

@@ -5,11 +5,12 @@ This module tests the CategoricalFeatureEncoder class and its integration
 with the coffee text analytics pipeline.
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import OneHotEncoder
 from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pandas as pd
+import pytest
+from sklearn.preprocessing import OneHotEncoder
 
 from src.features.categorical_encoder import CategoricalFeatureEncoder
 
@@ -156,9 +157,9 @@ class TestCategoricalFeatureEncoder:
         # All encoded columns should be binary (0 or 1) - test only the prefixed columns
         encoded_cols = roast_cols + country_cols + roaster_cols
         for col in encoded_cols:
-            assert result[col].isin([0, 1]).all(), (
-                f"Column {col} should be binary but contains: {result[col].unique()}"
-            )
+            assert (
+                result[col].isin([0, 1]).all()
+            ), f"Column {col} should be binary but contains: {result[col].unique()}"
 
     @pytest.mark.unit
     def test_transform_specific_roast_categories(self, encoder, sample_data):

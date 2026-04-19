@@ -6,13 +6,14 @@ Runs tests incrementally by file with RAM monitoring to avoid crashes.
 Supports safe mode (lightweight tests only) and batch mode (file-by-file).
 """
 
+import os
 import subprocess
 import sys
-import os
 import time
-import psutil
 from pathlib import Path
 from typing import List, Tuple
+
+import psutil
 
 # Configuration
 SAFE_RAM_THRESHOLD_MB = 2500  # Stop if RAM usage exceeds this
@@ -66,10 +67,14 @@ class RAMMonitor:
 
     def report(self):
         """Print RAM usage report."""
-        print(f"   📊 Peak RAM: {self.peak_mb:.1f} MB (threshold: {self.threshold_mb} MB)")
+        print(
+            f"   📊 Peak RAM: {self.peak_mb:.1f} MB (threshold: {self.threshold_mb} MB)"
+        )
 
 
-def run_test_file(test_file: str, monitor: RAMMonitor, use_cov: bool = True) -> Tuple[bool, str]:
+def run_test_file(
+    test_file: str, monitor: RAMMonitor, use_cov: bool = True
+) -> Tuple[bool, str]:
     """
     Run a single test file with RAM monitoring.
 
@@ -79,7 +84,9 @@ def run_test_file(test_file: str, monitor: RAMMonitor, use_cov: bool = True) -> 
     print(f"\n   Running {Path(test_file).name}...", end=" ", flush=True)
 
     cmd = [
-        sys.executable, "-m", "pytest",
+        sys.executable,
+        "-m",
+        "pytest",
         test_file,
         "-q",
         "--tb=line",

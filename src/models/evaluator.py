@@ -7,23 +7,24 @@ including cross-validation, performance metrics, visualization, and SHAP analysi
 Following thesis methodology for comprehensive model evaluation with MAE, RMSE, and R².
 """
 
+import logging
+import pickle
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import logging
-from typing import List, Dict, Optional, Any, Union, Tuple
-from sklearn.model_selection import cross_val_score, cross_validate
+import seaborn as sns
 from sklearn.metrics import (
-    mean_squared_error,
-    r2_score,
-    mean_absolute_error,
-    mean_absolute_percentage_error,
     explained_variance_score,
     max_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_squared_error,
+    r2_score,
 )
-import matplotlib.pyplot as plt
-import seaborn as sns
-from pathlib import Path
-import pickle
+from sklearn.model_selection import cross_val_score, cross_validate
 
 from .base import BaseEvaluator, BaseModel, ModelEvaluationError
 
@@ -159,9 +160,11 @@ class CoffeeModelEvaluator(BaseEvaluator):
                 "model_type": type(model).__name__,
                 "n_test_samples": len(y_test),
                 "predictions": y_pred,
-                "residuals": y_test - y_pred
-                if hasattr(y_test, "__sub__")
-                else np.array(y_test) - y_pred,
+                "residuals": (
+                    y_test - y_pred
+                    if hasattr(y_test, "__sub__")
+                    else np.array(y_test) - y_pred
+                ),
             }
 
             # Add feature importance if available
@@ -660,9 +663,11 @@ class CoffeeModelEvaluator(BaseEvaluator):
                     "model_type": f"{name}_predictions",
                     "n_test_samples": len(y_test),
                     "predictions": predictions,
-                    "residuals": y_test - predictions
-                    if hasattr(y_test, "__sub__")
-                    else np.array(y_test) - predictions,
+                    "residuals": (
+                        y_test - predictions
+                        if hasattr(y_test, "__sub__")
+                        else np.array(y_test) - predictions
+                    ),
                 }
 
                 # Add standardized report

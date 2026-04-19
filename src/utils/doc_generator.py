@@ -8,14 +8,14 @@ signatures, and usage examples.
 """
 
 import ast
-import inspect
 import importlib
-import sys
+import inspect
 import os
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
+import sys
 import textwrap
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class APIDocumentationGenerator:
@@ -181,12 +181,14 @@ class APIDocumentationGenerator:
             for param_name, param in signature.parameters.items():
                 param_info = {
                     "name": param_name,
-                    "annotation": str(param.annotation)
-                    if param.annotation != param.empty
-                    else None,
-                    "default": str(param.default)
-                    if param.default != param.empty
-                    else None,
+                    "annotation": (
+                        str(param.annotation)
+                        if param.annotation != param.empty
+                        else None
+                    ),
+                    "default": (
+                        str(param.default) if param.default != param.empty else None
+                    ),
                     "kind": str(param.kind),
                 }
                 func_info["parameters"].append(param_info)

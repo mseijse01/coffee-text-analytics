@@ -56,7 +56,9 @@ def run_visualization(args, config) -> bool:
         )
 
         # Per-model feature importance
-        for model_name, results in comparison_results.get("individual_results", {}).items():
+        for model_name, results in comparison_results.get(
+            "individual_results", {}
+        ).items():
             if "feature_importance" in results:
                 evaluator.plot_feature_importance(
                     results["feature_importance"],
@@ -66,7 +68,9 @@ def run_visualization(args, config) -> bool:
 
         # Predicted vs actual for the best model
         best_model_name = comparison_results["best_models"]["r2"]
-        best_results = comparison_results.get("individual_results", {}).get(best_model_name, {})
+        best_results = comparison_results.get("individual_results", {}).get(
+            best_model_name, {}
+        )
 
         if "predictions" in best_results:
             features_path = config.paths.get_features_data_path()

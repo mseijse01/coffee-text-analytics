@@ -5,26 +5,27 @@ This module orchestrates all feature extractors and provides a single interface
 for extracting comprehensive features following the thesis methodology.
 """
 
-import polars as pl
-import numpy as np
-import pickle
-import os
 import logging
-from typing import List, Dict, Optional, Any, Union, cast
+import os
+import pickle
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union, cast
 
-from .base import BaseExtractor, ExtractorError
-from .tfidf_extractor import TfidfExtractor
-from .bert_extractor import BertExtractor
-from .topic_extractor import TopicExtractor
-from .sentiment_extractor import SentimentExtractor
+import numpy as np
+import polars as pl
 
 # Import specialized preprocessing functions
 from data.preprocessing import (
     preprocess_text_for_embeddings,
     preprocess_text_for_topics,
 )
+
+from .base import BaseExtractor, ExtractorError
+from .bert_extractor import BertExtractor
 from .categorical_encoder import CategoricalFeatureEncoder
+from .sentiment_extractor import SentimentExtractor
+from .tfidf_extractor import TfidfExtractor
+from .topic_extractor import TopicExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -260,7 +261,9 @@ class CoffeeFeatureManager:
         logger.info("✅ All extractors fitted successfully")
         return self
 
-    def _create_extractor(self, extractor_name: str, extractor_config: Dict[str, Any]) -> Optional[BaseExtractor]:
+    def _create_extractor(
+        self, extractor_name: str, extractor_config: Dict[str, Any]
+    ) -> Optional[BaseExtractor]:
         """
         Create an extractor instance based on name and configuration.
 
@@ -601,9 +604,11 @@ class CoffeeFeatureManager:
             extractor_info = {
                 "is_fitted": extractor.is_fitted,
                 "feature_count": feature_count,
-                "config": extractor.get_config()
-                if hasattr(extractor, "get_config")
-                else extractor.config,
+                "config": (
+                    extractor.get_config()
+                    if hasattr(extractor, "get_config")
+                    else extractor.config
+                ),
             }
 
             # Add specific info for certain extractors
@@ -636,7 +641,9 @@ class CoffeeFeatureManager:
                 except Exception as e:
                     logger.warning(f"Failed to save {name} extractor: {e}")
 
-    def load_extractors(self, models_dir: Union[str, Path] = "models") -> "CoffeeFeatureManager":
+    def load_extractors(
+        self, models_dir: Union[str, Path] = "models"
+    ) -> "CoffeeFeatureManager":
         """
         Load previously fitted extractors.
 

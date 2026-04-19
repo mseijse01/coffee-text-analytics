@@ -2,13 +2,14 @@
 Text preprocessing utilities for coffee review data.
 """
 
-import re
-import pandas as pd
 import logging
-import nltk
 import os
+import re
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
+
+import nltk
+import pandas as pd
 
 # Configure logging
 logging.basicConfig(
@@ -223,7 +224,9 @@ def preprocess_text_for_topics(text: str) -> str:
     return " ".join(tokens)
 
 
-def create_specialized_datasets(df: pd.DataFrame, text_columns: Optional[List[str]] = None) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def create_specialized_datasets(
+    df: pd.DataFrame, text_columns: Optional[List[str]] = None
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Create three specialized datasets following thesis methodology.
 
@@ -412,7 +415,9 @@ def standardize_prices(df: pd.DataFrame, price_col: str = "price") -> pd.DataFra
     return result
 
 
-def merge_text_columns(df: pd.DataFrame, columns: List[str], output_col: str = "merged_text") -> pd.DataFrame:
+def merge_text_columns(
+    df: pd.DataFrame, columns: List[str], output_col: str = "merged_text"
+) -> pd.DataFrame:
     """
     Merge multiple text columns into one combined text column.
 
@@ -448,7 +453,9 @@ def merge_text_columns(df: pd.DataFrame, columns: List[str], output_col: str = "
     return result
 
 
-def load_csv_for_preprocessing(file_path: Optional[Union[str, Path]] = None) -> pd.DataFrame:
+def load_csv_for_preprocessing(
+    file_path: Optional[Union[str, Path]] = None
+) -> pd.DataFrame:
     """
     Load CSV data for text preprocessing operations with dual-mode support.
 

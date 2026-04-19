@@ -6,20 +6,22 @@ focusing on pipeline behavior and output validation with strategic mocking of
 heavyweight ML operations.
 """
 
-import pytest
+from typing import Dict, List
+from unittest.mock import MagicMock, patch
+
+import numpy as np
 import pandas as pd
 import polars as pl
-import numpy as np
-from unittest.mock import patch, MagicMock
-from typing import Dict, List
+import pytest
+
+from src.features.bert_extractor import BertExtractor
+from src.features.categorical_encoder import CategoricalFeatureEncoder
 
 # Import modules under test
 from src.features.feature_manager import CoffeeFeatureManager, GloVeExtractor
-from src.features.tfidf_extractor import TfidfExtractor
-from src.features.bert_extractor import BertExtractor
-from src.features.topic_extractor import TopicExtractor
 from src.features.sentiment_extractor import SentimentExtractor
-from src.features.categorical_encoder import CategoricalFeatureEncoder
+from src.features.tfidf_extractor import TfidfExtractor
+from src.features.topic_extractor import TopicExtractor
 
 
 @pytest.fixture
@@ -116,9 +118,9 @@ class TestFeatureEngineeringPipelineIntegration:
                 extractor_features = [
                     f for f in feature_names if f.startswith(f"{extractor_name}_{col}")
                 ]
-                assert len(extractor_features) > 0, (
-                    f"No features found for {extractor_name}_{col}"
-                )
+                assert (
+                    len(extractor_features) > 0
+                ), f"No features found for {extractor_name}_{col}"
 
     @pytest.mark.slow
     @pytest.mark.heavy_ml
@@ -155,9 +157,9 @@ class TestFeatureEngineeringPipelineIntegration:
         # Disable sentiment extraction to avoid model loading issues
         safe_config = full_config.copy()
         safe_config["extractors"]["sentiment"] = False
-        safe_config["extractors"]["glove"] = (
-            False  # Also disable GloVe due to network issues
-        )
+        safe_config["extractors"][
+            "glove"
+        ] = False  # Also disable GloVe due to network issues
 
         # Initialize manager with heavyweight features enabled (except problematic ones)
         manager = CoffeeFeatureManager(safe_config)
@@ -206,9 +208,9 @@ class TestFeatureEngineeringPipelineIntegration:
         features = manager.extract_all_features(data, existing_text_cols)
 
         # Validate output format and consistency
-        assert isinstance(features, pl.DataFrame), (
-            "Output should always be Polars DataFrame"
-        )
+        assert isinstance(
+            features, pl.DataFrame
+        ), "Output should always be Polars DataFrame"
         assert features.shape[0] == data.shape[0]
         assert features.shape[1] > 0
 
@@ -328,14 +330,14 @@ class TestFeatureEngineeringPipelineIntegration:
             # Check if this is a text feature or categorical feature
             if feature_name.startswith("tfidf_"):
                 # Text features: tfidf_{column}_{feature_name}
-                assert len(parts) >= 3, (
-                    f"TF-IDF feature name {feature_name} doesn't follow naming convention"
-                )
+                assert (
+                    len(parts) >= 3
+                ), f"TF-IDF feature name {feature_name} doesn't follow naming convention"
 
                 extractor_name = parts[0]
-                assert extractor_name == "tfidf", (
-                    f"Expected tfidf extractor, got {extractor_name} in {feature_name}"
-                )
+                assert (
+                    extractor_name == "tfidf"
+                ), f"Expected tfidf extractor, got {extractor_name} in {feature_name}"
 
                 # Verify this matches a text column pattern
                 found_column = False
@@ -343,20 +345,21 @@ class TestFeatureEngineeringPipelineIntegration:
                     if feature_name.startswith(f"tfidf_{text_col}_"):
                         found_column = True
                         break
-                assert found_column, (
-                    f"TF-IDF feature {feature_name} doesn't match any text column pattern"
-                )
+                assert (
+                    found_column
+                ), f"TF-IDF feature {feature_name} doesn't match any text column pattern"
 
             elif feature_name.startswith(("roaster_", "roast_")):
                 # Categorical features: {category}_{value}
-                assert len(parts) >= 2, (
-                    f"Categorical feature name {feature_name} doesn't follow naming convention"
-                )
+                assert (
+                    len(parts) >= 2
+                ), f"Categorical feature name {feature_name} doesn't follow naming convention"
 
                 category_name = parts[0]
-                assert category_name in ["roaster", "roast"], (
-                    f"Unknown categorical feature type: {category_name} in {feature_name}"
-                )
+                assert category_name in [
+                    "roaster",
+                    "roast",
+                ], f"Unknown categorical feature type: {category_name} in {feature_name}"
 
             else:
                 # Unknown feature type
@@ -426,14 +429,14 @@ class TestFeatureEngineeringPipelineIntegration:
 
         # Performance should be reasonable for small dataset
         assert fit_time < 30.0, f"Fitting took too long: {fit_time:.2f}s"
-        assert extract_time < 30.0, (
-            f"Feature extraction took too long: {extract_time:.2f}s"
-        )
+        assert (
+            extract_time < 30.0
+        ), f"Feature extraction took too long: {extract_time:.2f}s"
 
         # Memory usage validation
-        assert features.shape[1] < 1000, (
-            f"Too many features generated: {features.shape[1]}"
-        )
+        assert (
+            features.shape[1] < 1000
+        ), f"Too many features generated: {features.shape[1]}"
 
         # Feature quality validation
         total_features = features.shape[1]

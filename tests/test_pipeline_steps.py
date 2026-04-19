@@ -17,23 +17,22 @@ Interface contract:
 import argparse
 import os
 import sys
+from unittest.mock import MagicMock, call, patch
 
 import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
-from unittest.mock import MagicMock, patch, call
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from src.pipeline.constants import EXCLUDE_COLUMNS
-from src.pipeline.preprocess import run_preprocessing
 from src.pipeline.features import run_feature_extraction
+from src.pipeline.preprocess import run_preprocessing
 from src.pipeline.selection import run_feature_selection
 from src.pipeline.training import run_training
 from src.pipeline.visualization import run_visualization
-
 
 # ============================================================
 # Shared fixtures
@@ -154,18 +153,22 @@ class TestExcludeColumns:
 
     def test_contains_sensory_attributes(self):
         for col in ["aroma", "acid", "body", "flavor", "aftertaste"]:
-            assert col in EXCLUDE_COLUMNS, f"Expected sensory col '{col}' in EXCLUDE_COLUMNS"
+            assert (
+                col in EXCLUDE_COLUMNS
+            ), f"Expected sensory col '{col}' in EXCLUDE_COLUMNS"
 
     def test_contains_metadata_columns(self):
         for col in ["id", "slug", "url", "name", "roaster", "roast"]:
-            assert col in EXCLUDE_COLUMNS, f"Expected metadata col '{col}' in EXCLUDE_COLUMNS"
+            assert (
+                col in EXCLUDE_COLUMNS
+            ), f"Expected metadata col '{col}' in EXCLUDE_COLUMNS"
 
     def test_no_feature_columns(self):
         """Feature columns (tfidf_, bert_, etc.) must NOT be excluded."""
         for col in EXCLUDE_COLUMNS:
-            assert not col.startswith(("tfidf_", "bert_", "glove_", "topic_")), (
-                f"Feature column '{col}' should not be in EXCLUDE_COLUMNS"
-            )
+            assert not col.startswith(
+                ("tfidf_", "bert_", "glove_", "topic_")
+            ), f"Feature column '{col}' should not be in EXCLUDE_COLUMNS"
 
     def test_no_duplicates(self):
         assert len(EXCLUDE_COLUMNS) == len(set(EXCLUDE_COLUMNS))
@@ -224,14 +227,20 @@ class TestRunPreprocessing:
 class TestRunFeatureExtraction:
     """run_feature_extraction(args, config) -> bool"""
 
-    def test_returns_true_on_success(self, mock_args, mock_config, sample_feature_df, tmp_dirs):
+    def test_returns_true_on_success(
+        self, mock_args, mock_config, sample_feature_df, tmp_dirs
+    ):
         processed_path = mock_config.paths.get_processed_data_path()
         pl.from_pandas(sample_feature_df).write_csv(processed_path)
 
         mock_manager = MagicMock()
-        mock_manager.extract_all_features.return_value = pl.from_pandas(sample_feature_df)
+        mock_manager.extract_all_features.return_value = pl.from_pandas(
+            sample_feature_df
+        )
 
-        with patch("src.pipeline.features.CoffeeFeatureManager", return_value=mock_manager):
+        with patch(
+            "src.pipeline.features.CoffeeFeatureManager", return_value=mock_manager
+        ):
             result = run_feature_extraction(mock_args, mock_config)
 
         assert result is True
@@ -241,9 +250,13 @@ class TestRunFeatureExtraction:
         pl.from_pandas(sample_feature_df).write_csv(processed_path)
 
         mock_manager = MagicMock()
-        mock_manager.extract_all_features.return_value = pl.from_pandas(sample_feature_df)
+        mock_manager.extract_all_features.return_value = pl.from_pandas(
+            sample_feature_df
+        )
 
-        with patch("src.pipeline.features.CoffeeFeatureManager", return_value=mock_manager):
+        with patch(
+            "src.pipeline.features.CoffeeFeatureManager", return_value=mock_manager
+        ):
             run_feature_extraction(mock_args, mock_config)
 
         mock_manager.fit.assert_called_once()
@@ -254,7 +267,9 @@ class TestRunFeatureExtraction:
         result = run_feature_extraction(mock_args, mock_config)
         assert result is False
 
-    def test_returns_false_on_exception(self, mock_args, mock_config, sample_feature_df):
+    def test_returns_false_on_exception(
+        self, mock_args, mock_config, sample_feature_df
+    ):
         processed_path = mock_config.paths.get_processed_data_path()
         pl.from_pandas(sample_feature_df).write_csv(processed_path)
 
@@ -288,14 +303,21 @@ class TestRunFeatureSelection:
             "tfidf_desc_1_word2",
         ]
         # get_selection_summary must return something picklable
-        mock_selector.get_selection_summary.return_value = {"n_selected": 2, "n_total": 5}
+        mock_selector.get_selection_summary.return_value = {
+            "n_selected": 2,
+            "n_total": 5,
+        }
 
-        with patch("src.pipeline.selection.LassoFeatureSelector", return_value=mock_selector):
+        with patch(
+            "src.pipeline.selection.LassoFeatureSelector", return_value=mock_selector
+        ):
             result = run_feature_selection(mock_args, mock_config)
 
         assert result is True
 
-    def test_skips_selection_when_disabled(self, mock_args, mock_config, sample_feature_df):
+    def test_skips_selection_when_disabled(
+        self, mock_args, mock_config, sample_feature_df
+    ):
         mock_config.models.feature_selection_enabled = False
         features_path = mock_config.paths.get_features_data_path()
         pl.from_pandas(sample_feature_df).write_csv(features_path)
@@ -306,7 +328,9 @@ class TestRunFeatureSelection:
         assert result is True
         mock_sel_cls.assert_not_called()
 
-    def test_returns_false_when_target_missing(self, mock_args, mock_config, sample_feature_df):
+    def test_returns_false_when_target_missing(
+        self, mock_args, mock_config, sample_feature_df
+    ):
         df_no_target = sample_feature_df.drop(columns=["rating"])
         features_path = mock_config.paths.get_features_data_path()
         pl.from_pandas(df_no_target).write_csv(features_path)
@@ -319,7 +343,9 @@ class TestRunFeatureSelection:
         result = run_feature_selection(mock_args, mock_config)
         assert result is False
 
-    def test_returns_false_on_exception(self, mock_args, mock_config, sample_feature_df):
+    def test_returns_false_on_exception(
+        self, mock_args, mock_config, sample_feature_df
+    ):
         features_path = mock_config.paths.get_features_data_path()
         pl.from_pandas(sample_feature_df).write_csv(features_path)
 
@@ -345,28 +371,41 @@ class TestRunTraining:
         selected_path = mock_config.paths.processed / "coffee_features_selected.csv"
         pl.from_pandas(df).write_csv(selected_path)
 
-    def test_returns_true_standard_path(self, mock_args, mock_config, sample_feature_df):
+    def test_returns_true_standard_path(
+        self, mock_args, mock_config, sample_feature_df
+    ):
         self._write_features(mock_config, sample_feature_df)
 
         mock_model = MagicMock()
         mock_evaluator = MagicMock()
         mock_evaluator.compare_models.return_value = {
-            "summary_metrics": {"r2": {"linear": 0.85}, "rmse": {"linear": 0.5}, "mae": {"linear": 0.4}},
+            "summary_metrics": {
+                "r2": {"linear": 0.85},
+                "rmse": {"linear": 0.5},
+                "mae": {"linear": 0.4},
+            },
             "best_models": {"r2": "linear", "rmse": "linear", "mae": "linear"},
             "individual_results": {"linear": {"predictions": np.zeros(6)}},
             "comparison_report": "Test report",
         }
 
         with (
-            patch("src.pipeline.training.CoffeeLinearRegression", return_value=mock_model),
-            patch("src.pipeline.training.CoffeeModelEvaluator", return_value=mock_evaluator),
+            patch(
+                "src.pipeline.training.CoffeeLinearRegression", return_value=mock_model
+            ),
+            patch(
+                "src.pipeline.training.CoffeeModelEvaluator",
+                return_value=mock_evaluator,
+            ),
         ):
             result = run_training(mock_args, mock_config)
 
         assert result is True
         mock_model.fit.assert_called_once()
 
-    def test_returns_false_when_target_missing(self, mock_args, mock_config, sample_feature_df):
+    def test_returns_false_when_target_missing(
+        self, mock_args, mock_config, sample_feature_df
+    ):
         df_no_target = sample_feature_df.drop(columns=["rating"])
         self._write_features(mock_config, df_no_target)
 
@@ -378,14 +417,20 @@ class TestRunTraining:
         result = run_training(mock_args, mock_config)
         assert result is False
 
-    def test_box_cox_path_calls_transformer(self, mock_args, mock_config, sample_feature_df):
+    def test_box_cox_path_calls_transformer(
+        self, mock_args, mock_config, sample_feature_df
+    ):
         mock_config.models.box_cox_enabled = True
         self._write_features(mock_config, sample_feature_df)
 
         mock_model = MagicMock()
         mock_evaluator = MagicMock()
         mock_evaluator.compare_models_with_predictions.return_value = {
-            "summary_metrics": {"r2": {"linear": 0.85}, "rmse": {"linear": 0.5}, "mae": {"linear": 0.4}},
+            "summary_metrics": {
+                "r2": {"linear": 0.85},
+                "rmse": {"linear": 0.5},
+                "mae": {"linear": 0.4},
+            },
             "best_models": {"r2": "linear"},
             "individual_results": {},
             "comparison_report": "Test report",
@@ -397,23 +442,36 @@ class TestRunTraining:
         mock_transformer.inverse_transform.return_value = np.zeros(6)
 
         with (
-            patch("src.pipeline.training.CoffeeLinearRegression", return_value=mock_model),
-            patch("src.pipeline.training.CoffeeModelEvaluator", return_value=mock_evaluator),
-            patch("src.pipeline.training.BoxCoxTransformer", return_value=mock_transformer),
+            patch(
+                "src.pipeline.training.CoffeeLinearRegression", return_value=mock_model
+            ),
+            patch(
+                "src.pipeline.training.CoffeeModelEvaluator",
+                return_value=mock_evaluator,
+            ),
+            patch(
+                "src.pipeline.training.BoxCoxTransformer", return_value=mock_transformer
+            ),
         ):
             result = run_training(mock_args, mock_config)
 
         assert result is True
         mock_transformer.fit_transform.assert_called_once()
 
-    def test_box_cox_dual_path_calls_dual_pipeline(self, mock_args, mock_config, sample_feature_df):
+    def test_box_cox_dual_path_calls_dual_pipeline(
+        self, mock_args, mock_config, sample_feature_df
+    ):
         mock_config.models.box_cox_dual_pipeline = True
         self._write_features(mock_config, sample_feature_df)
 
         mock_model = MagicMock()
         dual_result = {
             "baseline_results": {
-                "summary_metrics": {"r2": {"linear": 0.85}, "rmse": {"linear": 0.5}, "mae": {"linear": 0.4}},
+                "summary_metrics": {
+                    "r2": {"linear": 0.85},
+                    "rmse": {"linear": 0.5},
+                    "mae": {"linear": 0.4},
+                },
                 "best_models": {"r2": "linear"},
                 "individual_results": {},
                 "comparison_report": "Dual report",
@@ -424,8 +482,13 @@ class TestRunTraining:
         mock_evaluator = MagicMock()
 
         with (
-            patch("src.pipeline.training.CoffeeLinearRegression", return_value=mock_model),
-            patch("src.pipeline.training.CoffeeModelEvaluator", return_value=mock_evaluator),
+            patch(
+                "src.pipeline.training.CoffeeLinearRegression", return_value=mock_model
+            ),
+            patch(
+                "src.pipeline.training.CoffeeModelEvaluator",
+                return_value=mock_evaluator,
+            ),
             patch(
                 "src.pipeline.training.run_box_cox_dual_pipeline",
                 return_value=dual_result,
@@ -442,21 +505,32 @@ class TestRunTraining:
         mock_model = MagicMock()
         mock_evaluator = MagicMock()
         mock_evaluator.compare_models.return_value = {
-            "summary_metrics": {"r2": {"linear": 0.85}, "rmse": {"linear": 0.5}, "mae": {"linear": 0.4}},
+            "summary_metrics": {
+                "r2": {"linear": 0.85},
+                "rmse": {"linear": 0.5},
+                "mae": {"linear": 0.4},
+            },
             "best_models": {"r2": "linear"},
             "individual_results": {},
             "comparison_report": "Test report",
         }
 
         with (
-            patch("src.pipeline.training.CoffeeLinearRegression", return_value=mock_model),
-            patch("src.pipeline.training.CoffeeModelEvaluator", return_value=mock_evaluator),
+            patch(
+                "src.pipeline.training.CoffeeLinearRegression", return_value=mock_model
+            ),
+            patch(
+                "src.pipeline.training.CoffeeModelEvaluator",
+                return_value=mock_evaluator,
+            ),
         ):
             run_training(mock_args, mock_config)
 
         mock_evaluator.save_comprehensive_evaluation.assert_called_once()
 
-    def test_returns_false_on_exception(self, mock_args, mock_config, sample_feature_df):
+    def test_returns_false_on_exception(
+        self, mock_args, mock_config, sample_feature_df
+    ):
         self._write_features(mock_config, sample_feature_df)
 
         with patch(
@@ -506,7 +580,10 @@ class TestRunVisualization:
         mock_evaluator.plot_model_comparison.return_value = MagicMock()
         mock_evaluator.plot_predictions.return_value = MagicMock()
 
-        with patch("src.pipeline.visualization.CoffeeModelEvaluator", return_value=mock_evaluator):
+        with patch(
+            "src.pipeline.visualization.CoffeeModelEvaluator",
+            return_value=mock_evaluator,
+        ):
             result = run_visualization(mock_args, mock_config)
 
         assert result is True
@@ -523,17 +600,23 @@ class TestRunVisualization:
 
         assert result is False
 
-    def test_loads_from_correct_pkl_path(self, mock_args, mock_config, sample_feature_df):
+    def test_loads_from_correct_pkl_path(
+        self, mock_args, mock_config, sample_feature_df
+    ):
         """Verify visualization loads from the same path training saves to."""
         import pickle
 
         eval_results = {
             "best_models": {"r2": "linear"},
-            "individual_results": {"linear": {"predictions": np.zeros(6), "feature_importance": {}}},
+            "individual_results": {
+                "linear": {"predictions": np.zeros(6), "feature_importance": {}}
+            },
         }
 
         # Write to the TRAINING output path — visualization must find it there
-        training_output_path = mock_config.paths.output / "comprehensive_model_evaluation.pkl"
+        training_output_path = (
+            mock_config.paths.output / "comprehensive_model_evaluation.pkl"
+        )
         with open(training_output_path, "wb") as f:
             pickle.dump(eval_results, f)
 
@@ -544,7 +627,10 @@ class TestRunVisualization:
         mock_evaluator.plot_model_comparison.return_value = MagicMock()
         mock_evaluator.plot_predictions.return_value = MagicMock()
 
-        with patch("src.pipeline.visualization.CoffeeModelEvaluator", return_value=mock_evaluator):
+        with patch(
+            "src.pipeline.visualization.CoffeeModelEvaluator",
+            return_value=mock_evaluator,
+        ):
             result = run_visualization(mock_args, mock_config)
 
         # If it loaded from the wrong path, it would return False

@@ -1,0 +1,34 @@
+repos:
+  # Auto-formatting with black
+  - repo: https://github.com/psf/black
+    rev: 24.1.1
+    hooks:
+      - id: black
+        language_version: python3.9
+        args: [--line-length=88]
+
+  # Import sorting with isort
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile=black]
+
+  # Type checking with mypy (core modules only)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        files: ^src/(data/loader|data/preprocessing|features/feature_manager|models/regressors|models/evaluator)\.py$
+        args: [--ignore-missing-imports]
+        additional_dependencies: [types-tqdm, pandas-stubs]
+
+  # Built-in checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=1000]

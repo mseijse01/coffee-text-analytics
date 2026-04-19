@@ -9,16 +9,17 @@ exact thesis methodology:
 4. Final feature set: selected_text + sensory + categorical
 """
 
+import logging
+import pickle
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
 import polars as pl
-import logging
-from typing import Dict, List, Optional, Tuple, Union, Any
+from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import SelectFromModel
-import pickle
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -84,9 +85,7 @@ class LassoFeatureSelector:
         self.selection_stats_ = {}
         self.is_fitted_ = False
 
-        logger.info(
-            f"LassoFeatureSelector initialized with config: {self.config}"
-        )
+        logger.info(f"LassoFeatureSelector initialized with config: {self.config}")
         logger.info(
             "Following thesis methodology: combine all text features, then apply LASSO"
         )
@@ -437,9 +436,7 @@ class LassoFeatureSelector:
         logger.info(f"Selector saved to {filepath}")
 
     @classmethod
-    def load_selector(
-        cls, filepath: Union[str, Path]
-    ) -> "LassoFeatureSelector":
+    def load_selector(cls, filepath: Union[str, Path]) -> "LassoFeatureSelector":
         """Load fitted selector from file."""
         with open(filepath, "rb") as f:
             selector = pickle.load(f)
