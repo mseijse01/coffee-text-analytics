@@ -44,13 +44,18 @@ jobs:
         # Exit-zero treats all errors as warnings
         flake8 src/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
-    - name: Check code formatting with black
+    - name: Format code with black
       run: |
-        black --check src/ tests/
+        black src/ tests/
 
-    - name: Check import sorting with isort
+    - name: Sort imports with isort
       run: |
-        isort --check-only src/ tests/
+        isort src/ tests/
+
+    - name: Check for uncommitted formatting changes
+      run: |
+        # Fail if black or isort would have made changes (developer should run pre-commit locally)
+        git diff --exit-code || (echo "Code formatting issues detected. Run 'make format' locally and re-commit." && exit 1)
 
     - name: Type check with mypy
       run: |
