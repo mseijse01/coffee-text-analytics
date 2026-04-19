@@ -8,16 +8,11 @@ validating configurations, and switching between environments.
 import argparse
 import json
 import sys
-from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
+from .environments import get_environment_config, list_available_environments
 from .settings import Config
-from .validation import validate_config, print_config_summary, check_dependencies
-from .environments import (
-    list_available_environments,
-    get_environment_config,
-    apply_environment_config,
-)
+from .validation import check_dependencies, print_config_summary, validate_config
 
 
 def create_config_parser():

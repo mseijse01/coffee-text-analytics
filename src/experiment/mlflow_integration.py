@@ -5,7 +5,6 @@ Enhanced experiment tracking for paper reimplementation with comprehensive resea
 
 import json
 import logging
-import pickle
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -17,7 +16,6 @@ import mlflow.sklearn
 import mlflow.xgboost
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 # Import SHAP if available
@@ -31,7 +29,6 @@ except ImportError:
 # Import Optuna if available
 try:
     import optuna
-    from optuna.integration.mlflow import MLflowCallback
 
     OPTUNA_AVAILABLE = True
 except ImportError:
