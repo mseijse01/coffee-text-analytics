@@ -12,14 +12,15 @@ FOCUS:
 - Mixed input type handling
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-import polars as pl
-from typing import Union, List, Dict, Any
-import tempfile
 import os
+import tempfile
 import time
+from typing import Any, Dict, List, Union
+
+import numpy as np
+import pandas as pd
+import polars as pl
+import pytest
 
 from src.features.feature_selector import LassoFeatureSelector
 
@@ -48,28 +49,28 @@ class TestPolarsFirstArchitecture:
         result = selector.fit_select_features(X_polars, y_polars)
 
         # Validate successful operation
-        assert isinstance(result, LassoFeatureSelector), (
-            "Should return self for method chaining"
-        )
+        assert isinstance(
+            result, LassoFeatureSelector
+        ), "Should return self for method chaining"
         assert selector.is_fitted_, "Should be fitted after processing"
 
         # Validate transform works
         X_transformed = selector.transform(X_polars)
-        assert hasattr(X_transformed, "shape"), (
-            "Transform result should have shape attribute"
-        )
-        assert X_transformed.shape[0] == X_polars.shape[0], (
-            "Should preserve sample count"
-        )
-        assert X_transformed.shape[1] <= X_polars.shape[1], (
-            "Should reduce or maintain feature count"
-        )
+        assert hasattr(
+            X_transformed, "shape"
+        ), "Transform result should have shape attribute"
+        assert (
+            X_transformed.shape[0] == X_polars.shape[0]
+        ), "Should preserve sample count"
+        assert (
+            X_transformed.shape[1] <= X_polars.shape[1]
+        ), "Should reduce or maintain feature count"
 
         # Validate methods work
         selected_features = selector.get_selected_features()
-        assert isinstance(selected_features, list), (
-            "Should return list of feature names"
-        )
+        assert isinstance(
+            selected_features, list
+        ), "Should return list of feature names"
         assert len(selected_features) > 0, "Should select some features"
 
     def test_mixed_polars_pandas_inputs(self):
@@ -126,9 +127,9 @@ class TestPolarsFirstArchitecture:
 
         if len(union) > 0:
             consistency_ratio = len(intersection) / len(union)
-            assert consistency_ratio >= 0.7, (
-                f"Feature selection should be mostly consistent between Polars and pandas (got {consistency_ratio:.2f})"
-            )
+            assert (
+                consistency_ratio >= 0.7
+            ), f"Feature selection should be mostly consistent between Polars and pandas (got {consistency_ratio:.2f})"
 
     def test_corrected_selector_polars_support(self):
         """Test LassoFeatureSelector with Polars inputs."""
@@ -210,25 +211,25 @@ class TestTypeFlexibilityAndCompatibility:
         selector_pd = LassoFeatureSelector({"cv_folds": 3})
         selector_pd.fit_select_features(X_pandas, y)
         result_pd = selector_pd.transform(X_pandas)
-        assert isinstance(result_pd, pd.DataFrame), (
-            "pandas input should return pandas DataFrame"
-        )
+        assert isinstance(
+            result_pd, pd.DataFrame
+        ), "pandas input should return pandas DataFrame"
 
         # Test numpy preservation
         selector_np = LassoFeatureSelector({"cv_folds": 3})
         selector_np.fit_select_features(X_numpy, y)
         result_np = selector_np.transform(X_numpy)
-        assert isinstance(result_np, np.ndarray), (
-            "numpy input should return numpy array"
-        )
+        assert isinstance(
+            result_np, np.ndarray
+        ), "numpy input should return numpy array"
 
         # Test Polars handling (implementation-dependent - just check it works)
         selector_pl = LassoFeatureSelector({"cv_folds": 3})
         selector_pl.fit_select_features(X_polars, y)
         result_pl = selector_pl.transform(X_polars)
-        assert hasattr(result_pl, "shape"), (
-            "Polars transform should return array-like object"
-        )
+        assert hasattr(
+            result_pl, "shape"
+        ), "Polars transform should return array-like object"
 
 
 class TestPerformanceAndEfficiency:
@@ -253,9 +254,9 @@ class TestPerformanceAndEfficiency:
         elapsed_time = time.time() - start_time
 
         # Should complete in reasonable time (generous bound for CI)
-        assert elapsed_time < 30.0, (
-            f"Polars processing took too long: {elapsed_time:.2f}s"
-        )
+        assert (
+            elapsed_time < 30.0
+        ), f"Polars processing took too long: {elapsed_time:.2f}s"
 
         # Should produce meaningful results
         assert len(selector.get_selected_features()) > 0

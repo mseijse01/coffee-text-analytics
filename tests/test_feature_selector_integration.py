@@ -9,14 +9,15 @@ Coverage Target: Boost selector coverage from 14% → 70%+
 NOTE: These tests also verify TYPE CONTRACTS and INTENDED BEHAVIOR, not just implementation.
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-import polars as pl
+import os
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
-import tempfile
-import os
+
+import numpy as np
+import pandas as pd
+import polars as pl
+import pytest
 
 # Import feature selectors
 from src.features.feature_selector import LassoFeatureSelector
@@ -45,56 +46,56 @@ class TestTypeContractsAndSpecification:
         # Should accept pandas DataFrame
         selector_pd = LassoFeatureSelector(config)
         result_pd = selector_pd.fit_select_features(X_pandas, y_pandas)
-        assert isinstance(result_pd, LassoFeatureSelector), (
-            "fit_select_features should return self"
-        )
+        assert isinstance(
+            result_pd, LassoFeatureSelector
+        ), "fit_select_features should return self"
 
         # Should accept numpy array
         selector_np = LassoFeatureSelector(config)
         result_np = selector_np.fit_select_features(X_numpy, y_numpy)
-        assert isinstance(result_np, LassoFeatureSelector), (
-            "fit_select_features should return self"
-        )
+        assert isinstance(
+            result_np, LassoFeatureSelector
+        ), "fit_select_features should return self"
 
         # Should accept Polars DataFrame (by design)
         # The feature selector is designed to handle Polars DataFrames
         selector_pl = LassoFeatureSelector(config)
         result_pl = selector_pl.fit_select_features(X_polars, y_pandas)
-        assert isinstance(result_pl, LassoFeatureSelector), (
-            "fit_select_features should return self for Polars input"
-        )
+        assert isinstance(
+            result_pl, LassoFeatureSelector
+        ), "fit_select_features should return self for Polars input"
 
         # Test output type contracts
         X_transformed_pd = selector_pd.transform(X_pandas)
         X_transformed_np = selector_np.transform(X_numpy)
 
         # Output type should match input type per specification
-        assert isinstance(X_transformed_pd, pd.DataFrame), (
-            "Transform should return DataFrame when given DataFrame"
-        )
-        assert isinstance(X_transformed_np, np.ndarray), (
-            "Transform should return numpy array when given numpy array"
-        )
+        assert isinstance(
+            X_transformed_pd, pd.DataFrame
+        ), "Transform should return DataFrame when given DataFrame"
+        assert isinstance(
+            X_transformed_np, np.ndarray
+        ), "Transform should return numpy array when given numpy array"
 
         # Test get_selected_features contract
         selected_features = selector_pd.get_selected_features()
-        assert isinstance(selected_features, list), (
-            "get_selected_features must return List[str]"
-        )
-        assert all(isinstance(f, str) for f in selected_features), (
-            "All feature names must be strings"
-        )
+        assert isinstance(
+            selected_features, list
+        ), "get_selected_features must return List[str]"
+        assert all(
+            isinstance(f, str) for f in selected_features
+        ), "All feature names must be strings"
 
         # Test get_feature_importance contract
         importance = selector_pd.get_feature_importance()
-        assert isinstance(importance, dict), (
-            "get_feature_importance must return Dict[str, float]"
-        )
+        assert isinstance(
+            importance, dict
+        ), "get_feature_importance must return Dict[str, float]"
         for key, value in importance.items():
             assert isinstance(key, str), f"Importance key {key} must be string"
-            assert isinstance(value, (int, float)), (
-                f"Importance value {value} must be numeric"
-            )
+            assert isinstance(
+                value, (int, float)
+            ), f"Importance value {value} must be numeric"
 
     def test_corrected_selector_type_contracts(self):
         """
@@ -217,12 +218,12 @@ class TestTypeContractsAndSpecification:
         X_selected2 = selector2.transform(X_polars)
 
         # Should return same type as input when possible
-        assert isinstance(X_selected2, pl.DataFrame), (
-            "Should preserve Polars type when possible"
-        )
-        assert X_selected2.shape[0] == X_polars.shape[0], (
-            "Should preserve number of samples"
-        )
+        assert isinstance(
+            X_selected2, pl.DataFrame
+        ), "Should preserve Polars type when possible"
+        assert (
+            X_selected2.shape[0] == X_polars.shape[0]
+        ), "Should preserve number of samples"
 
     def test_feature_name_consistency_and_validation(self):
         """
@@ -249,21 +250,21 @@ class TestTypeContractsAndSpecification:
         selected_features = selector1.get_selected_features()
 
         # Validate feature names
-        assert isinstance(selected_features, list), (
-            f"{LassoFeatureSelector.__name__} should return list of feature names"
-        )
-        assert all(isinstance(name, str) for name in selected_features), (
-            "All feature names should be strings"
-        )
-        assert all(name in X.columns for name in selected_features), (
-            "All selected features should exist in original data"
-        )
+        assert isinstance(
+            selected_features, list
+        ), f"{LassoFeatureSelector.__name__} should return list of feature names"
+        assert all(
+            isinstance(name, str) for name in selected_features
+        ), "All feature names should be strings"
+        assert all(
+            name in X.columns for name in selected_features
+        ), "All selected features should exist in original data"
 
         # Test transform with selected features
         X_transformed = selector1.transform(X)
-        assert list(X_transformed.columns) == selected_features, (
-            "Transform output columns should match selected features"
-        )
+        assert (
+            list(X_transformed.columns) == selected_features
+        ), "Transform output columns should match selected features"
 
     def test_numerical_correctness_and_stability(self):
         """
@@ -287,21 +288,21 @@ class TestTypeContractsAndSpecification:
         selector2.fit_select_features(X, y)
 
         # Should get identical results with same random state
-        assert selector1.get_selected_features() == selector2.get_selected_features(), (
-            "Results should be reproducible with same random_state"
-        )
+        assert (
+            selector1.get_selected_features() == selector2.get_selected_features()
+        ), "Results should be reproducible with same random_state"
 
         # Test that feature importance values are reasonable
         importance = selector1.get_feature_importance()
-        assert all(isinstance(v, (int, float)) for v in importance.values()), (
-            "Importance values should be numeric"
-        )
-        assert all(not np.isnan(v) for v in importance.values()), (
-            "Importance values should not be NaN"
-        )
-        assert all(not np.isinf(v) for v in importance.values()), (
-            "Importance values should not be infinite"
-        )
+        assert all(
+            isinstance(v, (int, float)) for v in importance.values()
+        ), "Importance values should be numeric"
+        assert all(
+            not np.isnan(v) for v in importance.values()
+        ), "Importance values should not be NaN"
+        assert all(
+            not np.isinf(v) for v in importance.values()
+        ), "Importance values should not be infinite"
 
     def test_configuration_validation(self):
         """
@@ -334,9 +335,9 @@ class TestTypeContractsAndSpecification:
 
         # Verify it actually selected some features despite the negative config
         selected = selector.get_selected_features()
-        assert len(selected) > 0, (
-            "Should select at least some features despite negative max_features"
-        )
+        assert (
+            len(selected) > 0
+        ), "Should select at least some features despite negative max_features"
 
 
 class TestLassoFeatureSelectorIntegration:
@@ -887,8 +888,8 @@ class TestLassoFeatureSelectorIntegration:
         X, y = coffee_text_features
 
         from sklearn.linear_model import LinearRegression
-        from sklearn.model_selection import cross_val_score
         from sklearn.metrics import r2_score
+        from sklearn.model_selection import cross_val_score
 
         # Test baseline performance (all features)
         baseline_scores = cross_val_score(LinearRegression(), X, y, cv=3, scoring="r2")

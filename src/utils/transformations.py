@@ -6,12 +6,13 @@ including Box-Cox transformation for target variable normalization.
 """
 
 import logging
+import warnings
+from typing import Any, Dict, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from typing import Tuple, Optional, Dict, Any
 from scipy import stats
 from scipy.stats import boxcox
-import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -424,10 +425,11 @@ def run_box_cox_dual_pipeline(
     Returns:
         dict: Comprehensive comparison results
     """
-    from models import CoffeeModelEvaluator
-    import time
     import json
+    import time
     from pathlib import Path
+
+    from models import CoffeeModelEvaluator
 
     logger.info("🔄 Starting Box-Cox Dual Pipeline Analysis")
     logger.info("Following thesis methodology: compare with and without transformation")
@@ -581,17 +583,19 @@ def run_box_cox_dual_pipeline(
                 "r2_baseline": baseline_r2,
                 "r2_boxcox": boxcox_r2,
                 "r2_improvement": boxcox_r2 - baseline_r2,
-                "r2_improvement_pct": ((boxcox_r2 - baseline_r2) / abs(baseline_r2))
-                * 100
-                if baseline_r2 != 0
-                else 0,
+                "r2_improvement_pct": (
+                    ((boxcox_r2 - baseline_r2) / abs(baseline_r2)) * 100
+                    if baseline_r2 != 0
+                    else 0
+                ),
                 "rmse_baseline": baseline_rmse,
                 "rmse_boxcox": boxcox_rmse,
                 "rmse_improvement": baseline_rmse - boxcox_rmse,  # Lower is better
-                "rmse_improvement_pct": ((baseline_rmse - boxcox_rmse) / baseline_rmse)
-                * 100
-                if baseline_rmse != 0
-                else 0,
+                "rmse_improvement_pct": (
+                    ((baseline_rmse - boxcox_rmse) / baseline_rmse) * 100
+                    if baseline_rmse != 0
+                    else 0
+                ),
                 "better_with_boxcox": boxcox_r2 > baseline_r2,
             }
 

@@ -11,8 +11,8 @@ from sklearn.model_selection import train_test_split
 
 from models import (
     CoffeeDecisionTree,
-    CoffeeLinearRegression,
     CoffeeLassoRegression,
+    CoffeeLinearRegression,
     CoffeeModelEvaluator,
     CoffeeRandomForest,
     CoffeeRidgeRegression,
@@ -20,8 +20,8 @@ from models import (
     CoffeeXGBoost,
     MultinomialInverseRegression,
 )
-from utils.transformations import BoxCoxTransformer, run_box_cox_dual_pipeline
 from src.pipeline.constants import EXCLUDE_COLUMNS
+from utils.transformations import BoxCoxTransformer, run_box_cox_dual_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,9 @@ def run_training(args, config) -> bool:
                 logger.warning(f"Stratification with {bins} bins failed: {exc}")
 
         if stratify_var is None:
-            logger.warning("Falling back to random sampling (sample too small for stratification)")
+            logger.warning(
+                "Falling back to random sampling (sample too small for stratification)"
+            )
 
         X_train, X_test, y_train, y_test = train_test_split(
             X,
@@ -172,7 +174,9 @@ def run_training(args, config) -> bool:
             boxcox_models = {}
             for name, model in models.items():
                 try:
-                    fresh = type(model)(model.config if hasattr(model, "config") else {})
+                    fresh = type(model)(
+                        model.config if hasattr(model, "config") else {}
+                    )
                     fresh.fit(X_train, y_train_t)
                     boxcox_models[name] = fresh
                 except Exception as exc:
@@ -181,16 +185,24 @@ def run_training(args, config) -> bool:
             predictions = {}
             for name, model in boxcox_models.items():
                 try:
-                    predictions[name] = transformer.inverse_transform(model.predict(X_test))
+                    predictions[name] = transformer.inverse_transform(
+                        model.predict(X_test)
+                    )
                 except Exception as exc:
                     logger.error(f"Prediction failed for {name}: {exc}")
 
-            comparison_results = evaluator.compare_models_with_predictions(predictions, y_test)
-            transformer.save_transformer(config.paths.models / "box_cox_transformer.pkl")
+            comparison_results = evaluator.compare_models_with_predictions(
+                predictions, y_test
+            )
+            transformer.save_transformer(
+                config.paths.models / "box_cox_transformer.pkl"
+            )
             trained_models = boxcox_models
 
         else:
-            logger.info("Evaluating models with comprehensive metrics and SHAP analysis...")
+            logger.info(
+                "Evaluating models with comprehensive metrics and SHAP analysis..."
+            )
             comparison_results = evaluator.compare_models(
                 trained_models, X_test, y_test, include_shap=True
             )

@@ -11,15 +11,16 @@ Features:
 - Advanced visualization and analysis
 """
 
+import logging
 import os
 import time
-import logging
-from typing import Dict, Any, List, Optional, Union, Callable
 from pathlib import Path
-import optuna
-from optuna.integration.mlflow import MLflowCallback
+from typing import Any, Callable, Dict, List, Optional, Union
+
 import numpy as np
+import optuna
 import pandas as pd
+from optuna.integration.mlflow import MLflowCallback
 
 # Production MLflow integration
 try:
@@ -300,9 +301,9 @@ class ResearchGradeOptuna:
             "mode": config.get("description", "Unknown"),
             "n_trials_completed": len(study.trials),
             "optimization_time": optimization_time,
-            "optimization_efficiency": len(study.trials) / optimization_time
-            if optimization_time > 0
-            else 0,
+            "optimization_efficiency": (
+                len(study.trials) / optimization_time if optimization_time > 0 else 0
+            ),
         }
 
         # Best results
@@ -333,12 +334,12 @@ class ResearchGradeOptuna:
             "completed_trials": len(complete_trials),
             "pruned_trials": len(pruned_trials),
             "failed_trials": len(failed_trials),
-            "success_rate": len(complete_trials) / len(study.trials)
-            if study.trials
-            else 0,
-            "pruning_efficiency": len(pruned_trials) / len(study.trials)
-            if study.trials
-            else 0,
+            "success_rate": (
+                len(complete_trials) / len(study.trials) if study.trials else 0
+            ),
+            "pruning_efficiency": (
+                len(pruned_trials) / len(study.trials) if study.trials else 0
+            ),
         }
 
         # Performance metrics

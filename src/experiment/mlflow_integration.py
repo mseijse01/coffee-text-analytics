@@ -3,21 +3,22 @@ MLflow Integration for Coffee Text Analytics
 Enhanced experiment tracking for paper reimplementation with comprehensive research capabilities
 """
 
+import json
+import logging
+import pickle
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+import matplotlib.pyplot as plt
 import mlflow
+import mlflow.lightgbm
 import mlflow.sklearn
 import mlflow.xgboost
-import mlflow.lightgbm
-import logging
-from typing import Dict, Any, Optional, List, Union
-from pathlib import Path
-import time
-import json
 import numpy as np
 import pandas as pd
-import pickle
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 # Import SHAP if available
 try:
@@ -167,9 +168,9 @@ class EnhancedCoffeeMLflowTracker:
         mlflow.log_params(
             {
                 f"{model_name}_optimization_type": optimization_type,
-                f"{model_name}_n_param_combinations": len(param_grid)
-                if isinstance(param_grid, list)
-                else "grid",
+                f"{model_name}_n_param_combinations": (
+                    len(param_grid) if isinstance(param_grid, list) else "grid"
+                ),
                 f"{model_name}_cv_folds": getattr(cv_results, "cv", "unknown"),
             }
         )
@@ -274,17 +275,17 @@ class EnhancedCoffeeMLflowTracker:
                 model_info = mlflow.xgboost.log_model(
                     model,
                     f"models/{model_name}",
-                    registered_model_name=self.model_registry_name
-                    if register_model
-                    else None,
+                    registered_model_name=(
+                        self.model_registry_name if register_model else None
+                    ),
                 )
             else:
                 model_info = mlflow.sklearn.log_model(
                     model,
                     f"models/{model_name}",
-                    registered_model_name=self.model_registry_name
-                    if register_model
-                    else None,
+                    registered_model_name=(
+                        self.model_registry_name if register_model else None
+                    ),
                 )
         except Exception as e:
             self.logger.warning(f"Could not log model {model_name}: {e}")
@@ -293,9 +294,9 @@ class EnhancedCoffeeMLflowTracker:
         # Log model metadata
         model_metadata = {
             f"{model_name}_type": model_type,
-            f"{model_name}_n_features": len(feature_names)
-            if feature_names
-            else "unknown",
+            f"{model_name}_n_features": (
+                len(feature_names) if feature_names else "unknown"
+            ),
             f"{model_name}_registered": register_model,
         }
         mlflow.log_params(model_metadata)
@@ -518,21 +519,23 @@ class EnhancedCoffeeMLflowTracker:
             # Extract key metrics for comparison
             comparison = {
                 "total_runs": len(runs),
-                "best_r2": runs["metrics.r2"].max()
-                if "metrics.r2" in runs.columns
-                else None,
-                "avg_r2": runs["metrics.r2"].mean()
-                if "metrics.r2" in runs.columns
-                else None,
+                "best_r2": (
+                    runs["metrics.r2"].max() if "metrics.r2" in runs.columns else None
+                ),
+                "avg_r2": (
+                    runs["metrics.r2"].mean() if "metrics.r2" in runs.columns else None
+                ),
                 "best_run_id": runs.iloc[0]["run_id"] if not runs.empty else None,
-                "runs_summary": runs[
-                    ["run_id", "metrics.r2", "metrics.rmse", "metrics.mae"]
-                ].to_dict("records")
-                if all(
-                    col in runs.columns
-                    for col in ["metrics.r2", "metrics.rmse", "metrics.mae"]
-                )
-                else None,
+                "runs_summary": (
+                    runs[
+                        ["run_id", "metrics.r2", "metrics.rmse", "metrics.mae"]
+                    ].to_dict("records")
+                    if all(
+                        col in runs.columns
+                        for col in ["metrics.r2", "metrics.rmse", "metrics.mae"]
+                    )
+                    else None
+                ),
             }
 
             return comparison
@@ -863,9 +866,9 @@ class OptimizedCoffeeMLflowTracker(EnhancedCoffeeMLflowTracker):
             "complete": len(complete_trials),
             "pruned": len(pruned_trials),
             "failed": len(failed_trials),
-            "pruning_efficiency": len(pruned_trials) / len(study.trials)
-            if study.trials
-            else 0,
+            "pruning_efficiency": (
+                len(pruned_trials) / len(study.trials) if study.trials else 0
+            ),
         }
 
         # Hyperparameter importance (if enough trials)

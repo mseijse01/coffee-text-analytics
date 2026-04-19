@@ -7,10 +7,11 @@ This module implements BERT embeddings extraction following the thesis methodolo
 - Polars DataFrame output for modern data processing
 """
 
-import polars as pl
-import numpy as np
 import logging
-from typing import List, Dict, Optional, Any, Union
+from typing import Any, Dict, List, Optional, Union
+
+import numpy as np
+import polars as pl
 
 from .base import BaseVectorExtractor, ExtractorError
 
@@ -18,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 # Check for transformers availability
 try:
-    from transformers import DistilBertTokenizer, DistilBertModel
     import torch
+    from transformers import DistilBertModel, DistilBertTokenizer
 
     TRANSFORMERS_AVAILABLE = True
     TorchTensor = torch.Tensor
@@ -270,9 +271,9 @@ class BertExtractor(BaseVectorExtractor):
             input_mask_expanded = (
                 attention_mask.unsqueeze(-1).expand(hidden_states.size()).float()
             )
-            hidden_states[
-                input_mask_expanded == 0
-            ] = -1e9  # Set padding tokens to large negative value
+            hidden_states[input_mask_expanded == 0] = (
+                -1e9
+            )  # Set padding tokens to large negative value
             return torch.max(hidden_states, 1)[0]
 
         else:
