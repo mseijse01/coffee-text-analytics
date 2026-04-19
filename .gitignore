@@ -177,6 +177,11 @@ output/figures/*.svg
 output/results/*.csv
 output/results/*.json
 output/results/*.txt
+output/**/*.pkl
+output/**/*.txt
+
+# Project-specific: MLflow artifacts
+mlruns/
 
 # Project-specific: Temporary and cache files
 *.tmp
