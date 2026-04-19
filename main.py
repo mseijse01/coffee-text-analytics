@@ -32,7 +32,6 @@ from config.environments import apply_environment_config
 
 # Import new component-based architecture
 from features import CoffeeFeatureManager, LassoFeatureSelector
-from features.feature_selector_corrected import CorrectedLassoFeatureSelector
 from models import (
     CoffeeLinearRegression,
     CoffeeRidgeRegression,
@@ -441,10 +440,10 @@ def select_features(args):
         logger.info(f"Features shape before selection: {X.shape}")
         logger.info(f"Target shape: {y.shape}")
 
-        # Initialize corrected feature selector with configuration (thesis methodology)
+        # Initialize feature selector with configuration (thesis methodology)
         selector_config = config.models.feature_selection_config.copy()
-        selector = CorrectedLassoFeatureSelector(selector_config)
-        logger.info("Using corrected LASSO feature selector (thesis methodology)")
+        selector = LassoFeatureSelector(selector_config)
+        logger.info("Using LASSO feature selector (thesis methodology)")
 
         # Fit and transform features
         logger.info("Fitting LASSO feature selector...")

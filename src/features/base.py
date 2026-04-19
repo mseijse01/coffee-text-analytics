@@ -10,13 +10,8 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Union
 import polars as pl
 
-# Import centralized exceptions using absolute import
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from exceptions import (
+# Import centralized exceptions
+from src.exceptions import (
     FeatureExtractionError,
     ExtractorNotFittedError,
     ExtractorConfigError,
@@ -43,7 +38,7 @@ class BaseExtractor(ABC):
         Args:
             config: Optional configuration dictionary
         """
-        self.config = config or {}
+        self.config: Dict[str, Any] = config if config is not None else {}
         self.is_fitted = False
         self.feature_names_ = []
 

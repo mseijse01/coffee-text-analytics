@@ -20,7 +20,6 @@ import os
 
 # Import feature selectors
 from src.features.feature_selector import LassoFeatureSelector
-from src.features.feature_selector_corrected import CorrectedLassoFeatureSelector
 
 
 class TestTypeContractsAndSpecification:
@@ -99,7 +98,7 @@ class TestTypeContractsAndSpecification:
 
     def test_corrected_selector_type_contracts(self):
         """
-        Test that CorrectedLassoFeatureSelector respects its type contracts.
+        Test that LassoFeatureSelector respects its type contracts.
         """
         # Use 2 folds for small test datasets to avoid CV errors
         config = {"cv_folds": 2}
@@ -120,16 +119,16 @@ class TestTypeContractsAndSpecification:
         )
         y = pd.Series([1.0, 2.0, 3.0])
 
-        selector = CorrectedLassoFeatureSelector(config)
+        selector = LassoFeatureSelector(config)
 
         # Should accept pandas DataFrame
         result = selector.fit_select_features(X_pandas, y)
-        assert isinstance(result, CorrectedLassoFeatureSelector), "Should return self"
+        assert isinstance(result, LassoFeatureSelector), "Should return self"
 
         # Should also accept Polars DataFrame (designed feature, not a bug)
-        selector2 = CorrectedLassoFeatureSelector(config)
+        selector2 = LassoFeatureSelector(config)
         result2 = selector2.fit_select_features(X_polars, y)
-        assert isinstance(result2, CorrectedLassoFeatureSelector), "Should return self"
+        assert isinstance(result2, LassoFeatureSelector), "Should return self"
 
         # Test method return types
         assert isinstance(selector.get_selected_features(), list)
@@ -203,7 +202,7 @@ class TestTypeContractsAndSpecification:
 
         # Should work with explicit conversion
         config = {"cv_folds": 2}  # Use 2 folds for small test dataset
-        selector = CorrectedLassoFeatureSelector(config)
+        selector = LassoFeatureSelector(config)
         selector.fit_select_features(X, y)
         X_selected = selector.transform(X)
 
@@ -211,7 +210,7 @@ class TestTypeContractsAndSpecification:
         assert X_selected.shape[0] == X.shape[0], "Should preserve number of samples"
 
         # ALSO CORRECT: passing Polars directly should work (internal conversion)
-        selector2 = CorrectedLassoFeatureSelector(config)
+        selector2 = LassoFeatureSelector(config)
         X_polars = polars_features.drop("rating")
         y_polars = polars_features.get_column("rating")
         selector2.fit_select_features(X_polars, y_polars)
@@ -722,8 +721,8 @@ class TestLassoFeatureSelectorIntegration:
             sys.stdout = old_stdout
 
 
-class TestCorrectedLassoFeatureSelectorIntegration:
-    """Integration tests for CorrectedLassoFeatureSelector (thesis methodology)."""
+class TestLassoFeatureSelectorIntegration:
+    """Integration tests for LassoFeatureSelector (thesis methodology)."""
 
     @pytest.fixture
     def coffee_text_features(self):
@@ -794,7 +793,7 @@ class TestCorrectedLassoFeatureSelectorIntegration:
             "random_state": 42,
         }
 
-        selector = CorrectedLassoFeatureSelector(config)
+        selector = LassoFeatureSelector(config)
         selector.fit_select_features(X, y)
 
         # Validate thesis methodology compliance
@@ -839,7 +838,7 @@ class TestCorrectedLassoFeatureSelectorIntegration:
             "random_state": 42,
         }
 
-        selector = CorrectedLassoFeatureSelector(config)
+        selector = LassoFeatureSelector(config)
         selector.fit_select_features(X, y)
 
         # Transform and validate
@@ -866,7 +865,7 @@ class TestCorrectedLassoFeatureSelectorIntegration:
         ]
 
         assert len(text_selected) >= config["min_text_features"]
-        # Note: CorrectedLassoFeatureSelector may select more features than target
+        # Note: LassoFeatureSelector may select more features than target
         # if they pass the LASSO threshold - this is expected behavior
         assert len(text_selected) <= len(X.columns)  # Should not exceed total features
         assert (
@@ -906,7 +905,7 @@ class TestCorrectedLassoFeatureSelectorIntegration:
             "random_state": 42,
         }
 
-        selector = CorrectedLassoFeatureSelector(config)
+        selector = LassoFeatureSelector(config)
         X_selected = selector.fit_transform(X, y)
 
         selected_scores = cross_val_score(
@@ -964,7 +963,7 @@ class TestCorrectedLassoFeatureSelectorIntegration:
             "random_state": 42,
         }
 
-        selector = CorrectedLassoFeatureSelector(config)
+        selector = LassoFeatureSelector(config)
 
         # End-to-end test
         X_final = selector.fit_transform(X_subset, y)
@@ -988,13 +987,13 @@ class TestCorrectedLassoFeatureSelectorIntegration:
 
     def test_error_handling_and_edge_cases_corrected(self, coffee_text_features):
         """
-        Integration test: Error handling and edge cases for CorrectedLassoFeatureSelector.
+        Integration test: Error handling and edge cases for LassoFeatureSelector.
 
         Tests various error conditions and edge cases in real workflows.
         """
         X, y = coffee_text_features
 
-        selector = CorrectedLassoFeatureSelector()
+        selector = LassoFeatureSelector()
 
         # Test methods before fitting
         assert selector.get_selected_features() == []
@@ -1029,7 +1028,7 @@ class TestCorrectedLassoFeatureSelectorIntegration:
 
         if len(X_no_text.columns) > 0:
             # Should handle gracefully when no text features
-            selector_no_text = CorrectedLassoFeatureSelector()
+            selector_no_text = LassoFeatureSelector()
             # This might fail or succeed depending on implementation
             try:
                 selector_no_text.fit_select_features(X_no_text, y)
@@ -1038,7 +1037,7 @@ class TestCorrectedLassoFeatureSelectorIntegration:
 
     def test_persistence_and_summary_integration_corrected(self, coffee_text_features):
         """
-        Integration test: Persistence and summary functionality for CorrectedLassoFeatureSelector.
+        Integration test: Persistence and summary functionality for LassoFeatureSelector.
 
         Tests save/load and reporting functionality with real data.
         """
@@ -1053,7 +1052,7 @@ class TestCorrectedLassoFeatureSelectorIntegration:
         }
 
         # Create and fit selector
-        original_selector = CorrectedLassoFeatureSelector(config)
+        original_selector = LassoFeatureSelector(config)
         original_selector.fit_select_features(X, y)
 
         # Test get_selection_summary
@@ -1087,7 +1086,7 @@ class TestCorrectedLassoFeatureSelectorIntegration:
                 assert os.path.exists(tmp.name)
 
                 # Load selector and verify
-                loaded_selector = CorrectedLassoFeatureSelector.load_selector(tmp.name)
+                loaded_selector = LassoFeatureSelector.load_selector(tmp.name)
                 assert loaded_selector.is_fitted_
                 assert (
                     loaded_selector.get_selected_features()
@@ -1104,19 +1103,19 @@ class TestCorrectedLassoFeatureSelectorIntegration:
                     os.unlink(tmp.name)
 
         # Test error handling for save before fit
-        unfitted_selector = CorrectedLassoFeatureSelector()
+        unfitted_selector = LassoFeatureSelector()
         with pytest.raises(ValueError, match="Cannot save unfitted selector"):
             unfitted_selector.save_selector("test.pkl")
 
     def test_transform_edge_cases_corrected(self, coffee_text_features):
         """
-        Integration test: Transform edge cases for CorrectedLassoFeatureSelector.
+        Integration test: Transform edge cases for LassoFeatureSelector.
 
         Tests transform functionality with missing features and edge cases.
         """
         X, y = coffee_text_features
 
-        selector = CorrectedLassoFeatureSelector(
+        selector = LassoFeatureSelector(
             {
                 "lasso_alpha": 0.1,
                 "random_state": 42,

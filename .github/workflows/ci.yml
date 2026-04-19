@@ -50,11 +50,17 @@ jobs:
     - name: Check import sorting with isort
       run: |
         isort --check-only src/ tests/
-    
+
+    - name: Type check with mypy
+      run: |
+        mypy src/data/loader.py src/data/preprocessing.py \
+             src/features/feature_manager.py \
+             src/models/regressors.py src/models/evaluator.py
+
     - name: Run unit tests with pytest
       timeout-minutes: 10
       run: |
-        pytest tests/test_data_processing.py -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=10
+        pytest tests/test_data_processing.py -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=18
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
