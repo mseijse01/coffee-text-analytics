@@ -105,12 +105,16 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Keep .env.example as a template (tracked in git)
+!mlflow_setup/.env.example
 
 # Spyder project settings
 .spyderproject
