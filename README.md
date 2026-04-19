@@ -4,9 +4,9 @@ A comprehensive text analytics and predictive modeling framework for analyzing c
 
 ## Current Status
 
-**Phase 2.2 Complete** - Ready for scaling or advanced research  
-**Latest Results**: XGBoost R²=0.9453, Ridge R²=0.9259  
-**Thesis Compliance**: 100% methodology alignment achieved  
+**Phase 2.2 Complete** - Ready for scaling or advanced research
+**Latest Results**: XGBoost R²=0.9453, Ridge R²=0.9259
+**Thesis Compliance**: 100% methodology alignment achieved
 **Quick Start**: `python validate_15_percent_methodology.py` (4-minute validation)
 
 ## Research Overview
@@ -45,7 +45,7 @@ This implementation follows the exact methodology described in the thesis:
 
 #### Machine Learning Models
 - **XGBoost**: Best performance (R²=0.9453) with hyperparameter optimization
-- **Ridge Regression**: Excellent performance (R²=0.9259) 
+- **Ridge Regression**: Excellent performance (R²=0.9259)
 - **LASSO Regression**: Strong performance (R²=0.8897)
 - **Random Forest**: Good ensemble performance (R²=0.8675)
 - **Linear Regression**: Baseline model (R²=0.8173)
@@ -67,7 +67,7 @@ This implementation follows the exact methodology described in the thesis:
 Model           R²       RMSE     MAE      Status
 --------------------------------------------------
 XGBoost         0.9453   0.4103   0.2152   Best
-Ridge           0.9259   0.4775   0.3801   Excellent  
+Ridge           0.9259   0.4775   0.3801   Excellent
 LASSO           0.8897   0.5825   0.4623   Strong
 Random Forest   0.8675   0.6386   0.3590   Good
 Linear          0.8173   0.7497   0.6101   Baseline
@@ -78,7 +78,7 @@ Linear          0.8173   0.7497   0.6101   Baseline
 Sensory Attribute    R²       MSE      Performance
 --------------------------------------------------
 Acidity             0.9389   0.5343   Excellent
-Aftertaste          0.8420   0.0375   Strong  
+Aftertaste          0.8420   0.0375   Strong
 Body                0.7966   0.0508   Good
 Aroma               0.7834   0.0816   Good
 Flavor              0.5789   0.0433   Moderate
@@ -115,13 +115,28 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 3. **Install dependencies:**
 ```bash
+# For development (flexible versions):
 pip install -r requirements.txt
+
+# For production/reproducible builds (locked versions):
+pip install -r requirements-lock.txt
 ```
 
 4. **Verify installation:**
 ```bash
 python run_tests.py  # Run test suite
 ```
+
+### Dependency Management
+
+This project uses a **two-tier dependency strategy**:
+
+- **`requirements.txt`** — Development dependencies with flexible versions (`>=`)
+  - Use for active development and experimentation
+
+- **`requirements-lock.txt`** — Production dependencies with pinned versions (`==`)
+  - Use for Docker deployments, CI/CD, and reproducible research
+  - Generated from tested environment via `pip freeze`
 
 ## Usage
 
@@ -136,7 +151,7 @@ This gives you complete thesis validation with XGBoost R²=0.9453, all models + 
 
 ### Quick Reference
 - **Current Achievement**: 100% thesis methodology compliance
-- **Best Model**: XGBoost (R²=0.9453) 
+- **Best Model**: XGBoost (R²=0.9453)
 - **Feature Selection**: 279 selected from 3,840 text features (92.7% reduction)
 - **MNIR Performance**: Acidity R²=0.9389, Body R²=0.7966
 - **Infrastructure**: MLflow + Optuna + SHAP analysis ready
@@ -146,7 +161,7 @@ This gives you complete thesis validation with XGBoost R²=0.9453, all models + 
 #### Scale to Larger Samples
 ```bash
 python validate_15_percent_methodology.py --sample_size=50   # 50% sample
-python validate_15_percent_methodology.py --sample_size=100  # Full dataset  
+python validate_15_percent_methodology.py --sample_size=100  # Full dataset
 ```
 
 #### Enhanced Hyperparameter Optimization
@@ -216,7 +231,7 @@ The dataset from CoffeeReview.com includes:
 
 #### Text Features (Primary Analysis)
 - `desc_1`: Primary review description
-- `desc_2`: Secondary review notes  
+- `desc_2`: Secondary review notes
 - `desc_3`: Additional tasting notes
 
 #### Target Variable
@@ -264,7 +279,7 @@ Per text column:
 - **Sentiment Features**: 2 dimensions
 - **Topic Features**: 20 dimensions (10 LDA + 10 NMF)
 
-**Total Features per Text Column**: ~5,790 dimensions  
+**Total Features per Text Column**: ~5,790 dimensions
 **Total for 3 Text Columns**: ~17,370 text-based features
 
 ## Dependencies & Technology Stack
@@ -333,7 +348,7 @@ python main.py --steps all
 ### Model Files Created
 - `models/tfidf_vectorizer.pkl` - TF-IDF vocabulary
 - `models/lda_model.pkl` - LDA topic model
-- `models/nmf_model.pkl` - NMF topic model  
+- `models/nmf_model.pkl` - NMF topic model
 - `models/linear_model.pkl` - Linear regression
 - `models/random_forest_model.pkl` - Random forest
 - `models/xgboost_model.pkl` - XGBoost
@@ -408,8 +423,8 @@ If you use this code or methodology in your research, please cite:
 
 ---
 
-**Thesis Supervisor**: Eoghan O'Neill  
-**Second Assessor**: Sean Brüggemann  
-**Institution**: Erasmus University Rotterdam, Erasmus School of Economics  
-**Program**: Data Science and Marketing Analytics  
+**Thesis Supervisor**: Eoghan O'Neill
+**Second Assessor**: Sean Brüggemann
+**Institution**: Erasmus University Rotterdam, Erasmus School of Economics
+**Program**: Data Science and Marketing Analytics
 **Year**: 2024
