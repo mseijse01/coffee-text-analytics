@@ -454,7 +454,7 @@ def merge_text_columns(
 
 
 def load_csv_for_preprocessing(
-    file_path: Optional[Union[str, Path]] = None
+    file_path: Optional[Union[str, Path]] = None,
 ) -> pd.DataFrame:
     """
     Load CSV data for text preprocessing operations with dual-mode support.
