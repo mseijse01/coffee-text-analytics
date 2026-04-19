@@ -8,6 +8,7 @@ import logging
 import nltk
 import os
 from pathlib import Path
+from typing import List, Optional, Tuple, Union
 
 # Configure logging
 logging.basicConfig(
@@ -77,7 +78,7 @@ def clean_text(text: str, remove_punctuation: bool = True) -> str:
     return text
 
 
-def tokenize_text(text):
+def tokenize_text(text: str) -> List[str]:
     """
     Tokenize text into individual words.
 
@@ -103,7 +104,7 @@ def tokenize_text(text):
         return text.split() if isinstance(text, str) else []
 
 
-def remove_stopwords(tokens, keep_stopwords=False):
+def remove_stopwords(tokens: List[str], keep_stopwords: bool = False) -> List[str]:
     """
     Remove common stopwords from token list.
 
@@ -129,7 +130,7 @@ def remove_stopwords(tokens, keep_stopwords=False):
         return tokens
 
 
-def lemmatize_text(tokens):
+def lemmatize_text(tokens: List[str]) -> List[str]:
     """
     Lemmatize tokens to their base form.
 
@@ -151,7 +152,7 @@ def lemmatize_text(tokens):
         return tokens
 
 
-def preprocess_text(text, remove_stop=True):
+def preprocess_text(text: str, remove_stop: bool = True) -> str:
     """
     Apply full preprocessing pipeline to text.
 
@@ -170,7 +171,7 @@ def preprocess_text(text, remove_stop=True):
     return " ".join(tokens)
 
 
-def preprocess_text_for_embeddings(text):
+def preprocess_text_for_embeddings(text: str) -> str:
     """
     Preprocess text for embedding-based models and sentiment analysis (thesis methodology).
 
@@ -196,7 +197,7 @@ def preprocess_text_for_embeddings(text):
     return " ".join(tokens)
 
 
-def preprocess_text_for_topics(text):
+def preprocess_text_for_topics(text: str) -> str:
     """
     Preprocess text for topic modeling (thesis methodology).
 
@@ -222,7 +223,7 @@ def preprocess_text_for_topics(text):
     return " ".join(tokens)
 
 
-def create_specialized_datasets(df, text_columns=None):
+def create_specialized_datasets(df: pd.DataFrame, text_columns: Optional[List[str]] = None) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Create three specialized datasets following thesis methodology.
 
@@ -277,7 +278,7 @@ def create_specialized_datasets(df, text_columns=None):
     return embeddings_df, topics_df, sentiment_df
 
 
-def extract_country_info(location: str) -> str:
+def extract_country_info(location: str) -> Optional[str]:
     """
     Extract country name from location string.
 
@@ -364,7 +365,7 @@ def extract_country_info(location: str) -> str:
     return location
 
 
-def standardize_prices(df, price_col="price"):
+def standardize_prices(df: pd.DataFrame, price_col: str = "price") -> pd.DataFrame:
     """
     Standardize coffee prices to USD per kilogram.
 
@@ -411,7 +412,7 @@ def standardize_prices(df, price_col="price"):
     return result
 
 
-def merge_text_columns(df, columns, output_col="merged_text"):
+def merge_text_columns(df: pd.DataFrame, columns: List[str], output_col: str = "merged_text") -> pd.DataFrame:
     """
     Merge multiple text columns into one combined text column.
 
@@ -447,7 +448,7 @@ def merge_text_columns(df, columns, output_col="merged_text"):
     return result
 
 
-def load_csv_for_preprocessing(file_path: str = None) -> pd.DataFrame:
+def load_csv_for_preprocessing(file_path: Optional[Union[str, Path]] = None) -> pd.DataFrame:
     """
     Load CSV data for text preprocessing operations with dual-mode support.
 
@@ -498,12 +499,12 @@ def load_csv_for_preprocessing(file_path: str = None) -> pd.DataFrame:
 
 
 def process_raw_data(
-    input_file=None,
-    output_file=None,
-    text_columns=None,
-    sample_fraction=None,
-    sample_size=None,
-):
+    input_file: Optional[Union[str, Path]] = None,
+    output_file: Optional[Union[str, Path]] = None,
+    text_columns: Optional[List[str]] = None,
+    sample_fraction: Optional[float] = None,
+    sample_size: Optional[int] = None,
+) -> pd.DataFrame:
     """
     Process raw coffee review data and save processed version with dual-mode support.
 

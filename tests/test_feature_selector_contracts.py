@@ -22,7 +22,6 @@ import os
 import time
 
 from src.features.feature_selector import LassoFeatureSelector
-from src.features.feature_selector_corrected import CorrectedLassoFeatureSelector
 
 
 class TestPolarsFirstArchitecture:
@@ -132,7 +131,7 @@ class TestPolarsFirstArchitecture:
             )
 
     def test_corrected_selector_polars_support(self):
-        """Test CorrectedLassoFeatureSelector with Polars inputs."""
+        """Test LassoFeatureSelector with Polars inputs."""
         X_polars = pl.DataFrame(
             {
                 "tfidf_desc_1_coffee": [0.1, 0.2, 0.3, 0.4],
@@ -146,10 +145,10 @@ class TestPolarsFirstArchitecture:
         y_polars = pl.Series([92.0, 93.0, 91.0, 94.0])
 
         # Should work with Polars inputs
-        selector = CorrectedLassoFeatureSelector({"cv_folds": 3})
+        selector = LassoFeatureSelector({"cv_folds": 3})
         result = selector.fit_select_features(X_polars, y_polars)
 
-        assert isinstance(result, CorrectedLassoFeatureSelector)
+        assert isinstance(result, LassoFeatureSelector)
         assert len(selector.get_selected_features()) > 0
         assert len(selector.get_text_features()) > 0
 
@@ -356,7 +355,7 @@ class TestDocumentationAndSpecification:
         y_polars = pl.Series([92.0, 93.0, 91.0, 94.0, 92.5])
 
         # Both selectors should handle this seamlessly
-        for SelectorClass in [LassoFeatureSelector, CorrectedLassoFeatureSelector]:
+        for SelectorClass in [LassoFeatureSelector, LassoFeatureSelector]:
             selector = SelectorClass({"cv_folds": 3})
 
             # Should work without conversion

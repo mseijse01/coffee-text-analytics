@@ -8,7 +8,7 @@ that integrate with the configuration system and follow the base model interface
 import numpy as np
 import pandas as pd
 import logging
-from typing import List, Dict, Optional, Any, Union
+from typing import List, Dict, Optional, Any, Union, cast
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
@@ -47,9 +47,9 @@ class CoffeeLinearRegression(BaseRegressor):
         """
         super().__init__(config)
 
-        default_config = {"scale_features": False, "fit_intercept": True}
-        default_config.update(self.config)
-        self.config = default_config
+        defaults: Dict[str, Any] = {"scale_features": False, "fit_intercept": True}
+        defaults.update(self.config)  # type: ignore[has-type]
+        self.config = cast(Dict[str, Any], defaults)
 
         self.scaler_ = None
         if self.config["scale_features"]:
@@ -124,15 +124,15 @@ class CoffeeRidgeRegression(BaseRegressor):
         """
         super().__init__(config)
 
-        default_config = {
+        defaults: Dict[str, Any] = {
             "alpha": 1.0,
             "alpha_grid": [0.1, 1.0, 10.0, 100.0],
             "cv": 5,
             "scale_features": True,
             "fit_intercept": True,
         }
-        default_config.update(self.config)
-        self.config = default_config
+        defaults.update(self.config)  # type: ignore[has-type]
+        self.config = cast(Dict[str, Any], defaults)
 
         self.scaler_ = None
         if self.config["scale_features"]:
@@ -217,7 +217,7 @@ class CoffeeLassoRegression(BaseRegressor):
         """
         super().__init__(config)
 
-        default_config = {
+        defaults: Dict[str, Any] = {
             "alpha": 1.0,
             "alpha_grid": [0.01, 0.1, 1.0, 10.0],
             "cv": 5,
@@ -225,8 +225,8 @@ class CoffeeLassoRegression(BaseRegressor):
             "fit_intercept": True,
             "max_iter": 1000,
         }
-        default_config.update(self.config)
-        self.config = default_config
+        defaults.update(self.config)  # type: ignore[has-type]
+        self.config = cast(Dict[str, Any], defaults)
 
         self.scaler_ = None
         if self.config["scale_features"]:
@@ -331,7 +331,7 @@ class CoffeeRandomForest(BaseRegressor):
         """
         super().__init__(config)
 
-        default_config = {
+        defaults: Dict[str, Any] = {
             "n_estimators": 100,
             "max_depth": None,
             "min_samples_split": 2,
@@ -340,8 +340,8 @@ class CoffeeRandomForest(BaseRegressor):
             "tune_hyperparameters": True,
             "cv": 5,
         }
-        default_config.update(self.config)
-        self.config = default_config
+        defaults.update(self.config)  # type: ignore[has-type]
+        self.config = cast(Dict[str, Any], defaults)
 
         self.best_params_ = None
 
@@ -462,7 +462,7 @@ class CoffeeXGBoost(BaseRegressor):
                 "XGBoost is not available. Please install xgboost package."
             )
 
-        default_config = {
+        defaults: Dict[str, Any] = {
             "n_estimators": 100,
             "max_depth": 6,
             "learning_rate": 0.1,
@@ -470,8 +470,8 @@ class CoffeeXGBoost(BaseRegressor):
             "tune_hyperparameters": True,
             "cv": 5,
         }
-        default_config.update(self.config)
-        self.config = default_config
+        defaults.update(self.config)  # type: ignore[has-type]
+        self.config = cast(Dict[str, Any], defaults)
 
         self.best_params_ = None
 
@@ -587,7 +587,7 @@ class CoffeeSVR(BaseRegressor):
         """
         super().__init__(config)
 
-        default_config = {
+        defaults: Dict[str, Any] = {
             "kernel": "rbf",
             "C": 1.0,
             "gamma": "scale",
@@ -596,8 +596,8 @@ class CoffeeSVR(BaseRegressor):
             "tune_hyperparameters": True,
             "cv": 5,
         }
-        default_config.update(self.config)
-        self.config = default_config
+        defaults.update(self.config)  # type: ignore[has-type]
+        self.config = cast(Dict[str, Any], defaults)
 
         self.scaler_ = None
         if self.config["scale_features"]:
@@ -728,7 +728,7 @@ class CoffeeDecisionTree(BaseRegressor):
         """
         super().__init__(config)
 
-        default_config = {
+        defaults: Dict[str, Any] = {
             "max_depth": None,
             "min_samples_split": 2,
             "min_samples_leaf": 1,
@@ -736,8 +736,8 @@ class CoffeeDecisionTree(BaseRegressor):
             "tune_hyperparameters": True,
             "cv": 5,
         }
-        default_config.update(self.config)
-        self.config = default_config
+        defaults.update(self.config)  # type: ignore[has-type]
+        self.config = cast(Dict[str, Any], defaults)
 
         self.best_params_ = None
 

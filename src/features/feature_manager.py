@@ -10,7 +10,7 @@ import numpy as np
 import pickle
 import os
 import logging
-from typing import List, Dict, Optional, Any, Union
+from typing import List, Dict, Optional, Any, Union, cast
 from pathlib import Path
 
 from .base import BaseExtractor, ExtractorError
@@ -50,16 +50,16 @@ class GloVeExtractor(BaseExtractor):
         """Initialize GloVe extractor."""
         super().__init__(config)
 
-        default_config = {
+        defaults: Dict[str, Any] = {
             "model_name": "glove-wiki-gigaword-300",
             "vector_dimension": 300,
             "aggregation": "mean",  # 'mean', 'sum', 'max'
         }
-        default_config.update(self.config)
-        self.config = default_config
+        defaults.update(self.config)  # type: ignore[has-type]
+        self.config = cast(Dict[str, Any], defaults)
 
-        self.glove_model_ = None
-        self.vector_dimension = self.config["vector_dimension"]
+        self.glove_model_: Any = None
+        self.vector_dimension: int = self.config["vector_dimension"]
         self.feature_names_ = [f"glove_{i}" for i in range(self.vector_dimension)]
 
         if GENSIM_AVAILABLE:
@@ -148,7 +148,7 @@ class CoffeeFeatureManager:
     interface for comprehensive feature extraction following thesis methodology.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]) -> None:
         """
         Initialize the Coffee Feature Manager.
 
@@ -202,13 +202,16 @@ class CoffeeFeatureManager:
             f"Initialized feature manager with extractors: {list(self.extractors.keys())}"
         )
 
-    def fit(self, df: pl.DataFrame, text_columns: List[str]) -> None:
+    def fit(self, df: pl.DataFrame, text_columns: List[str]) -> "CoffeeFeatureManager":
         """
         Fit all feature extractors on the dataset including categorical encoder.
 
         Args:
             df: Input DataFrame
             text_columns: List of text column names to process
+
+        Returns:
+            Self for method chaining
         """
         logger.info("Fitting CoffeeFeatureManager on dataset")
         logger.info(f"Dataset shape: {df.shape}")
@@ -255,8 +258,9 @@ class CoffeeFeatureManager:
 
         self.is_fitted = True
         logger.info("✅ All extractors fitted successfully")
+        return self
 
-    def _create_extractor(self, extractor_name: str, extractor_config: Dict[str, Any]):
+    def _create_extractor(self, extractor_name: str, extractor_config: Dict[str, Any]) -> Optional[BaseExtractor]:
         """
         Create an extractor instance based on name and configuration.
 
@@ -610,7 +614,7 @@ class CoffeeFeatureManager:
 
         return info
 
-    def save_extractors(self, models_dir: str = "models") -> None:
+    def save_extractors(self, models_dir: Union[str, Path] = "models") -> None:
         """
         Save all fitted extractors.
 
@@ -632,7 +636,7 @@ class CoffeeFeatureManager:
                 except Exception as e:
                     logger.warning(f"Failed to save {name} extractor: {e}")
 
-    def load_extractors(self, models_dir: str = "models") -> "CoffeeFeatureManager":
+    def load_extractors(self, models_dir: Union[str, Path] = "models") -> "CoffeeFeatureManager":
         """
         Load previously fitted extractors.
 

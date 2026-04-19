@@ -483,7 +483,7 @@ class CoffeeModelEvaluator(BaseEvaluator):
 
         # Create comprehensive comparison summary
         summary_metrics = ["r2", "rmse", "mae", "mse", "mape", "explained_variance"]
-        comparison_summary = {}
+        comparison_summary: Dict[str, Dict[str, Any]] = {}
 
         for metric in summary_metrics:
             comparison_summary[metric] = {}
@@ -679,7 +679,7 @@ class CoffeeModelEvaluator(BaseEvaluator):
 
         # Create comprehensive comparison summary
         summary_metrics = ["r2", "rmse", "mae", "mse", "mape", "explained_variance"]
-        comparison_summary = {}
+        comparison_summary: Dict[str, Dict[str, Any]] = {}
 
         for metric in summary_metrics:
             comparison_summary[metric] = {}
@@ -721,7 +721,7 @@ class CoffeeModelEvaluator(BaseEvaluator):
 
     def save_comprehensive_evaluation(
         self, evaluation_results: Dict[str, Any], filepath: Union[str, Path]
-    ):
+    ) -> None:
         """Save comprehensive evaluation results to file."""
 
         filepath = Path(filepath)

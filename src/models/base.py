@@ -13,13 +13,8 @@ import polars as pl
 import pandas as pd
 from sklearn.base import BaseEstimator
 
-# Import centralized exceptions using absolute import
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from exceptions import (
+# Import centralized exceptions
+from src.exceptions import (
     ModelError,
     ModelNotFittedError,
     ModelConfigError,
@@ -50,7 +45,7 @@ class BaseModel(ABC, BaseEstimator):
         Args:
             config: Optional configuration dictionary
         """
-        self.config = config or {}
+        self.config: Dict[str, Any] = config if config is not None else {}
         self.is_fitted = False
         self.model_ = None
         self.feature_names_ = []

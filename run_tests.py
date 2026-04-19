@@ -1,387 +1,281 @@
 #!/usr/bin/env python3
 """
-Comprehensive test runner for coffee text analytics project.
+Smart test runner for coffee text analytics — RAM-aware, incremental, coverage-safe.
 
-Runs all test suites and provides detailed reporting before refactoring.
+Runs tests incrementally by file with RAM monitoring to avoid crashes.
+Supports safe mode (lightweight tests only) and batch mode (file-by-file).
 """
 
-import unittest
+import subprocess
 import sys
 import os
 import time
+import psutil
 from pathlib import Path
+from typing import List, Tuple
 
-# Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+# Configuration
+SAFE_RAM_THRESHOLD_MB = 2500  # Stop if RAM usage exceeds this
+TEST_FILES = [
+    "tests/test_exceptions.py",  # Lightweight, no ML models
+    "tests/test_data_processing.py",  # Data processing core
+    "tests/test_models_base.py",  # Model base classes
+    "tests/test_categorical_encoder.py",  # Encoding utilities
+    "tests/test_config_integration.py",  # Configuration
+    "tests/test_feature_manager.py",  # Feature manager (may be heavy)
+    "tests/test_feature_selector_contracts.py",  # Feature selection (may be heavy)
+    "tests/test_feature_selector_integration.py",  # Feature selection integration
+    "tests/test_feature_pipeline_integration.py",  # Full feature pipeline (heavy)
+    "tests/test_models_regressors.py",  # Model regressors (may be heavy)
+    "tests/test_models_evaluator.py",  # Model evaluation
+    "tests/test_mlflow_integration.py",  # MLflow (may be heavy)
+    "tests/test_data_preprocessing_integration.py",  # Preprocessing (may be heavy)
+    "tests/test_performance.py",  # Performance tests (may be heavy)
+    "tests/test_utils_integration.py",  # Utils integration
+    "tests/test_visualization_comprehensive.py",  # Visualization (may be heavy)
+]
 
-# Import test modules
-from tests.test_data_processing import *
-# from tests.test_integration_new import *  # This module doesn't exist
-
-
-class ColoredTextTestResult(unittest.TextTestResult):
-    """Custom test result class with colored output."""
-
-    def __init__(self, stream, descriptions, verbosity):
-        super().__init__(stream, descriptions, verbosity)
-        self.success_count = 0
-        self.verbosity = verbosity  # Explicitly store verbosity
-
-    def addSuccess(self, test):
-        super().addSuccess(test)
-        self.success_count += 1
-        if self.verbosity > 1:
-            self.stream.write("✅ ")
-            self.stream.writeln(f"{test._testMethodName}")
-
-    def addError(self, test, err):
-        super().addError(test, err)
-        if self.verbosity > 1:
-            self.stream.write("❌ ")
-            self.stream.writeln(f"{test._testMethodName} - ERROR")
-
-    def addFailure(self, test, err):
-        super().addFailure(test, err)
-        if self.verbosity > 1:
-            self.stream.write("❌ ")
-            self.stream.writeln(f"{test._testMethodName} - FAILED")
-
-    def addSkip(self, test, reason):
-        super().addSkip(test, reason)
-        if self.verbosity > 1:
-            self.stream.write("⏭️  ")
-            self.stream.writeln(f"{test._testMethodName} - SKIPPED: {reason}")
+# Lightweight tests that skip heavy ML
+LIGHTWEIGHT_TESTS = [
+    "tests/test_exceptions.py",
+    "tests/test_data_processing.py",
+    "tests/test_models_base.py",
+    "tests/test_categorical_encoder.py",
+    "tests/test_config_integration.py",
+]
 
 
-class ColoredTextTestRunner(unittest.TextTestRunner):
-    """Custom test runner with colored output."""
+class RAMMonitor:
+    """Monitor RAM usage during test execution."""
 
-    resultclass = ColoredTextTestResult
+    def __init__(self, threshold_mb: int = SAFE_RAM_THRESHOLD_MB):
+        self.threshold_mb = threshold_mb
+        self.peak_mb = 0
+        self.process = psutil.Process()
+
+    def get_ram_mb(self) -> float:
+        """Get current process RAM usage in MB."""
+        return self.process.memory_info().rss / 1024 / 1024
+
+    def check_and_record(self) -> Tuple[float, bool]:
+        """Check RAM and return (current_mb, exceeded_threshold)."""
+        current_mb = self.get_ram_mb()
+        self.peak_mb = max(self.peak_mb, current_mb)
+        exceeded = current_mb > self.threshold_mb
+        return current_mb, exceeded
+
+    def report(self):
+        """Print RAM usage report."""
+        print(f"   📊 Peak RAM: {self.peak_mb:.1f} MB (threshold: {self.threshold_mb} MB)")
 
 
-def run_test_suite(test_module_name, test_classes):
-    """Run a specific test suite and return results."""
-    print(f"\n{'=' * 60}")
-    print(f"🧪 Running {test_module_name} Tests")
-    print(f"{'=' * 60}")
+def run_test_file(test_file: str, monitor: RAMMonitor, use_cov: bool = True) -> Tuple[bool, str]:
+    """
+    Run a single test file with RAM monitoring.
 
-    # Create test suite
-    suite = unittest.TestSuite()
+    Returns:
+        (success: bool, output: str)
+    """
+    print(f"\n   Running {Path(test_file).name}...", end=" ", flush=True)
 
-    for test_class in test_classes:
-        tests = unittest.TestLoader().loadTestsFromTestCase(test_class)
-        suite.addTests(tests)
+    cmd = [
+        sys.executable, "-m", "pytest",
+        test_file,
+        "-q",
+        "--tb=line",
+        "-v",
+    ]
 
-    # Run tests
-    runner = ColoredTextTestRunner(verbosity=2)
+    if use_cov:
+        cmd.extend(["--cov=src", "--cov-report=term-missing"])
+
+    start_ram, _ = monitor.check_and_record()
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+        end_ram, exceeded = monitor.check_and_record()
+        ram_increase = end_ram - start_ram
+
+        if exceeded:
+            print(f"⚠️  RAM EXCEEDED ({end_ram:.1f} MB > {monitor.threshold_mb} MB)")
+            return False, f"RAM exceeded: {end_ram:.1f} MB"
+
+        success = result.returncode == 0
+        if success:
+            # Count passed tests from output
+            passed_count = result.stdout.count(" PASSED")
+            print(f"✅ ({passed_count} tests, +{ram_increase:.1f} MB)")
+        else:
+            print(f"❌ (return code {result.returncode}, +{ram_increase:.1f} MB)")
+
+        return success, result.stdout
+
+    except subprocess.TimeoutExpired:
+        print(f"⏱️  TIMEOUT (60s)")
+        return False, "Test timeout"
+    except Exception as e:
+        print(f"💥 ERROR: {e}")
+        return False, str(e)
+
+
+def run_safe_mode(use_cov: bool = True) -> int:
+    """Run only lightweight unit tests (safe mode)."""
+    print(f"\n{'=' * 70}")
+    print("🧪 SAFE MODE: Lightweight Unit Tests (No Heavy ML)")
+    print(f"{'=' * 70}")
+
+    monitor = RAMMonitor()
+    results = []
+    total_time = 0
+
     start_time = time.time()
-    result = runner.run(suite)
+
+    for test_file in LIGHTWEIGHT_TESTS:
+        if not Path(test_file).exists():
+            print(f"\n   ⏭️  Skipped {test_file} (not found)")
+            continue
+
+        file_start = time.time()
+        success, output = run_test_file(test_file, monitor, use_cov=use_cov)
+        file_time = time.time() - file_start
+        total_time += file_time
+
+        results.append((test_file, success, file_time))
+
+        if not success:
+            print(f"   ❌ Failed — stopping to avoid cascade failures")
+            break
+
     end_time = time.time()
 
-    # Print summary
-    print(f"\n📊 {test_module_name} Summary:")
-    print(f"   ✅ Passed: {result.success_count}")
-    print(f"   ❌ Failed: {len(result.failures)}")
-    print(f"   💥 Errors: {len(result.errors)}")
-    print(f"   ⏭️  Skipped: {len(result.skipped)}")
-    print(f"   ⏱️  Time: {end_time - start_time:.2f}s")
+    # Summary
+    print(f"\n{'=' * 70}")
+    print("📊 SAFE MODE SUMMARY")
+    print(f"{'=' * 70}")
 
-    return result
+    passed = sum(1 for _, success, _ in results if success)
+    total = len(results)
 
+    print(f"✅ Passed: {passed}/{total}")
+    print(f"⏱️  Total Time: {total_time:.1f}s")
+    monitor.report()
 
-def analyze_code_coverage():
-    """Analyze which components are covered by tests."""
-    print(f"\n{'=' * 60}")
-    print("📈 Test Coverage Analysis")
-    print(f"{'=' * 60}")
-
-    # Define components and their test coverage
-    components = {
-        "Data Loading": {
-            "files": ["src/data/loader.py"],
-            "tests": ["TestDataLoading"],
-            "coverage": "✅ High",
-        },
-        "Data Preprocessing": {
-            "files": ["src/data/preprocessing.py"],
-            "tests": ["TestTextPreprocessing"],
-            "coverage": "✅ High",
-        },
-        "Data Cleaning": {
-            "files": ["src/utils/cleaning.py"],
-            "tests": ["TestDataCleaning"],
-            "coverage": "✅ High",
-        },
-        "Feature Extraction": {
-            "files": ["src/features/feature_extraction.py"],
-            "tests": ["TestCoffeeFeatureExtractor", "TestFeatureExtractionUtilities"],
-            "coverage": "✅ High",
-        },
-        "Model Training": {
-            "files": ["src/models/model_training.py"],
-            "tests": ["TestMultinomialInverseRegression", "TestTraditionalModels"],
-            "coverage": "✅ High",
-        },
-        "MNIR Implementation": {
-            "files": ["src/models/model_training.py (MNIR class)"],
-            "tests": ["TestMultinomialInverseRegression", "TestTrainMNIR"],
-            "coverage": "✅ High",
-        },
-        "Integration": {
-            "files": ["Multiple components"],
-            "tests": ["TestEndToEndPipeline", "TestComponentIntegration"],
-            "coverage": "✅ High",
-        },
-        "Error Handling": {
-            "files": ["All components"],
-            "tests": ["TestErrorHandlingIntegration"],
-            "coverage": "✅ Medium",
-        },
-    }
-
-    for component, info in components.items():
-        print(f"\n🔧 {component}")
-        print(f"   📁 Files: {', '.join(info['files'])}")
-        print(f"   🧪 Tests: {', '.join(info['tests'])}")
-        print(f"   📊 Coverage: {info['coverage']}")
+    if passed == total:
+        print("\n✓ All safe tests passed!")
+        return 0
+    else:
+        print(f"\n✗ {total - passed} test(s) failed")
+        return 1
 
 
-def identify_refactoring_opportunities():
-    """Identify potential refactoring opportunities based on test analysis."""
-    print(f"\n{'=' * 60}")
-    print("🔧 Refactoring Opportunities Identified")
-    print(f"{'=' * 60}")
+def run_batch_mode(use_cov: bool = True) -> int:
+    """Run all tests in batch (file-by-file with monitoring)."""
+    print(f"\n{'=' * 70}")
+    print("🔄 BATCH MODE: All Tests (With RAM Monitoring)")
+    print(f"{'=' * 70}")
 
-    opportunities = [
-        {
-            "area": "Code Duplication",
-            "description": "analyze_data_quality() function duplicated in loader.py and utils.py",
-            "priority": "🔴 High",
-            "action": "Consolidate into single utility function",
-        },
-        {
-            "area": "Feature Extraction",
-            "description": "Large CoffeeFeatureExtractor class with multiple responsibilities",
-            "priority": "🟡 Medium",
-            "action": "Split into specialized extractors (TfidfExtractor, BertExtractor, etc.)",
-        },
-        {
-            "area": "Error Handling",
-            "description": "Inconsistent error handling patterns across modules",
-            "priority": "🟡 Medium",
-            "action": "Standardize error handling with custom exceptions",
-        },
-        {
-            "area": "Configuration",
-            "description": "Hardcoded parameters scattered throughout codebase",
-            "priority": "🟡 Medium",
-            "action": "Centralize configuration in config module",
-        },
-        {
-            "area": "Model Training",
-            "description": "Large model_training.py file with multiple concerns",
-            "priority": "🟡 Medium",
-            "action": "Split into separate files for different model types",
-        },
-        {
-            "area": "Data Type Consistency",
-            "description": "Mixed Polars/Pandas usage could be streamlined",
-            "priority": "🟢 Low",
-            "action": "Establish clear data type conventions",
-        },
-    ]
-
-    for i, opp in enumerate(opportunities, 1):
-        print(f"\n{i}. {opp['area']} - {opp['priority']}")
-        print(f"   📝 Issue: {opp['description']}")
-        print(f"   🎯 Action: {opp['action']}")
-
-
-def generate_refactoring_plan():
-    """Generate a detailed refactoring plan."""
-    print(f"\n{'=' * 60}")
-    print("📋 Recommended Refactoring Plan")
-    print(f"{'=' * 60}")
-
-    phases = [
-        {
-            "phase": "Phase 1: Code Deduplication",
-            "priority": "🔴 High Priority",
-            "tasks": [
-                "Consolidate analyze_data_quality() functions",
-                "Remove duplicate preprocessing logic",
-                "Standardize import patterns",
-            ],
-            "risk": "🟢 Low Risk",
-            "estimated_time": "2-3 hours",
-        },
-        {
-            "phase": "Phase 2: Configuration Management",
-            "priority": "🟡 Medium Priority",
-            "tasks": [
-                "Create centralized config module",
-                "Move hardcoded parameters to config",
-                "Add environment-specific configurations",
-            ],
-            "risk": "🟢 Low Risk",
-            "estimated_time": "3-4 hours",
-        },
-        {
-            "phase": "Phase 3: Component Separation",
-            "priority": "🟡 Medium Priority",
-            "tasks": [
-                "Split CoffeeFeatureExtractor into specialized classes",
-                "Separate model training by type",
-                "Create abstract base classes for consistency",
-            ],
-            "risk": "🟡 Medium Risk",
-            "estimated_time": "6-8 hours",
-        },
-        {
-            "phase": "Phase 4: Error Handling Standardization",
-            "priority": "🟡 Medium Priority",
-            "tasks": [
-                "Create custom exception classes",
-                "Implement consistent error handling patterns",
-                "Add comprehensive logging",
-            ],
-            "risk": "🟡 Medium Risk",
-            "estimated_time": "4-5 hours",
-        },
-        {
-            "phase": "Phase 5: Performance Optimization",
-            "priority": "🟢 Low Priority",
-            "tasks": [
-                "Optimize Polars/Pandas conversions",
-                "Add caching for expensive operations",
-                "Profile and optimize bottlenecks",
-            ],
-            "risk": "🟡 Medium Risk",
-            "estimated_time": "5-6 hours",
-        },
-    ]
-
+    monitor = RAMMonitor()
+    results = []
     total_time = 0
-    for i, phase in enumerate(phases, 1):
-        print(f"\n{i}. {phase['phase']} - {phase['priority']}")
-        print(f"   📋 Tasks:")
-        for task in phase["tasks"]:
-            print(f"      • {task}")
-        print(f"   ⚠️  Risk Level: {phase['risk']}")
-        print(f"   ⏱️  Estimated Time: {phase['estimated_time']}")
+    stopped_early = False
 
-        # Extract time estimate
-        time_range = phase["estimated_time"].split()[0]
-        if "-" in time_range:
-            avg_time = sum(map(int, time_range.split("-"))) / 2
-        else:
-            avg_time = int(time_range)
-        total_time += avg_time
+    start_time = time.time()
 
-    print(f"\n📊 Total Estimated Refactoring Time: {total_time:.0f} hours")
-    print(f"🎯 Recommended Approach: Incremental refactoring with continuous testing")
+    for i, test_file in enumerate(TEST_FILES, 1):
+        if not Path(test_file).exists():
+            print(f"\n{i:2d}. ⏭️  {test_file} (not found)")
+            continue
+
+        print(f"\n{i:2d}. ", end="")
+
+        file_start = time.time()
+        success, output = run_test_file(test_file, monitor, use_cov=use_cov)
+        file_time = time.time() - file_start
+        total_time += file_time
+
+        results.append((test_file, success, file_time))
+
+        if not success:
+            print(f"   ⚠️  Test failed. Continuing to next file...")
+            # Don't stop — continue to gather as much coverage as possible
+            # Only stop if RAM exceeded
+            if "RAM exceeded" in output:
+                print(f"   🛑 Stopping due to RAM limits")
+                stopped_early = True
+                break
+
+    end_time = time.time()
+
+    # Summary
+    print(f"\n{'=' * 70}")
+    print("📊 BATCH MODE SUMMARY")
+    print(f"{'=' * 70}")
+
+    passed = sum(1 for _, success, _ in results if success)
+    total = len(results)
+
+    print(f"✅ Passed: {passed}/{total}")
+    print(f"⏱️  Total Time: {total_time:.1f}s")
+    monitor.report()
+
+    if stopped_early:
+        print(f"\n⚠️  Stopped early due to RAM limits")
+        print(f"   Ran {total}/{len(TEST_FILES)} test files")
+        return 2  # Partial success
+    elif passed == total:
+        print(f"\n✓ All tests passed!")
+        return 0
+    else:
+        print(f"\n⚠️  {total - passed} test(s) failed (but continuing to completion)")
+        return 1
 
 
 def main():
-    """Main test runner function."""
-    print("☕ Coffee Text Analytics - Comprehensive Test Suite")
-    print("🔧 Pre-Refactoring Testing & Analysis")
-    print(f"{'=' * 60}")
+    """Main entry point."""
+    global SAFE_RAM_THRESHOLD_MB
 
-    start_time = time.time()
+    import argparse
 
-    # Test suites to run
-    test_suites = [
-        {
-            "name": "Data Processing",
-            "classes": [
-                TestDataLoading,
-                TestTextPreprocessing,
-                TestDataCleaning,
-                TestDataQualityAnalysis,
-                TestDataIntegrity,
-            ],
-        },
-        {
-            "name": "New Architecture Integration",
-            "classes": [
-                TestNewArchitectureIntegration,
-            ],
-        },
-    ]
-
-    # Run all test suites
-    all_results = []
-    total_tests = 0
-    total_failures = 0
-    total_errors = 0
-    total_skipped = 0
-
-    for suite in test_suites:
-        result = run_test_suite(suite["name"], suite["classes"])
-        all_results.append(result)
-
-        total_tests += result.testsRun
-        total_failures += len(result.failures)
-        total_errors += len(result.errors)
-        total_skipped += len(result.skipped)
-
-    end_time = time.time()
-
-    # Overall summary
-    print(f"\n{'=' * 60}")
-    print("🎯 OVERALL TEST SUMMARY")
-    print(f"{'=' * 60}")
-
-    success_rate = (
-        ((total_tests - total_failures - total_errors) / total_tests * 100)
-        if total_tests > 0
-        else 0
+    parser = argparse.ArgumentParser(
+        description="Smart test runner with RAM monitoring"
+    )
+    parser.add_argument(
+        "--batch",
+        action="store_true",
+        help="Run all tests in batch (default: safe mode only)",
+    )
+    parser.add_argument(
+        "--no-cov",
+        action="store_true",
+        help="Skip coverage reporting (runs faster)",
+    )
+    parser.add_argument(
+        "--threshold",
+        type=int,
+        default=SAFE_RAM_THRESHOLD_MB,
+        help=f"RAM threshold in MB (default: {SAFE_RAM_THRESHOLD_MB})",
     )
 
-    print(f"📊 Total Tests Run: {total_tests}")
-    print(f"✅ Passed: {total_tests - total_failures - total_errors}")
-    print(f"❌ Failed: {total_failures}")
-    print(f"💥 Errors: {total_errors}")
-    print(f"⏭️  Skipped: {total_skipped}")
-    print(f"📈 Success Rate: {success_rate:.1f}%")
-    print(f"⏱️  Total Time: {end_time - start_time:.2f}s")
+    args = parser.parse_args()
 
-    # Determine readiness for refactoring
-    if total_failures == 0 and total_errors == 0:
-        print(f"\n🎉 READY FOR REFACTORING!")
-        print("✅ All tests passing - codebase is stable")
-        print("✅ Comprehensive test coverage in place")
-        print("✅ Integration tests verify end-to-end functionality")
+    # Update threshold if provided
+    SAFE_RAM_THRESHOLD_MB = args.threshold
+
+    print("☕ Coffee Text Analytics - Smart Test Runner")
+    print(f"   RAM Threshold: {args.threshold} MB")
+    print(f"   Coverage: {'❌ Disabled' if args.no_cov else '✅ Enabled'}")
+
+    if args.batch:
+        exit_code = run_batch_mode(use_cov=not args.no_cov)
     else:
-        print(f"\n⚠️  NOT READY FOR REFACTORING")
-        print("❌ Fix failing tests before proceeding")
-        print("❌ Ensure all components are working correctly")
+        exit_code = run_safe_mode(use_cov=not args.no_cov)
 
-    # Analysis and recommendations
-    analyze_code_coverage()
-    identify_refactoring_opportunities()
-    generate_refactoring_plan()
-
-    # Final recommendations
-    print(f"\n{'=' * 60}")
-    print("💡 NEXT STEPS")
-    print(f"{'=' * 60}")
-
-    if total_failures == 0 and total_errors == 0:
-        print("1. ✅ Tests are passing - proceed with confidence")
-        print("2. 🔧 Start with Phase 1 refactoring (code deduplication)")
-        print("3. 🧪 Run tests after each refactoring phase")
-        print("4. 📊 Monitor performance during refactoring")
-        print("5. 📝 Update documentation as you refactor")
-    else:
-        print("1. ❌ Fix failing tests first")
-        print("2. 🔍 Investigate test failures and errors")
-        print("3. 🧪 Re-run tests until all pass")
-        print("4. 🔧 Then proceed with refactoring plan")
-
-    # Exit with appropriate code
-    exit_code = 0 if (total_failures == 0 and total_errors == 0) else 1
     sys.exit(exit_code)
 
 
