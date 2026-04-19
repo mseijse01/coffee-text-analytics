@@ -13,11 +13,12 @@ Features:
 - Logging configuration
 """
 
-import os
 import logging
-from pathlib import Path
-from typing import Dict, Any, Optional, List
+import os
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List
+
 import plotly.graph_objects as go
 import plotly.io as pio
 
