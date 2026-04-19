@@ -37,6 +37,19 @@ make ci-test         # lint + test (simulates CI pipeline locally)
 mypy src/data/loader.py src/data/preprocessing.py src/features/feature_manager.py src/models/regressors.py src/models/evaluator.py  # Type checking (5 core files only)
 ```
 
+### Dependency Management
+```bash
+# Development: Use flexible versions for active development
+pip install -r requirements.txt
+
+# Production/Reproducibility: Use locked versions for exact reproducibility
+pip install -r requirements-lock.txt
+
+# Pre-commit hooks (auto-fixes formatting on commit):
+# Installed automatically via .pre-commit-config.yaml
+# Runs: black, isort, mypy (5 core modules), trailing-whitespace, end-of-file-fixer, check-yaml
+```
+
 ### Other Utilities
 ```bash
 python validate_15_percent_methodology.py              # Thesis compliance validation (~4 min)
