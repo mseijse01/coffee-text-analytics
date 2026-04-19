@@ -12,15 +12,10 @@ Features:
 """
 
 import logging
-import os
 import time
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
-import numpy as np
 import optuna
-import pandas as pd
-from optuna.integration.mlflow import MLflowCallback
 
 # Production MLflow integration
 try:

@@ -10,12 +10,11 @@ Following thesis methodology for comprehensive model evaluation with MAE, RMSE, 
 import logging
 import pickle
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from sklearn.metrics import (
     explained_variance_score,
     max_error,
@@ -24,7 +23,7 @@ from sklearn.metrics import (
     mean_squared_error,
     r2_score,
 )
-from sklearn.model_selection import cross_val_score, cross_validate
+from sklearn.model_selection import cross_validate
 
 from .base import BaseEvaluator, BaseModel, ModelEvaluationError
 

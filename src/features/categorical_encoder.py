@@ -10,13 +10,12 @@ Author: Coffee Analytics Team
 Date: 2024
 """
 
-import pandas as pd
-import numpy as np
 import logging
-from typing import Dict, List, Optional, Tuple, Any
-from sklearn.preprocessing import OneHotEncoder
 import pickle
-import os
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
 
 logger = logging.getLogger(__name__)
 
