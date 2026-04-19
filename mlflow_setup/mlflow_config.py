@@ -53,8 +53,8 @@ class MLflowConfig:
                 "artifact_location": "s3://mlflow-artifacts/",
                 "backend_type": "remote",
                 "s3_endpoint_url": "http://localhost:9000",
-                "aws_access_key_id": "minio_access_key",
-                "aws_secret_access_key": "minio_secret_key",
+                "aws_access_key_id": os.getenv("AWS_ACCESS_KEY_ID", "minio_access_key"),
+                "aws_secret_access_key": os.getenv("AWS_SECRET_ACCESS_KEY", "minio_secret_key"),
                 "description": "Docker-based remote tracking with PostgreSQL + MinIO",
             }
 
