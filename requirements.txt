@@ -47,3 +47,8 @@ polars>=0.15.0
 mypy>=1.0.0  # Static type checker
 pandas-stubs>=1.5.0  # Type stubs for pandas
 types-tqdm>=4.64.0  # Type stubs for tqdm
+
+# FastAPI serving layer
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+httpx>=0.24.0

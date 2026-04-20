@@ -155,10 +155,14 @@ mlflow: ## Start MLflow UI (port 5000)
 	@$(PYTHON) -m mlflow ui --port 5000
 	@echo "$(GREEN)✓ MLflow running at http://localhost:5000$(NC)"
 
-serve: ## Start FastAPI serving layer (placeholder for future)
-	@echo "$(BOLD)🚀 Starting API server...$(NC)"
-	@echo "$(YELLOW)Note: FastAPI serving layer not yet implemented$(NC)"
-	@echo "Coming in Task 4: Add FastAPI serving endpoint"
+serve: ## Start FastAPI serving layer on port 8000
+	@echo "$(BOLD)🚀 Starting Coffee Analytics API on http://localhost:8000$(NC)"
+	@echo "$(YELLOW)Requires: run 'make train' first to generate model artifacts$(NC)"
+	cd src && $(PYTHON) -m uvicorn serving.app:app --host 0.0.0.0 --port 8000 --reload
+
+serve-docker: ## Build and run serving container
+	docker build -f Dockerfile.serving -t coffee-serving:latest .
+	docker run -p 8000:8000 coffee-serving:latest
 
 # ============================================================================
 # ENVIRONMENT TARGETS

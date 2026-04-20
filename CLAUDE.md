@@ -88,15 +88,31 @@ python scripts/generate_docs.py
 ```bash
 python validate_15_percent_methodology.py              # Thesis compliance validation (~4 min)
 python validate_15_percent_methodology.py --sample_size=50  # 50% sample
+make validate-quick                                    # Quick validation on 5% sample (~30 sec)
+make train-xgboost                                     # Train XGBoost only (best model)
 make clean-cache                                       # Delete cache/ to force feature re-extraction
 make clean-models                                      # Delete models/*.pkl
 mlflow ui --port 5000                                  # View experiment runs
 python -m config.cli --validate                        # Validate configuration
+COFFEE_ENV=production python main.py --steps all       # Switch environment (dev/prod/test/cicd)
+```
+
+### MLflow Infrastructure (PostgreSQL + MinIO)
+```bash
+docker-compose -f mlflow_setup/docker-compose.yml up   # Start MLflow server + artifact storage
+# MLflow UI: http://localhost:5555, MinIO console: http://localhost:9001
 ```
 
 ## Architecture
 
 This is a **research ML pipeline** for analyzing consumer coffee reviews (CoffeeReview.com dataset, ~6,400 rows). The goal is predicting coffee quality ratings from text using NLP + regression models.
+
+### Data Schema
+- **Source**: `data/raw/coffee_clean.csv` — ~6,400 rows, filtered to ~2,440 after minimum rating cutoff
+- **Target**: `rating` (80–100 scale)
+- **Text inputs**: `desc_1`, `desc_2`, `desc_3` (three review description columns)
+- **Sensory attributes**: `aroma`, `acid`, `body`, `flavor`, `aftertaste` (kept separate per thesis methodology — see `pipeline/constants.py:EXCLUDE_COLUMNS`)
+- **Train/test split**: 70/30 stratified by rating bins
 
 ### Pipeline Flow
 `data/raw/coffee_clean.csv` → preprocessing → feature extraction → feature selection → model training → MLflow logging → visualization/output
@@ -132,3 +148,26 @@ Tests use pytest markers to separate concerns:
 - `unit` / `edge_case` / `error_handling` — Standard unit test classifications
 - `mlflow` — Require MLflow server
 - `methodology` / `performance` — Research validation tests
+
+## Next Phase: Production Serving Layer
+
+This project is currently **research-focused** with a trained pipeline but no HTTP serving layer. The next priority is to add production-grade model serving:
+
+### Strategic Context
+See `docs/NEXT_STEPS_BRAINSTORM.md` for a complete analysis. The recommended approach (Option C: bridge with coffee-database) involves:
+1. **FastAPI Serving Layer** (this repo) — expose XGBoost predictions via `/predict` endpoint
+2. **PostgreSQL Migration** (coffee-database sibling) — persist scraped beans in a real database
+3. **Integration Bridge** — have the scraper call the serving API to auto-rate new beans
+
+### Serving Layer Implementation
+A complete 10-step execution guide exists at `docs/SERVING_LAYER_EXECUTION_GUIDE.md`, ready for immediate implementation. It covers:
+- Adding fastapi/uvicorn dependencies
+- Creating `src/serving/schemas.py`, `src/serving/predictor.py`, and `src/serving/app.py`
+- Loading trained artifacts (TF-IDF, LASSO selector, XGBoost) at startup
+- Creating `Dockerfile.serving` for containerized deployment
+- Writing integration tests for the API
+- Updating the `serve` Makefile target
+
+**Key implementation detail**: TfidfExtractor.load_extractor() (not load_vectorizer()) — see predictor.py pattern.
+
+**Expected effort**: ~1–2 days to implement end-to-end, assuming model artifacts already exist from `make train`.

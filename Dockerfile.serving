@@ -1,0 +1,31 @@
+# Coffee Text Analytics — FastAPI serving container
+FROM python:3.9-slim
+
+LABEL maintainer="Marcelo Seijas <marcelo.seijas@erasmusuniversity.nl>"
+LABEL description="Coffee Analytics: FastAPI model serving"
+LABEL version="1.0"
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y gcc g++ curl && rm -rf /var/lib/apt/lists/*
+RUN pip install --upgrade pip setuptools wheel
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+
+# Copy source and trained model artifacts
+COPY src/ ./src/
+COPY models/ ./models/
+
+ENV PYTHONPATH=/app/src
+
+# BERT takes ~1-2 min to load — start-period must be long enough
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+USER appuser
+EXPOSE 8000
+
+CMD ["uvicorn", "serving.app:app", "--host", "0.0.0.0", "--port", "8000"]
