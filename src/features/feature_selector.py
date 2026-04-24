@@ -129,8 +129,7 @@ class LassoFeatureSelector:
                     "tfidf_desc_",
                     "bert_desc_",
                     "glove_desc_",
-                    "lda_topic_",
-                    "nmf_topic_",
+                    "topics_desc_",
                     "sentiment_desc_",
                 ]
             ):

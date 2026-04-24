@@ -5,16 +5,17 @@ This module provides tools to measure and optimize performance of various
 components in the pipeline.
 """
 
-import time
-import psutil
-import logging
 import functools
-from typing import Dict, Any, Callable, Optional, List
-from pathlib import Path
-import polars as pl
-import pandas as pd
-import numpy as np
+import logging
+import time
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
+import numpy as np
+import pandas as pd
+import polars as pl
+import psutil
 
 logger = logging.getLogger(__name__)
 

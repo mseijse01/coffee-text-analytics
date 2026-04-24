@@ -2,14 +2,15 @@
 Visualization utilities for coffee review data analysis.
 """
 
-import os
-import logging
 import json
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from pathlib import Path
+import logging
+import os
 import pickle
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 # Configure logging
 logging.basicConfig(

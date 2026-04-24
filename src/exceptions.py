@@ -6,7 +6,7 @@ All custom exceptions inherit from CoffeeAnalyticsError for consistent error han
 """
 
 import logging
-from typing import Optional, Any, Dict
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

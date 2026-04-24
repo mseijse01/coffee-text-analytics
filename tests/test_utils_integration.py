@@ -5,21 +5,22 @@ Tests the complete utility ecosystem including caching, Polars optimizations,
 and data processing utilities using real sample data.
 """
 
-import pytest
+import pickle
 import tempfile
 import time
-import pickle
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-import polars as pl
-import pandas as pd
+from unittest.mock import MagicMock, patch
+
 import numpy as np
+import pandas as pd
+import polars as pl
+import pytest
 
 # Import modules under test
 from src.utils.cache import CacheManager, FeatureCache, ModelCache, cached_function
-from src.utils.polars_utils import PolarsOptimizer, DataTypeOptimizer
 from src.utils.data_quality import DataQualityChecker
 from src.utils.performance import PerformanceMonitor
+from src.utils.polars_utils import DataTypeOptimizer, PolarsOptimizer
 
 
 class TestCachingSystemIntegration:
@@ -399,7 +400,7 @@ class TestCachingSystemIntegration:
     @pytest.mark.unit
     def test_global_cache_manager_functions(self):
         """Test global cache manager utility functions."""
-        from src.utils.cache import get_cache_manager, clear_all_cache, cache_info
+        from src.utils.cache import cache_info, clear_all_cache, get_cache_manager
 
         # Test get_cache_manager returns same instance
         manager1 = get_cache_manager()

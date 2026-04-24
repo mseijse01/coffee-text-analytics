@@ -7,17 +7,18 @@ feature extractors in the coffee text analytics project.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
+
 import polars as pl
 
 # Import centralized exceptions
 from src.exceptions import (
-    FeatureExtractionError,
-    ExtractorNotFittedError,
     ExtractorConfigError,
+    ExtractorNotFittedError,
+    FeatureExtractionError,
     handle_exception,
-    validate_not_none,
     validate_not_empty,
+    validate_not_none,
 )
 
 logger = logging.getLogger(__name__)

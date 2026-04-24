@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-15% Sample Validation + Model Persistence Script
+30% Sample Validation + Model Persistence Script
 
-Combines quick validation (15% sample) with model artifact saving.
+Combines validation on 30% sample with model artifact saving.
 Trains all models and persists them to disk for serving layer use.
+Used to validate R² consistency across different sample sizes.
 
-Usage: python validate_15_percent_and_save.py
-Expected runtime: ~4-5 minutes
+Usage: python validate_30_percent_and_save.py
+Expected runtime: ~8-10 minutes
 """
 
 import logging
@@ -265,12 +266,12 @@ def train_and_save_models(
 def main():
     """Run validation and save models."""
     logger.info("=" * 80)
-    logger.info("🎯 15% Sample Validation + Model Persistence")
+    logger.info("🎯 30% Sample Validation + Model Persistence")
     logger.info("=" * 80)
 
     try:
         # Load data
-        full_df, sample_df = load_and_sample(sample_fraction=0.15)
+        full_df, sample_df = load_and_sample(sample_fraction=0.30)
 
         # Extract features (now includes train/test split and feature selection)
         X_train, X_test, y_train, y_test, selector = extract_features(sample_df)

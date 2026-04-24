@@ -7,24 +7,25 @@ models in the coffee text analytics project.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
-import polars as pl
 import pandas as pd
+import polars as pl
 from sklearn.base import BaseEstimator
 
 # Import centralized exceptions
 from src.exceptions import (
-    ModelError,
-    ModelNotFittedError,
     ModelConfigError,
-    ModelTrainingError,
+    ModelError,
     ModelEvaluationError,
-    ModelSaveError,
     ModelLoadError,
+    ModelNotFittedError,
+    ModelSaveError,
+    ModelTrainingError,
     handle_exception,
-    validate_not_none,
     validate_not_empty,
+    validate_not_none,
 )
 
 logger = logging.getLogger(__name__)

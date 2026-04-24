@@ -629,17 +629,23 @@ class CoffeeFeatureManager:
         logger.info(f"Saving extractors to {models_dir}")
 
         for name, extractor in self.extractors.items():
-            if extractor.is_fitted and hasattr(extractor, "_save_vectorizer"):
-                try:
-                    # Update models directory in config
-                    extractor.config["models_dir"] = models_dir
-                    if hasattr(extractor, "_save_vectorizer"):
-                        extractor._save_vectorizer()
-                    elif hasattr(extractor, "_save_models"):
-                        extractor._save_models()
-                    logger.info(f"Saved {name} extractor")
-                except Exception as e:
-                    logger.warning(f"Failed to save {name} extractor: {e}")
+            if not extractor.is_fitted:
+                continue
+            try:
+                # Update models directory in config so save paths resolve correctly
+                extractor.config["models_dir"] = str(models_dir)
+                if hasattr(extractor, "save_extractor"):
+                    # TfidfExtractor uses save_extractor(models_dir)
+                    extractor.save_extractor(str(models_dir))
+                elif hasattr(extractor, "_save_models"):
+                    # TopicExtractor uses _save_models() (reads models_dir from config)
+                    extractor._save_models()
+                else:
+                    logger.debug(f"No save method found for {name} extractor, skipping")
+                    continue
+                logger.info(f"Saved {name} extractor")
+            except Exception as e:
+                logger.warning(f"Failed to save {name} extractor: {e}")
 
     def load_extractors(
         self, models_dir: Union[str, Path] = "models"

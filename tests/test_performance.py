@@ -5,32 +5,33 @@ Performance tests for coffee text analytics optimizations.
 This module tests the performance improvements from Phase 5 optimizations.
 """
 
-import unittest
-import time
-import sys
 import os
-import polars as pl
-import pandas as pd
-import numpy as np
+import sys
+import time
+import unittest
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import polars as pl
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+from utils.cache import CacheManager, FeatureCache, clear_all_cache
 from utils.performance import (
-    PerformanceProfiler,
     DataFrameBenchmark,
     FeatureExtractionBenchmark,
+    PerformanceProfiler,
     benchmark_function,
 )
 from utils.polars_utils import (
-    PolarsOptimizer,
     DataTypeOptimizer,
+    PolarsOptimizer,
     efficient_pandas_apply,
-    prepare_for_sklearn,
     optimize_memory,
+    prepare_for_sklearn,
 )
-from utils.cache import CacheManager, FeatureCache, clear_all_cache
 
 
 class TestPerformanceOptimizations(unittest.TestCase):
@@ -678,8 +679,8 @@ if __name__ == "__main__":
     def test_pipeline_performance_profiling(self):
         """Test pipeline performance profiling."""
         # Create a temporary test data file
-        import tempfile
         import csv
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             writer = csv.writer(f)
@@ -765,7 +766,7 @@ if __name__ == "__main__":
 
     def test_performance_decorator(self):
         """Test performance measurement decorator."""
-        from utils.performance import measure_performance, get_profiler
+        from utils.performance import get_profiler, measure_performance
 
         # Clear any existing measurements
         profiler = get_profiler()

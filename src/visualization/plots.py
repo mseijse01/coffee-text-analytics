@@ -1,11 +1,12 @@
 """Visualization functions for coffee review analysis."""
 
 from pathlib import Path
-from typing import Union, List
+from typing import List, Union
+
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import polars as pl
+from plotly.subplots import make_subplots
 
 from src.config.settings import Config
 

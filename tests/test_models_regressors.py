@@ -10,27 +10,28 @@ Tests for all regressor implementations including:
 - Error handling and edge cases
 """
 
-import pytest
+from unittest.mock import MagicMock, Mock, patch
+
 import numpy as np
 import pandas as pd
-from unittest.mock import Mock, patch, MagicMock
-from sklearn.model_selection import GridSearchCV
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
+import pytest
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.linear_model import Lasso, LinearRegression, Ridge
+from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeRegressor
 
-from src.models.regressors import (
-    CoffeeLinearRegression,
-    CoffeeRidgeRegression,
-    CoffeeLassoRegression,
-    CoffeeRandomForest,
-    CoffeeXGBoost,
-    CoffeeSVR,
-    CoffeeDecisionTree,
-    XGBOOST_AVAILABLE,
-)
 from src.models.base import ModelError
+from src.models.regressors import (
+    XGBOOST_AVAILABLE,
+    CoffeeDecisionTree,
+    CoffeeLassoRegression,
+    CoffeeLinearRegression,
+    CoffeeRandomForest,
+    CoffeeRidgeRegression,
+    CoffeeSVR,
+    CoffeeXGBoost,
+)
 
 
 class TestCoffeeLinearRegression:

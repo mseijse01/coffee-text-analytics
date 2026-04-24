@@ -5,16 +5,17 @@ This module provides caching capabilities for feature extraction, model training
 and other computationally expensive operations.
 """
 
-import pickle
 import hashlib
 import json
-import time
 import logging
-from pathlib import Path
-from typing import Any, Dict, Optional, Union, Callable
+import pickle
+import time
 from functools import wraps
-import polars as pl
+from pathlib import Path
+from typing import Any, Callable, Dict, Optional, Union
+
 import pandas as pd
+import polars as pl
 
 logger = logging.getLogger(__name__)
 

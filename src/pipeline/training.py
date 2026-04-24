@@ -269,7 +269,11 @@ def run_training(args, config) -> bool:
 def _run_mnir(df: pd.DataFrame, X_train: pd.DataFrame, config) -> None:
     """Train MNIR model for research interpretability."""
     sensory_cols = ["aroma", "acid", "body", "flavor", "aftertaste"]
-    sensory_data = {col: df[col].values for col in sensory_cols if col in df.columns}
+    # Use X_train.index to align sensory data with training rows (avoids shape mismatch)
+    train_idx = X_train.index
+    sensory_data = {
+        col: df.loc[train_idx, col].values for col in sensory_cols if col in df.columns
+    }
 
     if not sensory_data:
         logger.warning("No sensory attributes found for MNIR analysis")
@@ -282,11 +286,11 @@ def _run_mnir(df: pd.DataFrame, X_train: pd.DataFrame, config) -> None:
             "sensory_attributes": list(sensory_data.keys()),
         }
         mnir = MultinomialInverseRegression(mnir_config)
-        mnir.fit(X_train.values, sensory_data)
+        mnir.fit(X_train, sensory_data)
+        mnir.save_model(str(config.paths.models / "mnir_model.pkl"))
         print("\n" + "=" * 50)
         print("MNIR ANALYSIS RESULTS")
         print("=" * 50)
         print(mnir.generate_insights_report())
-        mnir.save_model(str(config.paths.models / "mnir_model.pkl"))
     except Exception as exc:
         logger.error(f"MNIR training failed: {exc}")

@@ -11,17 +11,18 @@ Tests for CoffeeModelEvaluator including:
 - Error handling and edge cases
 """
 
-import pytest
+import pickle
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
-import tempfile
-import pickle
+import pytest
 
-from src.models.evaluator import CoffeeModelEvaluator, SHAP_AVAILABLE
 from src.models.base import BaseModel, ModelEvaluationError
+from src.models.evaluator import SHAP_AVAILABLE, CoffeeModelEvaluator
 
 
 @pytest.fixture

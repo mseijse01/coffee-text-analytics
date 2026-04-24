@@ -8,14 +8,15 @@ This module implements topic modeling following the thesis methodology:
 - Polars DataFrame output for efficient processing
 """
 
-import polars as pl
-import numpy as np
-import pickle
-import os
 import logging
-from typing import List, Dict, Optional, Tuple, Any
+import os
+import pickle
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+import polars as pl
+from sklearn.decomposition import NMF, LatentDirichletAllocation
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import LatentDirichletAllocation, NMF
 
 from .base import BaseTopicExtractor, ExtractorError
 

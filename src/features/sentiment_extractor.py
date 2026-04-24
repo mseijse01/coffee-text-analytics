@@ -7,10 +7,11 @@ This module implements sentiment analysis following the thesis methodology:
 - Polars DataFrame output for efficient processing
 """
 
-import polars as pl
-import numpy as np
 import logging
-from typing import List, Dict, Optional, Any
+from typing import Any, Dict, List, Optional
+
+import numpy as np
+import polars as pl
 
 from .base import BaseExtractor, ExtractorError
 
@@ -19,9 +20,9 @@ logger = logging.getLogger(__name__)
 # Check for transformers availability
 try:
     from transformers import (
-        pipeline,
         DistilBertForSequenceClassification,
         DistilBertTokenizer,
+        pipeline,
     )
 
     TRANSFORMERS_AVAILABLE = True

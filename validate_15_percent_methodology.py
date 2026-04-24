@@ -5,40 +5,43 @@ Enhanced MLflow + Optuna + Thesis Methodology Integration
 With timeout protection and quick validation mode
 """
 
-import sys
-import os
-import time
-import logging
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from typing import Dict, Any, List, Tuple
 import datetime
-import polars as pl
+import logging
+import os
 import signal
+import sys
+import time
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
+
 import mlflow
+import numpy as np
+import pandas as pd
+import polars as pl
 
 # Add src to path for imports FIRST - before any src imports
 sys.path.append("src")
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
 # Enhanced imports for timeout and validation
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from sklearn.feature_extraction.text import TfidfVectorizer
+
+from experiment.mlflow_integration import EnhancedCoffeeMLflowTracker
 
 # Now import from src modules
 from features.feature_manager import CoffeeFeatureManager
-from experiment.mlflow_integration import EnhancedCoffeeMLflowTracker
-from features.feature_selector_corrected import CorrectedLassoFeatureSelector
+from features.feature_selector import LassoFeatureSelector
+from models.mnir import MultinomialInverseRegression
 from models.regressors import (
-    CoffeeLinearRegression,
-    CoffeeRidgeRegression,
     CoffeeLassoRegression,
+    CoffeeLinearRegression,
     CoffeeRandomForest,
+    CoffeeRidgeRegression,
     CoffeeXGBoost,
 )
-from models.mnir import MultinomialInverseRegression
 
 # Configure logging
 logging.basicConfig(
@@ -530,7 +533,7 @@ class Coffee15PercentValidator:
 
                 # Create DataFrame with feature names for proper identification
                 X_df = pd.DataFrame(X, columns=feature_cols)
-                selector = CorrectedLassoFeatureSelector(selector_config)
+                selector = LassoFeatureSelector(selector_config)
 
                 # Fit and transform using DataFrame (so feature names are preserved)
                 X_selected_df = selector.fit_transform(X_df, y)

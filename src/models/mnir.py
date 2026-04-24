@@ -5,13 +5,14 @@ This module implements MNIR following the thesis methodology for analyzing
 the relationship between text-based features and sensory attributes.
 """
 
+import logging
+from typing import Any, Dict, List, Optional, Union
+
 import numpy as np
 import pandas as pd
-import logging
-from typing import List, Dict, Optional, Any, Union
 from sklearn.linear_model import LassoCV, LinearRegression
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
 
 from .base import BaseRegressor, ModelError
 
@@ -298,7 +299,9 @@ class MultinomialInverseRegression(BaseRegressor):
         """
         return self.performance_metrics.copy()
 
-    def get_feature_importance(self, attribute: str, top_n: int = 10) -> List[tuple]:
+    def get_attribute_feature_importance(
+        self, attribute: str, top_n: int = 10
+    ) -> List[tuple]:
         """
         Get feature importance for a specific attribute.
 
@@ -392,7 +395,7 @@ class MultinomialInverseRegression(BaseRegressor):
         report.append("\n=== Top Features by Attribute ===")
         for attribute in self.regression_models.keys():
             report.append(f"\n{attribute.upper()} - Top 5 Features:")
-            top_features = self.get_feature_importance(attribute, top_n=5)
+            top_features = self.get_attribute_feature_importance(attribute, top_n=5)
             for i, (feature, importance) in enumerate(top_features, 1):
                 report.append(f"  {i}. {feature}: {importance:.4f}")
 
@@ -415,7 +418,7 @@ class MultinomialInverseRegression(BaseRegressor):
         feature_importance = {}
 
         for attribute in self.regression_models.keys():
-            attr_importance = self.get_feature_importance(
+            attr_importance = self.get_attribute_feature_importance(
                 attribute, top_n=len(self.feature_names)
             )
 

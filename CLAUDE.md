@@ -10,7 +10,9 @@ Virtual environment is at `~/.virtualenvs/coffee-analytics/`. The Makefile uses 
 
 ### Running the Pipeline
 ```bash
-python main.py --steps all                          # Full pipeline
+python main.py --steps all                           # Full pipeline
+python main.py --steps all --sample_fraction 0.15   # Full pipeline on 15% sample (RAM-friendly)
+python main.py --steps all --sample_size 400        # Full pipeline on exact row count
 python main.py --steps preprocess                   # Preprocessing only
 python main.py --steps features                     # Feature extraction only
 python main.py --steps select                       # Feature selection only
@@ -88,6 +90,8 @@ python scripts/generate_docs.py
 ```bash
 python validate_15_percent_methodology.py              # Thesis compliance validation (~4 min)
 python validate_15_percent_methodology.py --sample_size=50  # 50% sample
+python validate_15_percent_and_save.py                 # Validate on 15% sample + save model artifacts
+python validate_30_percent_and_save.py                 # Validate on 30% sample + save model artifacts
 make validate-quick                                    # Quick validation on 5% sample (~30 sec)
 make train-xgboost                                     # Train XGBoost only (best model)
 make clean-cache                                       # Delete cache/ to force feature re-extraction
@@ -96,6 +100,14 @@ mlflow ui --port 5000                                  # View experiment runs
 python -m config.cli --validate                        # Validate configuration
 COFFEE_ENV=production python main.py --steps all       # Switch environment (dev/prod/test/cicd)
 ```
+
+### Serving Layer
+```bash
+make serve             # Start FastAPI on http://localhost:8000 (requires make train first)
+make serve-docker      # Build Dockerfile.serving and run container on port 8000
+```
+
+The serving layer lives in `src/serving/`: `app.py` (FastAPI routes + lifespan), `predictor.py` (loads TF-IDF/LASSO/XGBoost artifacts), `schemas.py` (Pydantic request/response models). Run from `src/` root via `uvicorn serving.app:app`.
 
 ### MLflow Infrastructure (PostgreSQL + MinIO)
 ```bash
@@ -135,6 +147,32 @@ This is a **research ML pipeline** for analyzing consumer coffee reviews (Coffee
 - **Thesis compliance**: The 15% sample validation script exists specifically to verify the research methodology matches thesis requirements. Don't break this workflow.
 - **Best model**: XGBoost achieves R²=0.9453. MNIR is included for research/interpretability (not performance).
 
+### Known Issues & Pending Architecture Work
+
+⚠️ **LASSO Feature Selection Architecture Issue** (2026-04-21)
+- **Status**: Documented, awaiting architectural redesign
+- **Problem**: LassoFeatureSelector anonymizes sensory columns, breaking MNIR access; suspicious linear R² values; double categorical encoding
+- **Details**: See `docs/ARCHITECTURE_ISSUE_LASSO_FEATURE_SELECTION.md` (comprehensive analysis with 3 solution options and validation tests)
+- **Impact**: MNIR cannot train; R² validation unreliable; validation scripts have double-encoded categorical features
+- **Assigned to**: Sonnet (next session) — requires understanding thesis methodology + backward compatibility analysis
+
+### Pipeline Modes: Main vs. Validation Scripts
+
+There are two paths to generate model artifacts — they serve different purposes and produce different evaluation semantics:
+
+**Main pipeline** (`python main.py --steps all [--sample_fraction 0.15]`):
+- Follows thesis methodology: sensory + raw categorical columns are excluded from the LASSO input (via `EXCLUDE_COLUMNS` in `pipeline/constants.py`), then re-joined after selection
+- Each feature group (flavor, text, categorical) can be evaluated independently
+- Saves all artifacts (model pickles + LASSO selector + TF-IDF vectorizer) to `models/`
+- Use `--sample_fraction 0.15` for a RAM-friendly end-to-end run outside Claude Code
+
+**Validation scripts** (`validate_15_percent_and_save.py`, `validate_30_percent_and_save.py`):
+- Purpose: fast convenience path for generating serving-layer artifacts in one command
+- Pass combined features (text + sensory + categorical) to all models simultaneously
+- Linear R²≈1.0 is **expected** here — sensory features alone give R²=0.998 (thesis table); these scripts do not reproduce the per-feature-group results shown in the thesis
+- MNIR diverges from thesis design (thesis: text features → sensory attributes; scripts: full combined matrix)
+- Use these when you need artifacts quickly and don't need thesis-comparable metrics
+
 ### CI Pipeline Behavior
 - **Main CI job** (`test`): only runs `tests/test_data_processing.py` (fast, keeps CI under 10 min). Coverage threshold: 15%.
 - **Integration tests**: run only on push to `main`, not on PRs.
@@ -149,25 +187,13 @@ Tests use pytest markers to separate concerns:
 - `mlflow` — Require MLflow server
 - `methodology` / `performance` — Research validation tests
 
-## Next Phase: Production Serving Layer
+## Next Phase: Integration Bridge
 
-This project is currently **research-focused** with a trained pipeline but no HTTP serving layer. The next priority is to add production-grade model serving:
+The FastAPI serving layer is **implemented** (`src/serving/`). The next priority is integrating it with the sibling project:
 
-### Strategic Context
-See `docs/NEXT_STEPS_BRAINSTORM.md` for a complete analysis. The recommended approach (Option C: bridge with coffee-database) involves:
-1. **FastAPI Serving Layer** (this repo) — expose XGBoost predictions via `/predict` endpoint
-2. **PostgreSQL Migration** (coffee-database sibling) — persist scraped beans in a real database
-3. **Integration Bridge** — have the scraper call the serving API to auto-rate new beans
+### Roadmap
+1. ~~**FastAPI Serving Layer**~~ — done (`make serve`)
+2. **PostgreSQL Migration** (`coffee-database` sibling at `/Users/seijas/Code/coffee-database`) — persist scraped beans in a real database
+3. **Integration Bridge** — have the scraper call `/predict` to auto-rate new beans
 
-### Serving Layer Implementation
-A complete 10-step execution guide exists at `docs/SERVING_LAYER_EXECUTION_GUIDE.md`, ready for immediate implementation. It covers:
-- Adding fastapi/uvicorn dependencies
-- Creating `src/serving/schemas.py`, `src/serving/predictor.py`, and `src/serving/app.py`
-- Loading trained artifacts (TF-IDF, LASSO selector, XGBoost) at startup
-- Creating `Dockerfile.serving` for containerized deployment
-- Writing integration tests for the API
-- Updating the `serve` Makefile target
-
-**Key implementation detail**: TfidfExtractor.load_extractor() (not load_vectorizer()) — see predictor.py pattern.
-
-**Expected effort**: ~1–2 days to implement end-to-end, assuming model artifacts already exist from `make train`.
+See `docs/NEXT_STEPS_BRAINSTORM.md` for full analysis.

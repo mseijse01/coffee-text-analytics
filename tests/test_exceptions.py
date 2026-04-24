@@ -5,65 +5,57 @@ Tests all custom exceptions, context handling, and validation utilities
 without any heavyweight dependencies.
 """
 
-import pytest
 import logging
-import tempfile
 import os
-from unittest.mock import patch, MagicMock
+import tempfile
+from unittest.mock import MagicMock, patch
 
-from src.exceptions import (
-    # Base exceptions
+import pytest
+
+from src.exceptions import (  # Base exceptions; Data exceptions; Feature extraction exceptions; Model exceptions; Config exceptions; Visualization exceptions; File exceptions; Dependency exceptions; Utility functions
+    BertExtractionError,
     CoffeeAnalyticsError,
-    # Data exceptions
+    ConfigError,
+    ConfigLoadError,
+    ConfigValidationError,
     DataError,
     DataLoadingError,
-    DataValidationError,
     DataPreprocessingError,
     DataQualityError,
-    # Feature extraction exceptions
-    FeatureExtractionError,
-    ExtractorNotFittedError,
-    ExtractorConfigError,
-    TfidfExtractionError,
-    BertExtractionError,
-    TopicExtractionError,
-    SentimentExtractionError,
-    GloveExtractionError,
-    # Model exceptions
-    ModelError,
-    ModelNotFittedError,
-    ModelConfigError,
-    ModelTrainingError,
-    ModelEvaluationError,
-    ModelSaveError,
-    ModelLoadError,
-    MNIRError,
-    # Config exceptions
-    ConfigError,
-    ConfigValidationError,
-    ConfigLoadError,
+    DataValidationError,
+    DependencyError,
     EnvironmentConfigError,
-    # Visualization exceptions
-    VisualizationError,
-    PlotCreationError,
-    PlotSaveError,
-    # File exceptions
+    ExtractorConfigError,
+    ExtractorNotFittedError,
+    FeatureExtractionError,
     FileError,
+    FileLoadError,
     FileNotFoundError,
     FilePermissionError,
     FileSaveError,
-    FileLoadError,
-    # Dependency exceptions
-    DependencyError,
-    MissingDependencyError,
+    GloveExtractionError,
     IncompatibleDependencyError,
-    # Utility functions
+    MissingDependencyError,
+    MNIRError,
+    ModelConfigError,
+    ModelError,
+    ModelEvaluationError,
+    ModelLoadError,
+    ModelNotFittedError,
+    ModelSaveError,
+    ModelTrainingError,
+    PlotCreationError,
+    PlotSaveError,
+    SentimentExtractionError,
+    TfidfExtractionError,
+    TopicExtractionError,
+    VisualizationError,
     handle_exception,
-    validate_not_none,
-    validate_not_empty,
-    validate_file_exists,
-    validate_directory_exists,
     require_dependency,
+    validate_directory_exists,
+    validate_file_exists,
+    validate_not_empty,
+    validate_not_none,
 )
 
 

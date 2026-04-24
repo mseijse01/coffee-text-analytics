@@ -5,11 +5,12 @@ This module provides utilities to minimize Polars ↔ Pandas conversions
 and optimize data processing performance.
 """
 
-import polars as pl
-import pandas as pd
-import numpy as np
-from typing import Union, List, Dict, Any, Optional
 import logging
+from typing import Any, Dict, List, Optional, Union
+
+import numpy as np
+import pandas as pd
+import polars as pl
 
 logger = logging.getLogger(__name__)
 

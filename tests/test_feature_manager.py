@@ -5,17 +5,18 @@ This module tests the unified feature extraction manager and its integration
 with all feature extractors following thesis methodology.
 """
 
-import pytest
-import polars as pl
-import pandas as pd
-import numpy as np
-from unittest.mock import patch, MagicMock, Mock
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
-from src.features.feature_manager import CoffeeFeatureManager, GloVeExtractor
+import numpy as np
+import pandas as pd
+import polars as pl
+import pytest
+
 from src.features.base import ExtractorError
+from src.features.feature_manager import CoffeeFeatureManager, GloVeExtractor
 
 
 class TestCoffeeFeatureManager:

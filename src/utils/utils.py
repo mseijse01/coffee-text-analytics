@@ -1,15 +1,16 @@
 """Utility functions for coffee review analysis."""
 
 from pathlib import Path
-import polars as pl
-import pandas as pd
 from typing import Union
+
+import pandas as pd
+import polars as pl
 
 # Import consolidated data quality functions
 from .data_quality import (
     analyze_data_quality,
-    get_data_overview,
     calculate_sensory_stats,
+    get_data_overview,
 )
 
 

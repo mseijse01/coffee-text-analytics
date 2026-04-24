@@ -5,40 +5,36 @@ Test suite for data processing components.
 Tests data loading, preprocessing, and quality analysis functions.
 """
 
-import unittest
-import sys
 import os
+import sys
 import tempfile
+import unittest
+from pathlib import Path
+
+import numpy as np
 import pandas as pd
 import polars as pl
-import numpy as np
-from pathlib import Path
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from data.preprocessing import (
-    load_csv_for_preprocessing,
-    preprocess_text,
-    tokenize_text,
-    remove_stopwords,
-    lemmatize_text,
     clean_text,
     extract_country_info,
+    lemmatize_text,
+    load_csv_for_preprocessing,
+    preprocess_text,
+    remove_stopwords,
     standardize_prices,
+    tokenize_text,
 )
+from utils.cleaning import clean_dataset as clean_coffee_data
+from utils.cleaning import drop_irrelevant_columns
+from utils.cleaning import extract_and_correct_country as standardize_country_names
 
 # Import consolidated data quality functions
 from utils.data_quality import analyze_data_quality
-from utils.utils import (
-    convert_pandas_to_polars,
-    convert_polars_to_pandas,
-)
-from utils.cleaning import (
-    clean_dataset as clean_coffee_data,
-    extract_and_correct_country as standardize_country_names,
-    drop_irrelevant_columns,
-)
+from utils.utils import convert_pandas_to_polars, convert_polars_to_pandas
 
 
 class TestDataLoading(unittest.TestCase):

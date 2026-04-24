@@ -5,26 +5,27 @@ Tests abstract base classes, validation logic, and common model functionality
 without any heavyweight ML operations.
 """
 
-import pytest
+from abc import ABC
+from unittest.mock import MagicMock, Mock, patch
+
 import numpy as np
 import pandas as pd
 import polars as pl
-from unittest.mock import Mock, patch, MagicMock
-from abc import ABC
+import pytest
 
+from src.exceptions import (
+    ModelConfigError,
+    ModelError,
+    ModelEvaluationError,
+    ModelNotFittedError,
+    ModelTrainingError,
+)
 from src.models.base import (
-    BaseModel,
-    BaseRegressor,
     BaseClassifier,
     BaseEnsembleModel,
     BaseEvaluator,
-)
-from src.exceptions import (
-    ModelError,
-    ModelNotFittedError,
-    ModelConfigError,
-    ModelTrainingError,
-    ModelEvaluationError,
+    BaseModel,
+    BaseRegressor,
 )
 
 

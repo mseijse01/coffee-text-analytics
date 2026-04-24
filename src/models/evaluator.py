@@ -831,6 +831,10 @@ class CoffeeModelEvaluator(BaseEvaluator):
         )
         top_features = sorted_features[:top_n]
 
+        if not top_features:
+            logger.warning("No features to plot in plot_feature_importance")
+            return plt.figure()
+
         features, importances = zip(*top_features)
 
         # Create plot

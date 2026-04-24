@@ -15,15 +15,15 @@ Usage:
 """
 
 from .settings import (
-    Config,
-    PathConfig,
-    ModelConfig,
-    FeatureConfig,
-    DataConfig,
-    VisualizationConfig,
-    LoggingConfig,
-    config,
     PATHS,
+    Config,
+    DataConfig,
+    FeatureConfig,
+    LoggingConfig,
+    ModelConfig,
+    PathConfig,
+    VisualizationConfig,
+    config,
 )
 
 # Main configuration instance for easy access

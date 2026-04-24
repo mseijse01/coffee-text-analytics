@@ -5,12 +5,13 @@ Tests for visualization functionality with mocked matplotlib/plotting operations
 to increase test coverage without requiring actual plot generation.
 """
 
-import pytest
-import numpy as np
-import pandas as pd
-from unittest.mock import Mock, patch, MagicMock
 import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import numpy as np
+import pandas as pd
+import pytest
 
 # Import visualization modules
 from src.visualization import visualize
@@ -226,8 +227,9 @@ class TestPlotlyVisualization:
     @patch("plotly.express.box")
     def test_plot_boxplots(self, mock_box):
         """Test boxplot generation."""
-        from src.visualization.plots import plot_boxplots
         import polars as pl
+
+        from src.visualization.plots import plot_boxplots
 
         # Create test data
         df = pl.DataFrame({"col1": [1, 2, 3, 4, 5], "col2": [10, 20, 30, 40, 50]})

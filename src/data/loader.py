@@ -1,9 +1,10 @@
 """Functions for loading and validating coffee review data."""
 
-from pathlib import Path
-import polars as pl
-import sys
 import os
+import sys
+from pathlib import Path
+
+import polars as pl
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))

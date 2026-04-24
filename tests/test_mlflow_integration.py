@@ -5,11 +5,12 @@ This module tests the CoffeeMLflowTracker class and its integration
 with the coffee text analytics pipeline.
 """
 
-import pytest
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src.experiment.mlflow_integration import CoffeeMLflowTracker
 

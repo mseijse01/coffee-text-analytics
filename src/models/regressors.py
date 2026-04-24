@@ -5,12 +5,13 @@ This module provides wrapped implementations of standard regression models
 that integrate with the configuration system and follow the base model interface.
 """
 
+import logging
+from typing import Any, Dict, List, Optional, Union, cast
+
 import numpy as np
 import pandas as pd
-import logging
-from typing import List, Dict, Optional, Any, Union, cast
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import Lasso, LinearRegression, Ridge
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 
@@ -629,8 +630,9 @@ class CoffeeSVR(BaseRegressor):
             # Check if two-step tuning is enabled
             if self.config.get("use_two_step_tuning", False):
                 # Two-step hyperparameter tuning (signature approach)
-                from utils.hyperparameter_tuning import apply_two_step_tuning
                 from sklearn.svm import SVR
+
+                from utils.hyperparameter_tuning import apply_two_step_tuning
 
                 svr = SVR()
 

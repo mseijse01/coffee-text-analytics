@@ -5,24 +5,26 @@ Tests the complete configuration management workflow including environment-speci
 settings, path management, model parameters, and integration with pipeline components.
 """
 
-import pytest
+import logging
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-import logging
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from src.config.environments import get_environment_config
 
 # Import modules under test
 from src.config.settings import (
     Config,
-    PathConfig,
-    ModelConfig,
-    FeatureConfig,
     DataConfig,
-    VisualizationConfig,
+    FeatureConfig,
     LoggingConfig,
+    ModelConfig,
+    PathConfig,
+    VisualizationConfig,
 )
-from src.config.environments import get_environment_config
 from src.config.validation import validate_config
 
 

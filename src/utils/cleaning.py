@@ -10,23 +10,24 @@ Includes functions for:
 
 # cleaning.py imports section
 import re
-import pycountry
-import polars as pl
+from pathlib import Path
+from typing import List, Optional, Union
+
 import pandas as pd
 import plotly.express as px
-from pathlib import Path
-from typing import Union, Optional, List
+import polars as pl
+import pycountry
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import word_tokenize
 
 # Import text preprocessing from the centralized location
 try:
     from ..data.preprocessing import preprocess_text
 except ImportError:
     # Fallback for when running tests
-    import sys
     import os
+    import sys
 
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from data.preprocessing import preprocess_text

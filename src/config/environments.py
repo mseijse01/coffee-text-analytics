@@ -5,9 +5,9 @@ This module provides predefined configuration presets for different environments
 (development, production, testing) that can be used to override default settings.
 """
 
-from typing import Dict, Any
-from .settings import Config
+from typing import Any, Dict
 
+from .settings import Config
 
 # Development environment configuration
 DEVELOPMENT_CONFIG = {

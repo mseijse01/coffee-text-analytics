@@ -2,37 +2,37 @@
 Utility functions and classes for the Coffee Text Analytics project.
 """
 
-# Data quality and analysis utilities
-from .data_quality import analyze_data_quality
-
-# Cleaning and preprocessing utilities
-from .cleaning import (
-    clean_price,
-    standardize_prices,
-    extract_country,
-    extract_and_correct_country,
-    apply_text_preprocessing,
-    clean_dataset,
-    profile_dataset,
-    analyze_numerical_columns,
-    drop_irrelevant_columns,
-)
-
-# Performance optimization utilities
-from .polars_utils import (
-    PolarsOptimizer,
-    DataTypeOptimizer,
-    efficient_pandas_apply,
-    optimize_memory,
-    analyze_memory,
-)
-
 # Caching utilities
 from .cache import CacheManager, FeatureCache, ModelCache
 
+# Cleaning and preprocessing utilities
+from .cleaning import (
+    analyze_numerical_columns,
+    apply_text_preprocessing,
+    clean_dataset,
+    clean_price,
+    drop_irrelevant_columns,
+    extract_and_correct_country,
+    extract_country,
+    profile_dataset,
+    standardize_prices,
+)
+
+# Data quality and analysis utilities
+from .data_quality import analyze_data_quality
+
+# Performance optimization utilities
+from .polars_utils import (
+    DataTypeOptimizer,
+    PolarsOptimizer,
+    analyze_memory,
+    efficient_pandas_apply,
+    optimize_memory,
+)
+
 # Performance profiling utilities (optional)
 try:
-    from .performance import PerformanceProfiler, DataFrameBenchmark
+    from .performance import DataFrameBenchmark, PerformanceProfiler
 
     PERFORMANCE_AVAILABLE = True
 except ImportError:
@@ -43,9 +43,9 @@ from .doc_generator import generate_api_docs
 
 # General utilities
 from .utils import (
-    load_dataset_from_utils,
     convert_pandas_to_polars,
     convert_polars_to_pandas,
+    load_dataset_from_utils,
 )
 
 __all__ = [

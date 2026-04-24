@@ -8,25 +8,25 @@ the thesis methodology with component-based architecture.
 # Base classes
 from .base import (
     BaseExtractor,
-    BaseVectorExtractor,
-    BaseTopicExtractor,
     BaseSparseExtractor,
+    BaseTopicExtractor,
+    BaseVectorExtractor,
+    ExtractorConfigError,
     ExtractorError,
     ExtractorNotFittedError,
-    ExtractorConfigError,
 )
-
-# Individual extractors
-from .tfidf_extractor import TfidfExtractor
 from .bert_extractor import BertExtractor
-from .topic_extractor import TopicExtractor
-from .sentiment_extractor import SentimentExtractor
 
 # Unified manager
 from .feature_manager import CoffeeFeatureManager, GloVeExtractor
 
 # Feature selection
 from .feature_selector import LassoFeatureSelector
+from .sentiment_extractor import SentimentExtractor
+
+# Individual extractors
+from .tfidf_extractor import TfidfExtractor
+from .topic_extractor import TopicExtractor
 
 # Legacy CoffeeFeatureExtractor has been removed - use CoffeeFeatureManager instead
 

@@ -8,16 +8,17 @@ Phase 2: Grid Search (fine-tuning around best parameters)
 Following thesis methodology for robust hyperparameter optimization.
 """
 
+import json
 import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Tuple, Optional, Union
-from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-from sklearn.base import BaseEstimator
+import pickle
 import time
 from pathlib import Path
-import pickle
-import json
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import pandas as pd
+from sklearn.base import BaseEstimator
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 logger = logging.getLogger(__name__)
 

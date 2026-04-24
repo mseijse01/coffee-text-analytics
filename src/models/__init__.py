@@ -7,31 +7,31 @@ the thesis methodology with component-based architecture.
 
 # Base classes
 from .base import (
-    BaseModel,
-    BaseRegressor,
     BaseClassifier,
     BaseEnsembleModel,
     BaseEvaluator,
-    ModelError,
-    ModelNotFittedError,
+    BaseModel,
+    BaseRegressor,
     ModelConfigError,
+    ModelError,
     ModelEvaluationError,
-)
-
-# Individual models
-from .mnir import MultinomialInverseRegression
-from .regressors import (
-    CoffeeLinearRegression,
-    CoffeeRidgeRegression,
-    CoffeeLassoRegression,
-    CoffeeRandomForest,
-    CoffeeXGBoost,
-    CoffeeSVR,
-    CoffeeDecisionTree,
+    ModelNotFittedError,
 )
 
 # Evaluation
 from .evaluator import CoffeeModelEvaluator
+
+# Individual models
+from .mnir import MultinomialInverseRegression
+from .regressors import (
+    CoffeeDecisionTree,
+    CoffeeLassoRegression,
+    CoffeeLinearRegression,
+    CoffeeRandomForest,
+    CoffeeRidgeRegression,
+    CoffeeSVR,
+    CoffeeXGBoost,
+)
 
 # Legacy functions have been removed - use component-based architecture instead
 

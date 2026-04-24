@@ -5,9 +5,10 @@ This module provides comprehensive data quality analysis functions
 that work with both Pandas and Polars DataFrames.
 """
 
-import polars as pl
+from typing import Any, Dict, Union
+
 import pandas as pd
-from typing import Union, Dict, Any
+import polars as pl
 
 
 class DataQualityChecker:
