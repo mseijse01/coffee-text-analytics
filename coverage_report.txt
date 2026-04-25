@@ -1,0 +1,1200 @@
+...............................................ss.ss............s....... [ 18%]
+........................................................................ [ 36%]
+..............F............................FF.....F...F................. [ 55%]
+........................................................................ [ 73%]
+...................................................................F.F.. [ 92%]
+...........................s..                                           [100%]
+=================================== FAILURES ===================================
+____________ TestCoffeeFeatureManager.test_save_and_load_extractors ____________
+
+self = <Mock id='6072767056'>
+
+    def assert_called_once(self):
+        """assert that the mock was called only once.
+        """
+        if not self.call_count == 1:
+            msg = ("Expected '%s' to have been called once. Called %s times.%s"
+                   % (self._mock_name or 'mock',
+                      self.call_count,
+                      self._calls_repr()))
+>           raise AssertionError(msg)
+E           AssertionError: Expected 'mock' to have been called once. Called 0 times.
+
+/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py:912: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_feature_manager.TestCoffeeFeatureManager object at 0x149067250>
+feature_manager = <src.features.feature_manager.CoffeeFeatureManager object at 0x169dd0290>
+
+    @pytest.mark.integration
+    def test_save_and_load_extractors(self, feature_manager):
+        """Test saving and loading extractor models."""
+        # Create temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            models_dir = temp_dir
+
+            # Mock fitted extractors
+            feature_manager.is_fitted = True
+            for extractor in feature_manager.extractors.values():
+                extractor.is_fitted = True  # Set fitted state
+                mock_save = Mock()
+                extractor._save_vectorizer = (
+                    mock_save  # This is the actual method called
+                )
+
+            # Test saving
+            feature_manager.save_extractors(models_dir)
+
+            # Verify _save_vectorizer was called on all extractors
+            for extractor in feature_manager.extractors.values():
+>               extractor._save_vectorizer.assert_called_once()
+E               AssertionError: Expected 'mock' to have been called once. Called 0 times.
+
+tests/test_feature_manager.py:428: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+2026-04-25 03:28:41,637 - src.features.categorical_encoder - INFO - Initialized CategoricalFeatureEncoder with thesis methodology
+2026-04-25 03:28:41,637 - src.features.categorical_encoder - INFO - Configuration: {'roast': {'method': 'onehot', 'handle_unknown': 'ignore', 'prefix': 'roast'}, 'country_of_origin': {'method': 'top_k', 'top_k': 15, 'other_label': 'Other', 'prefix': 'country'}, 'roaster': {'method': 'frequency_grouping', 'min_frequency': 3, 'other_label': 'Other_Roaster', 'prefix': 'roaster'}}
+2026-04-25 03:28:41,637 - src.features.feature_manager - INFO - Initialized CoffeeFeatureManager
+2026-04-25 03:28:41,637 - src.features.feature_manager - INFO - Configuration: {'extractors': {'tfidf': True, 'bert': True, 'topics': True, 'sentiment': True, 'glove': False}, 'tfidf': {'max_features': 100, 'ngram_range': (1, 2)}, 'bert': {'model_name': 'distilbert-base-uncased', 'max_length': 128}, 'topics': {'n_topics': 10, 'method': 'lda'}, 'sentiment': {'model_type': 'vader'}}
+2026-04-25 03:28:41,638 - src.features.feature_manager - INFO - Categorical encoder initialized with thesis methodology
+2026-04-25 03:28:41,638 - src.features.bert_extractor - INFO - Loading BERT models: distilbert-base-uncased
+2026-04-25 03:28:41,747 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/distilbert-base-uncased/resolve/main/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-25 03:28:41,865 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/distilbert-base-uncased/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 307 Temporary Redirect"
+2026-04-25 03:28:41,989 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/distilbert/distilbert-base-uncased/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-25 03:28:42,099 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/distilbert-base-uncased/tree/main?recursive=true&expand=false "HTTP/1.1 307 Temporary Redirect"
+2026-04-25 03:28:42,209 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/distilbert/distilbert-base-uncased/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-25 03:28:42,387 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/distilbert-base-uncased/resolve/main/config.json "HTTP/1.1 200 OK"
+2026-04-25 03:28:42,522 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/distilbert-base-uncased/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+Loading weights:   0%|          | 0/100 [00:00<?, ?it/s]Loading weights: 100%|██████████| 100/100 [00:00<00:00, 9994.05it/s]
+[1mDistilBertModel LOAD REPORT[0m from: distilbert-base-uncased
+Key                     | Status     |  |
+------------------------+------------+--+-
+vocab_transform.weight  | UNEXPECTED |  |
+vocab_layer_norm.bias   | UNEXPECTED |  |
+vocab_projector.bias    | UNEXPECTED |  |
+vocab_layer_norm.weight | UNEXPECTED |  |
+vocab_transform.bias    | UNEXPECTED |  |
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+2026-04-25 03:28:42,562 - src.features.bert_extractor - INFO - BERT models loaded successfully on device: cpu
+2026-04-25 03:28:42,562 - src.features.sentiment_extractor - INFO - Loading sentiment model: distilbert-base-uncased-finetuned-sst-2-english
+2026-04-25 03:28:42,674 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english/resolve/main/config.json "HTTP/1.1 200 OK"
+Loading weights:   0%|          | 0/104 [00:00<?, ?it/s]Loading weights: 100%|██████████| 104/104 [00:00<00:00, 11831.61it/s]
+2026-04-25 03:28:42,854 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/distilbert-base-uncased-finetuned-sst-2-english/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 307 Temporary Redirect"
+2026-04-25 03:28:42,967 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-25 03:28:43,080 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/distilbert-base-uncased-finetuned-sst-2-english/tree/main?recursive=true&expand=false "HTTP/1.1 307 Temporary Redirect"
+2026-04-25 03:28:43,194 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-25 03:28:43,314 - src.features.sentiment_extractor - INFO - Sentiment model loaded successfully
+2026-04-25 03:28:43,315 - src.features.feature_manager - INFO - Initialized feature manager with extractors: ['tfidf', 'bert', 'topics', 'sentiment']
+------------------------------ Captured log setup ------------------------------
+INFO     src.features.categorical_encoder:categorical_encoder.py:79 Initialized CategoricalFeatureEncoder with thesis methodology
+INFO     src.features.categorical_encoder:categorical_encoder.py:80 Configuration: {'roast': {'method': 'onehot', 'handle_unknown': 'ignore', 'prefix': 'roast'}, 'country_of_origin': {'method': 'top_k', 'top_k': 15, 'other_label': 'Other', 'prefix': 'country'}, 'roaster': {'method': 'frequency_grouping', 'min_frequency': 3, 'other_label': 'Other_Roaster', 'prefix': 'roaster'}}
+INFO     src.features.feature_manager:feature_manager.py:166 Initialized CoffeeFeatureManager
+INFO     src.features.feature_manager:feature_manager.py:167 Configuration: {'extractors': {'tfidf': True, 'bert': True, 'topics': True, 'sentiment': True, 'glove': False}, 'tfidf': {'max_features': 100, 'ngram_range': (1, 2)}, 'bert': {'model_name': 'distilbert-base-uncased', 'max_length': 128}, 'topics': {'n_topics': 10, 'method': 'lda'}, 'sentiment': {'model_type': 'vader'}}
+INFO     src.features.feature_manager:feature_manager.py:168 Categorical encoder initialized with thesis methodology
+INFO     src.features.bert_extractor:bert_extractor.py:92 Loading BERT models: distilbert-base-uncased
+INFO     httpx:_client.py:1025 HTTP Request: HEAD https://huggingface.co/distilbert-base-uncased/resolve/main/tokenizer_config.json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://huggingface.co/api/models/distilbert-base-uncased/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 307 Temporary Redirect"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://huggingface.co/api/models/distilbert/distilbert-base-uncased/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://huggingface.co/api/models/distilbert-base-uncased/tree/main?recursive=true&expand=false "HTTP/1.1 307 Temporary Redirect"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://huggingface.co/api/models/distilbert/distilbert-base-uncased/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: HEAD https://huggingface.co/distilbert-base-uncased/resolve/main/config.json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: HEAD https://huggingface.co/distilbert-base-uncased/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+INFO     src.features.bert_extractor:bert_extractor.py:103 BERT models loaded successfully on device: cpu
+INFO     src.features.sentiment_extractor:sentiment_extractor.py:82 Loading sentiment model: distilbert-base-uncased-finetuned-sst-2-english
+INFO     httpx:_client.py:1025 HTTP Request: HEAD https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english/resolve/main/config.json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://huggingface.co/api/models/distilbert-base-uncased-finetuned-sst-2-english/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 307 Temporary Redirect"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://huggingface.co/api/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://huggingface.co/api/models/distilbert-base-uncased-finetuned-sst-2-english/tree/main?recursive=true&expand=false "HTTP/1.1 307 Temporary Redirect"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://huggingface.co/api/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+INFO     src.features.sentiment_extractor:sentiment_extractor.py:94 Sentiment model loaded successfully
+INFO     src.features.feature_manager:feature_manager.py:202 Initialized feature manager with extractors: ['tfidf', 'bert', 'topics', 'sentiment']
+----------------------------- Captured stderr call -----------------------------
+2026-04-25 03:28:43,316 - src.features.feature_manager - INFO - Saving extractors to /var/folders/tp/2v2g7skx77g81sk2wy2r123w0000gn/T/tmpa4g80j9z
+2026-04-25 03:28:43,316 - src.features.tfidf_extractor - INFO - TF-IDF extractor saved to /var/folders/tp/2v2g7skx77g81sk2wy2r123w0000gn/T/tmpa4g80j9z
+2026-04-25 03:28:43,316 - src.features.feature_manager - INFO - Saved tfidf extractor
+2026-04-25 03:28:43,316 - src.features.topic_extractor - INFO - Topic models saved successfully
+2026-04-25 03:28:43,316 - src.features.feature_manager - INFO - Saved topics extractor
+------------------------------ Captured log call -------------------------------
+INFO     src.features.feature_manager:feature_manager.py:638 Saving extractors to /var/folders/tp/2v2g7skx77g81sk2wy2r123w0000gn/T/tmpa4g80j9z
+INFO     src.features.tfidf_extractor:tfidf_extractor.py:322 TF-IDF extractor saved to /var/folders/tp/2v2g7skx77g81sk2wy2r123w0000gn/T/tmpa4g80j9z
+INFO     src.features.feature_manager:feature_manager.py:655 Saved tfidf extractor
+INFO     src.features.topic_extractor:topic_extractor.py:346 Topic models saved successfully
+INFO     src.features.feature_manager:feature_manager.py:655 Saved topics extractor
+_________ TestErrorHandlingAndEdgeCases.test_empty_dataframes_handling _________
+
+self = <tests.test_feature_selector_contracts.TestErrorHandlingAndEdgeCases object at 0x14908dbd0>
+
+    def test_empty_dataframes_handling(self):
+        """Test handling of empty DataFrames in both formats."""
+        # Empty pandas DataFrame
+        X_pandas_empty = pd.DataFrame()
+        y_pandas_empty = pd.Series(dtype=float)
+
+        selector1 = LassoFeatureSelector()
+>       with pytest.raises((ValueError, IndexError)):
+E       Failed: DID NOT RAISE (<class 'ValueError'>, <class 'IndexError'>)
+
+tests/test_feature_selector_contracts.py:317: Failed
+----------------------------- Captured stderr call -----------------------------
+2026-04-25 03:32:20,260 - src.features.feature_selector - INFO - LassoFeatureSelector initialized with config: {'alpha_range': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0], 'cv_folds': 5, 'target_text_features': 500, 'min_text_features': 100, 'max_text_features': 1000, 'selection_threshold': 'mean', 'random_state': 57, 'scale_features': True}
+2026-04-25 03:32:20,260 - src.features.feature_selector - INFO - Following thesis methodology: combine all text features, then apply LASSO
+2026-04-25 03:32:20,260 - src.features.feature_selector - INFO - Fitting corrected LASSO feature selector (thesis methodology)
+2026-04-25 03:32:20,260 - src.features.feature_selector - INFO - Feature type identification (thesis methodology):
+2026-04-25 03:32:20,260 - src.features.feature_selector - INFO -   Text features: 0 (all desc columns combined)
+2026-04-25 03:32:20,260 - src.features.feature_selector - INFO -   Sensory features: 0 (aroma, acid, body, flavor, aftertaste)
+2026-04-25 03:32:20,260 - src.features.feature_selector - INFO -   Categorical features: 0 (origin, roast, etc.)
+2026-04-25 03:32:20,260 - src.features.feature_selector - WARNING - No text features found! Check feature naming convention.
+------------------------------ Captured log call -------------------------------
+INFO     src.features.feature_selector:feature_selector.py:88 LassoFeatureSelector initialized with config: {'alpha_range': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0], 'cv_folds': 5, 'target_text_features': 500, 'min_text_features': 100, 'max_text_features': 1000, 'selection_threshold': 'mean', 'random_state': 57, 'scale_features': True}
+INFO     src.features.feature_selector:feature_selector.py:89 Following thesis methodology: combine all text features, then apply LASSO
+INFO     src.features.feature_selector:feature_selector.py:175 Fitting corrected LASSO feature selector (thesis methodology)
+INFO     src.features.feature_selector:feature_selector.py:147 Feature type identification (thesis methodology):
+INFO     src.features.feature_selector:feature_selector.py:148   Text features: 0 (all desc columns combined)
+INFO     src.features.feature_selector:feature_selector.py:151   Sensory features: 0 (aroma, acid, body, flavor, aftertaste)
+INFO     src.features.feature_selector:feature_selector.py:154   Categorical features: 0 (origin, roast, etc.)
+WARNING  src.features.feature_selector:feature_selector.py:196 No text features found! Check feature naming convention.
+_____ TestErrorHandlingAndEdgeCases.test_dimension_mismatches_with_polars ______
+
+self = <tests.test_feature_selector_contracts.TestErrorHandlingAndEdgeCases object at 0x14908e1d0>
+
+    def test_dimension_mismatches_with_polars(self):
+        """Test dimension mismatch handling with Polars inputs."""
+        X_polars = pl.DataFrame({"a": [1, 2, 3, 4], "b": [5, 6, 7, 8]})
+        y_wrong_size = pl.Series([1, 2])  # Wrong size
+
+        selector = LassoFeatureSelector()
+>       with pytest.raises((ValueError, IndexError)):
+E       Failed: DID NOT RAISE (<class 'ValueError'>, <class 'IndexError'>)
+
+tests/test_feature_selector_contracts.py:334: Failed
+----------------------------- Captured stderr call -----------------------------
+2026-04-25 03:32:20,267 - src.features.feature_selector - INFO - LassoFeatureSelector initialized with config: {'alpha_range': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0], 'cv_folds': 5, 'target_text_features': 500, 'min_text_features': 100, 'max_text_features': 1000, 'selection_threshold': 'mean', 'random_state': 57, 'scale_features': True}
+2026-04-25 03:32:20,267 - src.features.feature_selector - INFO - Following thesis methodology: combine all text features, then apply LASSO
+2026-04-25 03:32:20,267 - src.features.feature_selector - INFO - Fitting corrected LASSO feature selector (thesis methodology)
+2026-04-25 03:32:20,268 - src.features.feature_selector - INFO - Feature type identification (thesis methodology):
+2026-04-25 03:32:20,268 - src.features.feature_selector - INFO -   Text features: 0 (all desc columns combined)
+2026-04-25 03:32:20,268 - src.features.feature_selector - INFO -   Sensory features: 0 (aroma, acid, body, flavor, aftertaste)
+2026-04-25 03:32:20,268 - src.features.feature_selector - INFO -   Categorical features: 2 (origin, roast, etc.)
+2026-04-25 03:32:20,268 - src.features.feature_selector - WARNING - No text features found! Check feature naming convention.
+------------------------------ Captured log call -------------------------------
+INFO     src.features.feature_selector:feature_selector.py:88 LassoFeatureSelector initialized with config: {'alpha_range': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0], 'cv_folds': 5, 'target_text_features': 500, 'min_text_features': 100, 'max_text_features': 1000, 'selection_threshold': 'mean', 'random_state': 57, 'scale_features': True}
+INFO     src.features.feature_selector:feature_selector.py:89 Following thesis methodology: combine all text features, then apply LASSO
+INFO     src.features.feature_selector:feature_selector.py:175 Fitting corrected LASSO feature selector (thesis methodology)
+INFO     src.features.feature_selector:feature_selector.py:147 Feature type identification (thesis methodology):
+INFO     src.features.feature_selector:feature_selector.py:148   Text features: 0 (all desc columns combined)
+INFO     src.features.feature_selector:feature_selector.py:151   Sensory features: 0 (aroma, acid, body, flavor, aftertaste)
+INFO     src.features.feature_selector:feature_selector.py:154   Categorical features: 2 (origin, roast, etc.)
+WARNING  src.features.feature_selector:feature_selector.py:196 No text features found! Check feature naming convention.
+__ TestTypeContractsAndSpecification.test_input_validation_and_error_handling __
+
+self = <tests.test_feature_selector_integration.TestTypeContractsAndSpecification object at 0x14909a6d0>
+
+    def test_input_validation_and_error_handling(self):
+        """
+        Test proper input validation and error handling.
+
+        NEGATIVE TESTS: Ensure functions fail appropriately with bad inputs.
+        """
+        config = {"cv_folds": 2}
+        selector = LassoFeatureSelector(config)
+
+        # Test invalid input types - should validate input before attempting to use .shape
+        with pytest.raises((TypeError, ValueError, AttributeError), match=".*"):
+            selector.fit_select_features("invalid_input", [1, 2, 3])
+
+        with pytest.raises((TypeError, ValueError), match=".*"):
+>           selector.fit_select_features([[1, 2], [3, 4]], "invalid_target")
+
+tests/test_feature_selector_integration.py:154:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <src.features.feature_selector.LassoFeatureSelector object at 0x15f419dd0>
+X = [[1, 2], [3, 4]], y = 'invalid_target'
+
+    def fit_select_features(
+        self,
+        X: Union[np.ndarray, pd.DataFrame, pl.DataFrame],
+        y: Union[np.ndarray, pd.Series, pl.Series],
+    ) -> "LassoFeatureSelector":
+        """
+        Fit LASSO feature selector following thesis methodology.
+
+        Args:
+            X: Feature matrix (Polars DataFrame preferred, pandas DataFrame or numpy array supported)
+            y: Target variable (Polars Series preferred, pandas Series or numpy array supported)
+
+        Returns:
+            Self for method chaining
+        """
+        logger.info("Fitting corrected LASSO feature selector (thesis methodology)")
+
+        # Convert to DataFrame if needed
+        if isinstance(X, np.ndarray):
+            feature_names = [f"feature_{i}" for i in range(X.shape[1])]
+            X_df = pd.DataFrame(X, columns=feature_names)
+        elif isinstance(X, pl.DataFrame):
+            # For Polars, convert to pandas for sklearn compatibility but preserve original
+            feature_names = X.columns
+            X_df = X.to_pandas()  # Convert to pandas for sklearn operations
+        else:
+            # For pandas, use copy
+            X_df = X.copy()
+>           feature_names = X_df.columns.tolist()
+E           AttributeError: 'list' object has no attribute 'columns'
+
+src/features/feature_selector.py:188: AttributeError
+----------------------------- Captured stderr call -----------------------------
+2026-04-25 03:32:20,421 - src.features.feature_selector - INFO - LassoFeatureSelector initialized with config: {'cv_folds': 2, 'alpha_range': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0], 'target_text_features': 500, 'min_text_features': 100, 'max_text_features': 1000, 'selection_threshold': 'mean', 'random_state': 57, 'scale_features': True}
+2026-04-25 03:32:20,421 - src.features.feature_selector - INFO - Following thesis methodology: combine all text features, then apply LASSO
+2026-04-25 03:32:20,421 - src.features.feature_selector - INFO - Fitting corrected LASSO feature selector (thesis methodology)
+2026-04-25 03:32:20,421 - src.features.feature_selector - INFO - Fitting corrected LASSO feature selector (thesis methodology)
+------------------------------ Captured log call -------------------------------
+INFO     src.features.feature_selector:feature_selector.py:88 LassoFeatureSelector initialized with config: {'cv_folds': 2, 'alpha_range': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0], 'target_text_features': 500, 'min_text_features': 100, 'max_text_features': 1000, 'selection_threshold': 'mean', 'random_state': 57, 'scale_features': True}
+INFO     src.features.feature_selector:feature_selector.py:89 Following thesis methodology: combine all text features, then apply LASSO
+INFO     src.features.feature_selector:feature_selector.py:175 Fitting corrected LASSO feature selector (thesis methodology)
+INFO     src.features.feature_selector:feature_selector.py:175 Fitting corrected LASSO feature selector (thesis methodology)
+_______ TestTypeContractsAndSpecification.test_configuration_validation ________
+
+self = <tests.test_feature_selector_integration.TestTypeContractsAndSpecification object at 0x14909ba50>
+
+    def test_configuration_validation(self):
+        """
+        Test that configuration parameters are validated properly.
+        """
+        # Test that invalid configurations are handled gracefully
+        # Note: Constructor doesn't validate, but fitting should handle edge cases
+
+        # Test with reasonable data
+        X = pd.DataFrame({"a": [1, 2, 3, 4, 5], "b": [4, 5, 6, 7, 8]})
+        y = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0])
+
+        # Test invalid alpha range - should not crash but may not work well
+        try:
+            selector = LassoFeatureSelector({"alpha_range": "invalid", "cv_folds": 2})
+            # This might fail during fitting when sklearn tries to use the invalid alpha_range
+            selector.fit_select_features(X, y)
+        except (ValueError, TypeError):
+            pass  # Expected behavior
+
+        # Test invalid CV folds - should fail during fitting
+>       with pytest.raises((ValueError, TypeError), match=".*"):
+E       Failed: DID NOT RAISE (<class 'ValueError'>, <class 'TypeError'>)
+
+tests/test_feature_selector_integration.py:327: Failed
+----------------------------- Captured stderr call -----------------------------
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO - LassoFeatureSelector initialized with config: {'alpha_range': 'invalid', 'cv_folds': 2, 'target_text_features': 500, 'min_text_features': 100, 'max_text_features': 1000, 'selection_threshold': 'mean', 'random_state': 57, 'scale_features': True}
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO - Following thesis methodology: combine all text features, then apply LASSO
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO - Fitting corrected LASSO feature selector (thesis methodology)
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO - Feature type identification (thesis methodology):
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO -   Text features: 0 (all desc columns combined)
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO -   Sensory features: 0 (aroma, acid, body, flavor, aftertaste)
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO -   Categorical features: 2 (origin, roast, etc.)
+2026-04-25 03:32:20,557 - src.features.feature_selector - WARNING - No text features found! Check feature naming convention.
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO - LassoFeatureSelector initialized with config: {'cv_folds': -1, 'alpha_range': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0], 'target_text_features': 500, 'min_text_features': 100, 'max_text_features': 1000, 'selection_threshold': 'mean', 'random_state': 57, 'scale_features': True}
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO - Following thesis methodology: combine all text features, then apply LASSO
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO - Fitting corrected LASSO feature selector (thesis methodology)
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO - Feature type identification (thesis methodology):
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO -   Text features: 0 (all desc columns combined)
+2026-04-25 03:32:20,557 - src.features.feature_selector - INFO -   Sensory features: 0 (aroma, acid, body, flavor, aftertaste)
+2026-04-25 03:32:20,558 - src.features.feature_selector - INFO -   Categorical features: 2 (origin, roast, etc.)
+2026-04-25 03:32:20,558 - src.features.feature_selector - WARNING - No text features found! Check feature naming convention.
+------------------------------ Captured log call -------------------------------
+INFO     src.features.feature_selector:feature_selector.py:88 LassoFeatureSelector initialized with config: {'alpha_range': 'invalid', 'cv_folds': 2, 'target_text_features': 500, 'min_text_features': 100, 'max_text_features': 1000, 'selection_threshold': 'mean', 'random_state': 57, 'scale_features': True}
+INFO     src.features.feature_selector:feature_selector.py:89 Following thesis methodology: combine all text features, then apply LASSO
+INFO     src.features.feature_selector:feature_selector.py:175 Fitting corrected LASSO feature selector (thesis methodology)
+INFO     src.features.feature_selector:feature_selector.py:147 Feature type identification (thesis methodology):
+INFO     src.features.feature_selector:feature_selector.py:148   Text features: 0 (all desc columns combined)
+INFO     src.features.feature_selector:feature_selector.py:151   Sensory features: 0 (aroma, acid, body, flavor, aftertaste)
+INFO     src.features.feature_selector:feature_selector.py:154   Categorical features: 2 (origin, roast, etc.)
+WARNING  src.features.feature_selector:feature_selector.py:196 No text features found! Check feature naming convention.
+INFO     src.features.feature_selector:feature_selector.py:88 LassoFeatureSelector initialized with config: {'cv_folds': -1, 'alpha_range': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0], 'target_text_features': 500, 'min_text_features': 100, 'max_text_features': 1000, 'selection_threshold': 'mean', 'random_state': 57, 'scale_features': True}
+INFO     src.features.feature_selector:feature_selector.py:89 Following thesis methodology: combine all text features, then apply LASSO
+INFO     src.features.feature_selector:feature_selector.py:175 Fitting corrected LASSO feature selector (thesis methodology)
+INFO     src.features.feature_selector:feature_selector.py:147 Feature type identification (thesis methodology):
+INFO     src.features.feature_selector:feature_selector.py:148   Text features: 0 (all desc columns combined)
+INFO     src.features.feature_selector:feature_selector.py:151   Sensory features: 0 (aroma, acid, body, flavor, aftertaste)
+INFO     src.features.feature_selector:feature_selector.py:154   Categorical features: 2 (origin, roast, etc.)
+WARNING  src.features.feature_selector:feature_selector.py:196 No text features found! Check feature naming convention.
+__ TestCachingSystemIntegration.test_cached_function_decorator_comprehensive ___
+
+self = <tests.test_utils_integration.TestCachingSystemIntegration object at 0x14f8f7c10>
+temp_cache_dir = PosixPath('/var/folders/tp/2v2g7skx77g81sk2wy2r123w0000gn/T/tmpqgg3sa37')
+
+    @pytest.mark.unit
+    def test_cached_function_decorator_comprehensive(self, temp_cache_dir):
+        """Test cached_function decorator with various scenarios."""
+        call_count = 0
+
+        @cached_function(cache_type="test_decorator", max_age_hours=1)
+        def expensive_function(x, y, multiplier=2):
+            nonlocal call_count
+            call_count += 1
+            return x * y * multiplier
+
+        # First call should execute function
+        result1 = expensive_function(3, 4, multiplier=2)
+        assert result1 == 24
+        assert call_count == 1
+
+        # Second call with same args should use cache
+        result2 = expensive_function(3, 4, multiplier=2)
+        assert result2 == 24
+        assert call_count == 1  # Should not increment
+
+        # Call with different args should execute function again
+        result3 = expensive_function(5, 6, multiplier=3)
+        assert result3 == 90
+        assert call_count == 2
+
+        # Test with keyword arguments in different order (should still cache)
+        result4 = expensive_function(y=4, x=3, multiplier=2)
+        assert result4 == 24
+>       assert call_count == 2  # Should still use cache
+E       assert 3 == 2
+
+tests/test_utils_integration.py:398: AssertionError
+----------------------------- Captured stderr call -----------------------------
+2026-04-25 03:32:28,089 - src.utils.cache - INFO - Computing and caching for key: expensiv...
+2026-04-25 03:32:28,089 - src.utils.cache - INFO - Computation completed in 0.00s
+2026-04-25 03:32:28,089 - src.utils.cache - INFO - Cached item with key: expensiv...
+2026-04-25 03:32:28,089 - src.utils.cache - INFO - Cache hit for key: expensiv...
+2026-04-25 03:32:28,089 - src.utils.cache - INFO - Computing and caching for key: expensiv...
+2026-04-25 03:32:28,089 - src.utils.cache - INFO - Computation completed in 0.00s
+2026-04-25 03:32:28,090 - src.utils.cache - INFO - Cached item with key: expensiv...
+2026-04-25 03:32:28,090 - src.utils.cache - INFO - Computing and caching for key: expensiv...
+2026-04-25 03:32:28,090 - src.utils.cache - INFO - Computation completed in 0.00s
+2026-04-25 03:32:28,090 - src.utils.cache - INFO - Cached item with key: expensiv...
+------------------------------ Captured log call -------------------------------
+INFO     src.utils.cache:cache.py:156 Computing and caching for key: expensiv...
+INFO     src.utils.cache:cache.py:162 Computation completed in 0.00s
+INFO     src.utils.cache:cache.py:125 Cached item with key: expensiv...
+INFO     src.utils.cache:cache.py:103 Cache hit for key: expensiv...
+INFO     src.utils.cache:cache.py:156 Computing and caching for key: expensiv...
+INFO     src.utils.cache:cache.py:162 Computation completed in 0.00s
+INFO     src.utils.cache:cache.py:125 Cached item with key: expensiv...
+INFO     src.utils.cache:cache.py:156 Computing and caching for key: expensiv...
+INFO     src.utils.cache:cache.py:162 Computation completed in 0.00s
+INFO     src.utils.cache:cache.py:125 Cached item with key: expensiv...
+____ TestCachingSystemIntegration.test_cache_directory_creation_edge_cases _____
+
+self = <tests.test_utils_integration.TestCachingSystemIntegration object at 0x14f8fc990>
+temp_cache_dir = PosixPath('/var/folders/tp/2v2g7skx77g81sk2wy2r123w0000gn/T/tmpzkml9t3_')
+
+    @pytest.mark.unit
+    def test_cache_directory_creation_edge_cases(self, temp_cache_dir):
+        """Test cache directory creation in edge cases."""
+        # Test with nested cache type
+        cache_manager = CacheManager(cache_dir=temp_cache_dir)
+
+        # Test setting cache with nested directory structure
+>       cache_manager.set("test_key", {"data": "test"}, "nested/deep/cache")
+
+tests/test_utils_integration.py:434:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src/utils/cache.py:119: in set
+    cache_dir.mkdir(exist_ok=True)  # Ensure directory exists
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = PosixPath('/var/folders/tp/2v2g7skx77g81sk2wy2r123w0000gn/T/tmpzkml9t3_/nested/deep/cache')
+mode = 511, parents = False, exist_ok = True
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [Errno 2] No such file or directory: '/var/folders/tp/2v2g7skx77g81sk2wy2r123w0000gn/T/tmpzkml9t3_/nested/deep/cache'
+
+/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1116: FileNotFoundError
+=============================== warnings summary ===============================
+tests/test_categorical_encoder.py:91
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:91: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_categorical_encoder.py:105
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:105: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_categorical_encoder.py:117
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:117: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_categorical_encoder.py:129
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:129: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_categorical_encoder.py:164
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:164: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_categorical_encoder.py:180
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:180: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_categorical_encoder.py:208
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:208: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_categorical_encoder.py:225
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:225: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_categorical_encoder.py:244
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:244: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_categorical_encoder.py:250
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:250: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_categorical_encoder.py:265
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:265: PytestUnknownMarkWarning: Unknown pytest.mark.methodology - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.methodology
+
+tests/test_categorical_encoder.py:283
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:283: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_categorical_encoder.py:322
+  /Users/seijas/Code/coffee-text-analytics/tests/test_categorical_encoder.py:322: PytestUnknownMarkWarning: Unknown pytest.mark.performance - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.performance
+
+tests/test_exceptions.py:65
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:65: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:76
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:76: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:89
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:89: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:97
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:97: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:119
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:119: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:184
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:184: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:193
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:193: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:213
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:213: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:221
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:221: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:229
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:229: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:239
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:239: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:256
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:256: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:271
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:271: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:285
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:285: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:295
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:295: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:303
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:303: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:313
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:313: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:325
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:325: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:337
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:337: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:348
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:348: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:362
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:362: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:397
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:397: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_exceptions.py:416
+  /Users/seijas/Code/coffee-text-analytics/tests/test_exceptions.py:416: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:118
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:118: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:154
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:154: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:173
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:173: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:181
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:181: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:215
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:215: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:231
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:231: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_feature_manager.py:297
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:297: PytestUnknownMarkWarning: Unknown pytest.mark.methodology - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.methodology
+
+tests/test_feature_manager.py:327
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:327: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:347
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:347: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:366
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:366: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:378
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:378: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:407
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:407: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_feature_manager.py:430
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:430: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:456
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:456: PytestUnknownMarkWarning: Unknown pytest.mark.performance - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.performance
+
+tests/test_feature_manager.py:481
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:481: PytestUnknownMarkWarning: Unknown pytest.mark.error_handling - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.error_handling
+
+tests/test_feature_manager.py:525
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:525: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:539
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:539: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py:563
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_manager.py:563: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_pipeline_integration.py:85
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_pipeline_integration.py:85: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_feature_pipeline_integration.py:125
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_pipeline_integration.py:125: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/test_feature_pipeline_integration.py:126
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_pipeline_integration.py:126: PytestUnknownMarkWarning: Unknown pytest.mark.heavy_ml - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.heavy_ml
+
+tests/test_feature_pipeline_integration.py:127
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_pipeline_integration.py:127: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_feature_pipeline_integration.py:189
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_pipeline_integration.py:189: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_feature_pipeline_integration.py:264
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_pipeline_integration.py:264: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_mlflow_integration.py:41
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:41: PytestUnknownMarkWarning: Unknown pytest.mark.mlflow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.mlflow
+
+tests/test_mlflow_integration.py:54
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:54: PytestUnknownMarkWarning: Unknown pytest.mark.mlflow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.mlflow
+
+tests/test_mlflow_integration.py:84
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:84: PytestUnknownMarkWarning: Unknown pytest.mark.mlflow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.mlflow
+
+tests/test_mlflow_integration.py:114
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:114: PytestUnknownMarkWarning: Unknown pytest.mark.mlflow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.mlflow
+
+tests/test_mlflow_integration.py:133
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:133: PytestUnknownMarkWarning: Unknown pytest.mark.mlflow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.mlflow
+
+tests/test_mlflow_integration.py:161
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:161: PytestUnknownMarkWarning: Unknown pytest.mark.mlflow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.mlflow
+
+tests/test_mlflow_integration.py:180
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:180: PytestUnknownMarkWarning: Unknown pytest.mark.mlflow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.mlflow
+
+tests/test_mlflow_integration.py:187
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:187: PytestUnknownMarkWarning: Unknown pytest.mark.mlflow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.mlflow
+
+tests/test_mlflow_integration.py:200
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:200: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_mlflow_integration.py:201
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:201: PytestUnknownMarkWarning: Unknown pytest.mark.mlflow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.mlflow
+
+tests/test_mlflow_integration.py:220
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:220: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/test_mlflow_integration.py:221
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mlflow_integration.py:221: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_mnir.py:55
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:55: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:60
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:60: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:67
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:67: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:72
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:72: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:79
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:79: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:88
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:88: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:99
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:99: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:106
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:106: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:115
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:115: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:122
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:122: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:128
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:128: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:139
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:139: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:149
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:149: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:155
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:155: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:162
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:162: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:168
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:168: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:178
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:178: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_mnir.py:195
+  /Users/seijas/Code/coffee-text-analytics/tests/test_mnir.py:195: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:154
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:154: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:165
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:165: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:174
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:174: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:182
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:182: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:196
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:196: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:208
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:208: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:219
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:219: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:233
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:233: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:250
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:250: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:268
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:268: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:284
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:284: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:292
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:292: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:309
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:309: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:324
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:324: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:339
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:339: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:345
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:345: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:350
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:350: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:366
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:366: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:372
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:372: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:387
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:387: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:396
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:396: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:405
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:405: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:414
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:414: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:425
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:425: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:445
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:445: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:452
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:452: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:460
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:460: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:475
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:475: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:499
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:499: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_base.py:526
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_base.py:526: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:58
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:58: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:73
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:73: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:90
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:90: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:103
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:103: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:114
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:114: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:136
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:136: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:191
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:191: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:208
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:208: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:220
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:220: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:242
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:242: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:268
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:268: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:293
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:293: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:312
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:312: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:359
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:359: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:384
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:384: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:405
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:405: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:469
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:469: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:497
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:497: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:527
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:527: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:560
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:560: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:593
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:593: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:616
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:616: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:640
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:640: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:660
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:660: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:674
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:674: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:682
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:682: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:697
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:697: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:733
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:733: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:787
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:787: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:819
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:819: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:848
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:848: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:865
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:865: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:879
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:879: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:901
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:901: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:909
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:909: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:932
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:932: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_models_evaluator.py:949
+  /Users/seijas/Code/coffee-text-analytics/tests/test_models_evaluator.py:949: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_serving.py:86
+  /Users/seijas/Code/coffee-text-analytics/tests/test_serving.py:86: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_utils_integration.py:304
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:304: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_utils_integration.py:339
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:339: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_utils_integration.py:354
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:354: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_utils_integration.py:369
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:369: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_utils_integration.py:400
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:400: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_utils_integration.py:427
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:427: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_utils_integration.py:444
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:444: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_utils_integration.py:470
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:470: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_utils_integration.py:505
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:505: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_utils_integration.py:528
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:528: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_utils_integration.py:554
+  /Users/seijas/Code/coffee-text-analytics/tests/test_utils_integration.py:554: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+tests/test_feature_manager.py: 17 warnings
+tests/test_feature_pipeline_integration.py: 3 warnings
+  /Users/seijas/.virtualenvs/r-tensorflow/lib/python3.11/site-packages/transformers/models/bert/tokenization_bert.py:104: DeprecationWarning: Deprecated in 0.9.0: WordPiece.__init__ will not create from files anymore, try `WordPiece.from_file` instead
+    self._tokenizer = Tokenizer(WordPiece(self._vocab, unk_token=str(unk_token)))
+
+tests/test_feature_selector_contracts.py::TestTypeFlexibilityAndCompatibility::test_all_supported_input_types
+  /Users/seijas/Code/coffee-text-analytics/tests/test_feature_selector_contracts.py:190: DataOrientationWarning: Row orientation inferred during DataFrame construction. Explicitly specify the orientation by passing `orient="row"` to silence this warning.
+    X_polars = pl.DataFrame(data_values, schema=["feature_1", "feature_2"])
+
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_end_to_end_pipeline_integration
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_end_to_end_pipeline_integration
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_persistence_and_summary_integration_corrected
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_persistence_and_summary_integration_corrected
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_transform_edge_cases_corrected
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_transform_edge_cases_corrected
+  /Users/seijas/.virtualenvs/r-tensorflow/lib/python3.11/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.388e-02, tolerance: 1.316e-02
+    model = cd_fast.enet_coordinate_descent(
+
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_end_to_end_pipeline_integration
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_end_to_end_pipeline_integration
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_persistence_and_summary_integration_corrected
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_persistence_and_summary_integration_corrected
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_transform_edge_cases_corrected
+tests/test_feature_selector_integration.py::TestLassoFeatureSelectorIntegration::test_transform_edge_cases_corrected
+  /Users/seijas/.virtualenvs/r-tensorflow/lib/python3.11/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.931e-02, tolerance: 1.504e-02
+    model = cd_fast.enet_coordinate_descent(
+
+tests/test_mlflow_integration.py::TestCoffeeMLflowTracker::test_tracker_initialization
+  /Users/seijas/.virtualenvs/r-tensorflow/lib/python3.11/site-packages/mlflow/tracking/_tracking_service/utils.py:184: FutureWarning: The filesystem tracking backend (e.g., './mlruns') is deprecated as of February 2026. Consider transitioning to a database backend (e.g., 'sqlite:///mlflow.db') to take advantage of the latest MLflow features. See https://mlflow.org/docs/latest/self-hosting/migrate-from-file-store for migration guidance.
+    return FileStore(store_uri, store_uri)
+
+tests/test_models_evaluator.py::TestSingleModelEvaluation::test_skewness_kurtosis_calculation
+  /Users/seijas/Code/coffee-text-analytics/src/models/evaluator.py:340: RuntimeWarning: Precision loss occurred in moment calculation due to catastrophic cancellation. This occurs when the data are nearly identical. Results may be unreliable.
+    return float(skew(data))
+
+tests/test_models_evaluator.py::TestSingleModelEvaluation::test_skewness_kurtosis_calculation
+  /Users/seijas/Code/coffee-text-analytics/src/models/evaluator.py:354: RuntimeWarning: Precision loss occurred in moment calculation due to catastrophic cancellation. This occurs when the data are nearly identical. Results may be unreliable.
+    return float(kurtosis(data))
+
+tests/test_models_evaluator.py::TestEdgeCasesAndErrorHandling::test_zero_variance_target_handling
+  /Users/seijas/Code/coffee-text-analytics/src/models/evaluator.py:320: RuntimeWarning: divide by zero encountered in scalar divide
+    "rmse_normalized": core_metrics["rmse"] / np.std(y_true),  # Normalized RMSE
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.11.1-final-0 _______________
+
+Name                                   Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------
+src/__init__.py                            0      0   100%
+src/config/__init__.py                     3      0   100%
+src/config/cli.py                        145    145     0%   8-294
+src/config/environments.py                47     27    43%   194-236, 261, 285
+src/config/settings.py                   173      0   100%
+src/config/validation.py                 192    172    10%   33-35, 44-56, 60-77, 81-127, 131-159, 163-214, 220-241, 245-265, 282-301, 312-356, 369, 385-401
+src/data/__init__.py                       0      0   100%
+src/data/load_data.py                    156    156     0%   11-339
+src/data/loader.py                        53     53     0%   3-134
+src/data/preprocessing.py                210     37    82%   43-44, 98, 101-105, 129-131, 151-153, 246, 278, 305, 323, 368, 439-442, 486-499, 533-538, 546, 552, 554, 583
+src/exceptions.py                        117      2    98%   297, 303
+src/experiment/mlflow_integration.py     359    299    17%   26-27, 34-35, 72-73, 81-83, 103-144, 162-210, 214-239, 266-316, 336-377, 381-411, 423-449, 453-483, 487-494, 506-542, 550, 562, 579-581, 602-662, 691-738, 742-794, 798-813, 817-832, 836-879, 904-959, 967, 972-997
+src/features/__init__.py                   8      0   100%
+src/features/base.py                      62     10    84%   58, 77, 94, 107, 121, 141, 150, 172, 197, 220
+src/features/bert_extractor.py           132     88    33%   28-31, 69, 82, 89, 107-109, 121-132, 144-190, 202-236, 251-280, 284, 288, 292, 301, 321-325, 340-351
+src/features/categorical_encoder.py      131     23    82%   69-71, 111, 150, 185, 227-230, 287, 307-322, 335-346
+src/features/feature_manager.py          342     66    81%   38-40, 91, 108-110, 128-133, 255-258, 296-302, 386-387, 440-442, 496, 514, 586-589, 608-611, 642, 656-657, 671-684, 688-702, 728-733
+src/features/feature_selector.py         181      2    99%   212, 322
+src/features/sentiment_extractor.py      116     81    30%   30-32, 75, 96-98, 110-119, 131-181, 193-228, 232, 236, 248-252, 264-265, 281-282, 291, 311-326
+src/features/tfidf_extractor.py          134     46    66%   77-78, 99, 113, 123, 129, 152-155, 167, 204-205, 234-235, 250-253, 281-282, 307, 324-325, 345-365, 382-387, 399-436
+src/features/topic_extractor.py          185    138    25%   83-130, 134-144, 148-157, 161-177, 181-189, 201-240, 244, 248-256, 260-265, 269, 273, 282-297, 309-321, 334-335, 339-340, 348-349, 361-394, 403
+src/models/__init__.py                     5      0   100%
+src/models/base.py                        98     31    68%   90, 107, 135, 224-233, 262-276, 299-308, 335-336, 374, 397
+src/models/evaluator.py                  405     40    90%   38-40, 105-106, 185-186, 341-347, 355-361, 526-527, 592-609, 680-682, 770, 864-865, 924-925
+src/models/mnir.py                       188     28    85%   27-31, 243-244, 257-274, 288-291, 300, 343-361
+src/models/regressors.py                 334    266    20%   28-30, 57, 70, 77, 89-99, 103-107, 126-142, 148-178, 182-191, 195-199, 219-237, 243-279, 283-292, 296-300, 304-308, 333-347, 353-421, 425-431, 435-439, 459-477, 483-549, 553-559, 563-567, 589-607, 613-689, 693-702, 706-710, 731-744, 750-800, 804-810, 814-818
+src/pipeline/__init__.py                   0      0   100%
+src/pipeline/constants.py                  1      0   100%
+src/pipeline/features.py                  29      0   100%
+src/pipeline/preprocess.py                16      2    88%   38-39
+src/pipeline/selection.py                 56      2    96%   71-72
+src/pipeline/training.py                 151     45    70%   82-83, 86, 140, 153-154, 180-181, 187-192, 217-223, 235-241, 245, 252, 271-296
+src/pipeline/visualization.py             48      2    96%   96-97
+src/serving/__init__.py                    0      0   100%
+src/serving/app.py                        37      8    78%   30-33, 66, 78-80
+src/serving/predictor.py                  58     34    41%   35-38, 45-88, 102-122, 127
+src/serving/schemas.py                    23      0   100%
+src/utils/__init__.py                     12      2    83%   38-39
+src/utils/cache.py                       124      0   100%
+src/utils/cleaning.py                    266    197    26%   55-88, 101-107, 126, 142, 144, 146, 148, 150, 182-201, 211-240, 261-283, 289-290, 295-298, 304-309, 314-315, 329-368, 378-388, 399-426, 436-493, 504-535, 540-567, 597, 610-616, 629-643, 656-675, 740-793
+src/utils/data_quality.py                 91     33    64%   36, 72, 98, 178-179, 198-226, 242-256
+src/utils/doc_generator.py               241    217    10%   33-34, 43-54, 66-116, 128-162, 166-209, 230-297, 301-319, 331-345, 349-372, 376-423, 427-483, 487-523, 534-550, 554
+src/utils/hyperparameter_tuning.py       165    165     0%   11-454
+src/utils/performance.py                 185     87    53%   78-79, 136, 153, 168-178, 318-353, 379-417, 439-493, 509-540, 549, 555-563
+src/utils/polars_utils.py                116     19    84%   40, 99-104, 133-134, 200-209, 222-223, 262, 303
+src/utils/shap_analysis.py               283    178    37%   28-31, 56, 98-101, 106, 110-116, 126-128, 145, 152-153, 156-157, 161-164, 174-190, 201-215, 232, 239, 243, 254-262, 271-306, 314-333, 341-350, 362-428, 435-467, 475-535, 576-577, 597-616
+src/utils/transformations.py             308    286     7%   32-48, 60-166, 178-204, 216-233, 245, 254-264, 283-295, 299-325, 329-333, 338-343, 366-395, 428-705
+src/utils/utils.py                        26     18    31%   31-32, 48-57, 73-82
+src/visualization/__init__.py              0      0   100%
+src/visualization/plots.py                29     10    66%   31-32, 57-69, 74-89
+src/visualization/visualize.py           213    136    36%   26-28, 34-38, 122-213, 226-269, 353-414, 428-487
+--------------------------------------------------------------------
+TOTAL                                   6254   3151    50%
+=========================== short test summary info ============================
+FAILED tests/test_feature_manager.py::TestCoffeeFeatureManager::test_save_and_load_extractors
+FAILED tests/test_feature_selector_contracts.py::TestErrorHandlingAndEdgeCases::test_empty_dataframes_handling
+FAILED tests/test_feature_selector_contracts.py::TestErrorHandlingAndEdgeCases::test_dimension_mismatches_with_polars
+FAILED tests/test_feature_selector_integration.py::TestTypeContractsAndSpecification::test_input_validation_and_error_handling
+FAILED tests/test_feature_selector_integration.py::TestTypeContractsAndSpecification::test_configuration_validation
+FAILED tests/test_utils_integration.py::TestCachingSystemIntegration::test_cached_function_decorator_comprehensive
+FAILED tests/test_utils_integration.py::TestCachingSystemIntegration::test_cache_directory_creation_edge_cases
+7 failed, 377 passed, 6 skipped, 11 deselected, 206 warnings in 263.20s (0:04:23)

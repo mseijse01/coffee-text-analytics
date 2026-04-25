@@ -670,6 +670,27 @@ class TestVisualization:
         with pytest.raises(ValueError, match="Metric 'invalid_metric' not found"):
             evaluator.plot_model_comparison(comparison_results, metric="invalid_metric")
 
+    @pytest.mark.unit
+    def test_plot_feature_importance_empty_dict_returns_figure(self):
+        """Guard against zip(*[]) crash when feature importance is empty."""
+        evaluator = CoffeeModelEvaluator()
+        fig = evaluator.plot_feature_importance({}, model_name="Linear")
+        assert fig is not None
+        plt.close(fig)
+
+    @pytest.mark.unit
+    def test_plot_feature_importance_normal_case(self):
+        """Non-empty feature importance produces a labelled bar chart."""
+        evaluator = CoffeeModelEvaluator()
+        importance = {"feat_a": 0.5, "feat_b": 0.3, "feat_c": 0.2}
+        fig = evaluator.plot_feature_importance(
+            importance, model_name="XGBoost", top_n=3
+        )
+        assert fig is not None
+        ax = fig.axes[0]
+        assert "XGBoost" in ax.get_title()
+        plt.close(fig)
+
 
 class TestReportGeneration:
     """Test report generation functionality."""

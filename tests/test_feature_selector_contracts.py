@@ -372,6 +372,33 @@ class TestDocumentationAndSpecification:
             X_transformed = selector.transform(X_polars)
             assert X_transformed.shape[0] == X_polars.shape[0]
 
+    def test_topic_features_classified_as_text(self):
+        """topics_desc_* features must be classified as text (not categorical).
+
+        Regression test: previous code checked for 'lda_topic_' / 'nmf_topic_'
+        prefixes which never matched the actual generated names, causing topic
+        features to bypass LASSO selection entirely.
+        """
+        selector = LassoFeatureSelector()
+        feature_names = [
+            "tfidf_desc_1_coffee",
+            "bert_desc_1_0",
+            "topics_desc_1_lda_topic_0",
+            "topics_desc_2_nmf_topic_3",
+            "sentiment_desc_1_positive",
+            "aroma",
+            "acid",
+            "roast_Light",
+            "country_Ethiopia",
+        ]
+        text, sensory, categorical = selector._identify_feature_types(feature_names)
+        assert (
+            "topics_desc_1_lda_topic_0" in text
+        ), "topic features must be classified as text"
+        assert "topics_desc_2_nmf_topic_3" in text
+        assert "topics_desc_1_lda_topic_0" not in categorical
+        assert "topics_desc_2_nmf_topic_3" not in categorical
+
     def test_backward_compatibility_maintained(self):
         """Test that pandas/numpy support is maintained for backward compatibility."""
         # Create test data in legacy formats

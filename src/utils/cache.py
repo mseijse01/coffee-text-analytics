@@ -116,7 +116,7 @@ class CacheManager:
             cache_type: Type of cache (features, models, data, preprocessing)
         """
         cache_dir = self.cache_dir / cache_type
-        cache_dir.mkdir(exist_ok=True)  # Ensure directory exists
+        cache_dir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
         cache_file = cache_dir / f"{key}.pkl"
 
         try:

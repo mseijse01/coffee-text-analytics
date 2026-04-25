@@ -415,17 +415,16 @@ class TestCoffeeFeatureManager:
             feature_manager.is_fitted = True
             for extractor in feature_manager.extractors.values():
                 extractor.is_fitted = True  # Set fitted state
-                mock_save = Mock()
-                extractor._save_vectorizer = (
-                    mock_save  # This is the actual method called
-                )
+                # save_extractors checks hasattr(save_extractor) first; mocking it
+                # on the instance ensures this branch is always taken
+                extractor.save_extractor = Mock()
 
             # Test saving
             feature_manager.save_extractors(models_dir)
 
-            # Verify _save_vectorizer was called on all extractors
+            # Verify save_extractor was called on all extractors
             for extractor in feature_manager.extractors.values():
-                extractor._save_vectorizer.assert_called_once()
+                extractor.save_extractor.assert_called_once()
 
     @pytest.mark.unit
     def test_specialized_preprocessing_integration(self, feature_manager):
