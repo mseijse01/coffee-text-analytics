@@ -231,7 +231,16 @@ class CoffeeFeatureManager:
         logger.info(f"Total texts for fitting: {len(all_texts)}")
 
         # Fit each configured extractor
-        extractors_config = self.config.get("extractors", {})
+        # Use same default as __init__ so top-level keys (tfidf, bert, ...) are honoured
+        # when "extractors" key is absent (as in the main pipeline feature_config)
+        _default_enabled = {
+            "tfidf": True,
+            "bert": True,
+            "glove": True,
+            "topics": True,
+            "sentiment": True,
+        }
+        extractors_config = self.config.get("extractors", _default_enabled)
         for extractor_name in ["tfidf", "bert", "topics", "sentiment", "glove"]:
             # Only process if extractor is enabled
             if extractors_config.get(extractor_name, False):
