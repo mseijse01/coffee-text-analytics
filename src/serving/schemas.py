@@ -11,6 +11,11 @@ class PredictRequest(BaseModel):
     desc_1: str = Field(..., description="Primary tasting notes")
     desc_2: str = Field("", description="Secondary review notes")
     desc_3: str = Field("", description="Bottom-line conclusion")
+    roast: str = Field("", description="Roast level (e.g. 'Light', 'Medium', 'Dark')")
+    country_of_origin: str = Field(
+        "", description="Country of origin (e.g. 'Ethiopia')"
+    )
+    roaster: str = Field("", description="Roaster name")
     aroma: Optional[float] = Field(None, ge=0, le=10)
     acid: Optional[float] = Field(None, ge=0, le=10)
     body: Optional[float] = Field(None, ge=0, le=10)

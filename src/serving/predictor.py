@@ -64,7 +64,7 @@ class CoffeePredictor:
                     "bert": True,  # pre-trained DistilBERT — no pkl to load
                     "topics": True,
                     "sentiment": True,  # pre-trained DistilBERT sentiment — no pkl to load
-                    "glove": False,  # disabled: requires large gensim download at runtime
+                    "glove": True,  # vectors cached at ~/gensim-data/glove-wiki-gigaword-300/
                 }
             }
         )
@@ -92,6 +92,9 @@ class CoffeePredictor:
         desc_1: str,
         desc_2: str = "",
         desc_3: str = "",
+        roast: str = "",
+        country_of_origin: str = "",
+        roaster: str = "",
         aroma: Optional[float] = None,
         acid: Optional[float] = None,
         body: Optional[float] = None,
@@ -102,8 +105,18 @@ class CoffeePredictor:
         if not self._loaded:
             raise RuntimeError("CoffeePredictor.load() must be called before predict()")
 
-        # Build single-row Polars DataFrame matching training data schema
-        row = {"desc_1": [desc_1], "desc_2": [desc_2 or ""], "desc_3": [desc_3 or ""]}
+        # Build single-row Polars DataFrame matching training data schema.
+        # Categorical columns must be present (even if empty) so the encoder
+        # runs and produces its full feature set — unknown values map to
+        # 'Other' / all-zeros per the encoder's handle_unknown config.
+        row = {
+            "desc_1": [desc_1],
+            "desc_2": [desc_2 or ""],
+            "desc_3": [desc_3 or ""],
+            "roast": [roast or ""],
+            "country_of_origin": [country_of_origin or ""],
+            "roaster": [roaster or ""],
+        }
         df = pl.DataFrame(row)
 
         # Extract all features — same pipeline as training

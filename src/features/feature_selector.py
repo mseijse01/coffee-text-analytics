@@ -335,13 +335,18 @@ class LassoFeatureSelector:
             # For pandas, use copy
             X_df = X.copy()
 
-        # Select final features
-        available_features = [f for f in self.final_features_ if f in X_df.columns]
-        if len(available_features) != len(self.final_features_):
-            missing = set(self.final_features_) - set(available_features)
-            logger.warning(f"Missing features in transform: {missing}")
+        # Select final features, zero-filling any that are absent (e.g. at serving
+        # time when categorical encoder hasn't seen training vocabulary).
+        missing = [f for f in self.final_features_ if f not in X_df.columns]
+        if missing:
+            logger.warning(
+                f"Zero-filling {len(missing)} missing features in transform "
+                f"(e.g. unseen categorical levels or disabled extractors)"
+            )
+            for col in missing:
+                X_df[col] = 0.0
 
-        X_selected = X_df[available_features]
+        X_selected = X_df[self.final_features_]
 
         # Convert back to original type if needed
         if input_type == pl.DataFrame:

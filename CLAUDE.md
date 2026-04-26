@@ -22,13 +22,22 @@ python main.py --steps visualize                    # Visualization only
 ```
 
 ### Testing
+
+**Quick Test Suite (Recommended)** — 35 focused unit tests, ~5 seconds:
 ```bash
-make test                                              # Safe lightweight tests (default)
-make test-one FILE=tests/test_exceptions.py            # Single test file
-make test-fast                                         # Skip slow + heavy_ml markers
-make test-full                                         # All 16 test files with RAM monitoring
-pytest tests/ -p no:cacheprovider -c pytest-fast.ini  # Fast config (no coverage, quieter)
-pytest tests/ --cov=src --cov-report=term-missing      # With coverage
+bash run_tests_externally.sh quick   # Recommended: 35 tests, all passing
+```
+Tests: MNIR core (18) + focused (11) + cache (6). No flaky dependencies, deterministic.
+
+**Full Test Suite**:
+```bash
+bash run_tests_externally.sh full    # All ~400 tests across 16 test files (~30 min, heavy RAM)
+make test                            # Safe lightweight tests (default)
+make test-one FILE=tests/test_exceptions.py   # Single test file
+make test-fast                       # Skip slow + heavy_ml markers
+make test-full                       # All test files with RAM monitoring
+pytest tests/ -p no:cacheprovider    # Fast config (no coverage, quieter)
+pytest tests/ --cov=src --cov-report=term-missing  # With coverage
 ```
 
 ### Linting & Formatting
@@ -147,14 +156,11 @@ This is a **research ML pipeline** for analyzing consumer coffee reviews (Coffee
 - **Thesis compliance**: The 15% sample validation script exists specifically to verify the research methodology matches thesis requirements. Don't break this workflow.
 - **Best model**: XGBoost achieves R²=0.9453. MNIR is included for research/interpretability (not performance).
 
-### Known Issues & Pending Architecture Work
-
-⚠️ **LASSO Feature Selection Architecture Issue** (2026-04-21)
-- **Status**: Documented, awaiting architectural redesign
-- **Problem**: LassoFeatureSelector anonymizes sensory columns, breaking MNIR access; suspicious linear R² values; double categorical encoding
-- **Details**: See `docs/ARCHITECTURE_ISSUE_LASSO_FEATURE_SELECTION.md` (comprehensive analysis with 3 solution options and validation tests)
-- **Impact**: MNIR cannot train; R² validation unreliable; validation scripts have double-encoded categorical features
-- **Assigned to**: Sonnet (next session) — requires understanding thesis methodology + backward compatibility analysis
+⚠️ **LASSO Feature Selection Architecture Issue** (2026-04-21, documented)
+- **Status**: Known issue, analysis complete (see `docs/ARCHITECTURE_ISSUE_LASSO_FEATURE_SELECTION.md`)
+- **Problem**: Main pipeline correctly handles sensory column exclusion; validation scripts diverge from thesis methodology
+- **Impact**: Validation scripts pass all features to models (including sensory), not suitable for thesis comparison
+- **Recommendation**: Use validation scripts for serving-layer artifacts only; use main pipeline with `--sample_fraction 0.15` for thesis-compliant runs
 
 ### Pipeline Modes: Main vs. Validation Scripts
 
