@@ -6,28 +6,38 @@ only the features available from roaster website scraping:
   - Origin tier (high/mid/commercial specialty reputation)
   - Roast level (ordinal)
   - Process (natural / honey / washed)
-  - Tasting note categories (9 binary features extracted from review text)
+  - Variety tier (premium / heritage / commercial)
+  - Note count (number of tasting notes, capped at 5)
+  - Tasting note categories (9 binary features, names matching extraction_service.py)
+
+Category names match extraction_service.py exactly:
+  fruit, aroma, sweetness, nutty, earthy, spice, acidity, body, complexity
 
 The full XGBoost model (BERT + GloVe + TF-IDF) is preserved unchanged.
-This script produces two additional artifacts alongside the existing models:
-  models/scraper_model.pkl        — trained Ridge or RandomForest regressor
+This script produces two artifacts alongside the existing models:
+  models/scraper_model.pkl        — trained best regressor
   models/scraper_feature_cols.pkl — ordered list of feature column names
 
 Usage:
     cd /Users/seijas/Code/coffee-text-analytics
-    python scripts/train_scraper_model.py
+    ~/.virtualenvs/coffee-analytics/bin/python scripts/train_scraper_model.py
 """
 
 import pickle
 import re
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
+
+# Allow importing from src/ (TwoStepHyperparameterTuner lives there)
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+from utils.hyperparameter_tuning import TwoStepHyperparameterTuner  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -37,11 +47,12 @@ DATA_PATH = ROOT / "data" / "raw" / "coffee_clean.csv"
 MODELS_DIR = ROOT / "models"
 
 # ---------------------------------------------------------------------------
-# Feature definitions — mirroring extraction_service.py categories
+# Feature definitions — category names match extraction_service.py exactly
 # ---------------------------------------------------------------------------
 
 NOTE_KEYWORDS = {
-    "fruity": [
+    # extraction_service category: "fruit"
+    "fruit": [
         "peach",
         "berry",
         "strawberry",
@@ -75,7 +86,8 @@ NOTE_KEYWORDS = {
         "melon",
         "watermelon",
     ],
-    "floral": [
+    # extraction_service category: "aroma"
+    "aroma": [
         "floral",
         "jasmine",
         "lavender",
@@ -93,7 +105,8 @@ NOTE_KEYWORDS = {
         "lilac",
         "lily",
     ],
-    "sweet": [
+    # extraction_service category: "sweetness"
+    "sweetness": [
         "honey",
         "caramel",
         "chocolate",
@@ -116,6 +129,7 @@ NOTE_KEYWORDS = {
         "nougat",
         "syrup",
     ],
+    # extraction_service category: "nutty"
     "nutty": [
         "almond",
         "hazelnut",
@@ -134,6 +148,7 @@ NOTE_KEYWORDS = {
         "toast",
         "toasted",
     ],
+    # extraction_service category: "earthy"
     "earthy": [
         "earthy",
         "woody",
@@ -147,7 +162,8 @@ NOTE_KEYWORDS = {
         "pine",
         "resin",
     ],
-    "spicy": [
+    # extraction_service category: "spice"
+    "spice": [
         "spice",
         "spicy",
         "cinnamon",
@@ -164,7 +180,8 @@ NOTE_KEYWORDS = {
         "star anise",
         "black pepper",
     ],
-    "bright": [
+    # extraction_service category: "acidity"
+    "acidity": [
         "bright",
         "tart",
         "sharp",
@@ -176,6 +193,7 @@ NOTE_KEYWORDS = {
         "lemon zest",
         "citric",
     ],
+    # extraction_service category: "body"
     "body": [
         "smooth",
         "creamy",
@@ -194,7 +212,8 @@ NOTE_KEYWORDS = {
         "medium body",
         "full body",
     ],
-    "complex": [
+    # extraction_service category: "complexity"
+    "complexity": [
         "balanced",
         "complex",
         "layered",
@@ -258,6 +277,26 @@ ROAST_MAP = {
     "dark": 5,
 }
 
+VARIETY_TIERS = {
+    # Tier 3 — rare / premium
+    "geisha": 3,
+    "pacamara": 3,
+    "laurina": 3,
+    "maragogipe": 3,
+    "java": 3,
+    # Tier 2 — heritage cultivars
+    "typica": 2,
+    "bourbon": 2,
+    "heirloom": 2,
+    "caturra": 2,
+    "catuai": 2,
+    "sl28": 2,
+    "sl34": 2,
+    "batian": 2,
+    "villa sarchi": 2,
+    # default = 1 (catimor, ruiru, commercial hybrids, unknown)
+}
+
 PROCESS_NATURAL_KEYWORDS = [
     "natural",
     "dry process",
@@ -265,7 +304,12 @@ PROCESS_NATURAL_KEYWORDS = [
     "sun dried",
     "sun-dried",
 ]
-PROCESS_HONEY_KEYWORDS = ["honey", "semi-washed", "pulped natural", "semi washed"]
+PROCESS_HONEY_KEYWORDS = [
+    "honey",
+    "semi-washed",
+    "pulped natural",
+    "semi washed",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +327,6 @@ def _text_has_any(text: str, keywords: list[str]) -> int:
 def _origin_tier(origin: str) -> int:
     if not origin or not isinstance(origin, str):
         return 1
-    # Try exact match first
     for key, tier in ORIGIN_TIERS.items():
         if key.lower() in origin.lower():
             return tier
@@ -296,8 +339,18 @@ def _roast_ord(roast: str) -> int:
     return ROAST_MAP.get(roast.lower().strip(), 3)
 
 
+def _variety_tier(variety: str) -> int:
+    if not variety or not isinstance(variety, str):
+        return 1
+    v = variety.lower()
+    for key, tier in VARIETY_TIERS.items():
+        if key in v:
+            return tier
+    return 1
+
+
 def build_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Build the 13-feature matrix from CoffeeReview data."""
+    """Build the 15-feature matrix from CoffeeReview data."""
     text = (
         df.get("desc_1", pd.Series([""] * len(df))).fillna("")
         + " "
@@ -309,11 +362,17 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for i, (_, row) in enumerate(df.iterrows()):
         t = text.iloc[i]
+
+        # Count how many distinct note categories appear in this review
+        cat_hits = sum(_text_has_any(t, kws) for kws in NOTE_KEYWORDS.values())
+
         feat = {
             "origin_tier": _origin_tier(row.get("origin", "")),
             "roast_ord": _roast_ord(row.get("roast", "")),
             "is_natural": _text_has_any(t, PROCESS_NATURAL_KEYWORDS),
             "is_honey": _text_has_any(t, PROCESS_HONEY_KEYWORDS),
+            "variety_tier": _variety_tier(str(row.get("variety", "") or "")),
+            "note_count": min(cat_hits, 5),
         }
         for cat, keywords in NOTE_KEYWORDS.items():
             feat[f"has_{cat}"] = _text_has_any(t, keywords)
@@ -329,7 +388,7 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
 
 def main():
     print("=" * 60)
-    print("Sparse Scraper Model — Training")
+    print("Sparse Scraper Model — Training (Phase 2)")
     print("=" * 60)
 
     # Load data
@@ -353,7 +412,7 @@ def main():
     print(f"Columns: {feature_cols}")
     print("\nFeature means (how often each fires):")
     for col in feature_cols:
-        print(f"  {col:<20} {X[col].mean():.3f}")
+        print(f"  {col:<25} {X[col].mean():.3f}")
 
     # Stratified split by rating bin
     bins = pd.cut(y, bins=[80, 84, 87, 90, 95, 100], labels=False, include_lowest=True)
@@ -362,67 +421,115 @@ def main():
     )
     print(f"\nTrain: {len(X_train)}  Test: {len(X_test)}")
 
-    # Train and compare models
-    candidates = {
-        "Ridge(α=1.0)": Ridge(alpha=1.0),
-        "Ridge(α=0.1)": Ridge(alpha=0.1),
-        "RandomForest": RandomForestRegressor(
-            n_estimators=300, max_depth=6, min_samples_leaf=10, random_state=42
-        ),
+    # Two-step hyperparameter tuning (project's signature methodology):
+    #   Phase 1 — RandomizedSearchCV (wide, cheap: n_iter=30, 3-fold CV)
+    #   Phase 2 — GridSearchCV zoomed around Phase 1 best params (5-fold CV)
+    # Applied independently to Ridge and GradientBoosting; winner keeps the title.
+
+    tuner_config = {
+        "randomized_search_config": {
+            "n_iter": 30,  # enough to explore; dataset is small
+            "cv": 3,
+            "scoring": "r2",
+            "n_jobs": -1,
+            "random_state": 42,
+        },
+        "grid_search_config": {
+            "cv": 5,
+            "scoring": "r2",
+            "n_jobs": -1,
+        },
     }
 
-    print("\nModel comparison:")
-    print(f"  {'Model':<20} {'R²':>8} {'RMSE':>8} {'MAE':>8}")
-    print("  " + "-" * 46)
+    results: list[tuple[str, object, float, float, float]] = []
 
-    best_name, best_model, best_r2 = None, None, -np.inf
-    for name, model in candidates.items():
-        model.fit(X_train, y_train)
-        preds = model.predict(X_test)
-        r2 = r2_score(y_test, preds)
-        rmse = np.sqrt(mean_squared_error(y_test, preds))
-        mae = mean_absolute_error(y_test, preds)
-        marker = " ←" if r2 > best_r2 else ""
-        print(f"  {name:<20} {r2:>8.4f} {rmse:>8.4f} {mae:>8.4f}{marker}")
-        if r2 > best_r2:
-            best_r2, best_name, best_model = r2, name, model
+    # --- Ridge ---
+    print("\nPhase 1+2: Ridge ...")
+    ridge_tuner = TwoStepHyperparameterTuner(tuner_config)
+    ridge_tuner.fit(
+        estimator=Ridge(),
+        X=X_train,
+        y=y_train,
+        param_distributions={"alpha": [0.001, 0.01, 0.1, 1.0, 10, 100]},
+        grid_refinement_factor=3,
+    )
+    ridge_preds = ridge_tuner.best_estimator_.predict(X_test)
+    ridge_r2 = r2_score(y_test, ridge_preds)
+    ridge_rmse = np.sqrt(mean_squared_error(y_test, ridge_preds))
+    ridge_mae = mean_absolute_error(y_test, ridge_preds)
+    print(f"  Ridge best params: {ridge_tuner.best_params_}")
+    print(f"  R²={ridge_r2:.4f}  RMSE={ridge_rmse:.4f}  MAE={ridge_mae:.4f}")
+    results.append(
+        ("Ridge", ridge_tuner.best_estimator_, ridge_r2, ridge_rmse, ridge_mae)
+    )
 
+    # --- GradientBoosting ---
+    print("\nPhase 1+2: GradientBoosting ...")
+    gbr_tuner = TwoStepHyperparameterTuner(tuner_config)
+    gbr_tuner.fit(
+        estimator=GradientBoostingRegressor(random_state=42),
+        X=X_train,
+        y=y_train,
+        param_distributions={
+            "n_estimators": [50, 100, 200, 300],
+            "max_depth": [2, 3, 4, 5, 6],
+            "learning_rate": [0.01, 0.05, 0.1, 0.2],
+            "subsample": [0.7, 0.8, 1.0],
+        },
+        grid_refinement_factor=3,
+    )
+    gbr_preds = gbr_tuner.best_estimator_.predict(X_test)
+    gbr_r2 = r2_score(y_test, gbr_preds)
+    gbr_rmse = np.sqrt(mean_squared_error(y_test, gbr_preds))
+    gbr_mae = mean_absolute_error(y_test, gbr_preds)
+    print(f"  GBR best params: {gbr_tuner.best_params_}")
+    print(f"  R²={gbr_r2:.4f}  RMSE={gbr_rmse:.4f}  MAE={gbr_mae:.4f}")
+    results.append(
+        ("GradientBoosting", gbr_tuner.best_estimator_, gbr_r2, gbr_rmse, gbr_mae)
+    )
+
+    # Pick winner
+    best_name, best_model, best_r2, _, _ = max(results, key=lambda t: t[2])
     print(f"\nWinner: {best_name}  (R²={best_r2:.4f})")
 
     # Sanity checks
     print("\nSanity check predictions:")
     checks = [
         {
-            "name": "Ethiopian natural, fruity+floral",
+            "name": "Ethiopian natural, fruit+aroma (Geisha)",
             "origin_tier": 3,
             "roast_ord": 2,
             "is_natural": 1,
             "is_honey": 0,
-            "has_fruity": 1,
-            "has_floral": 1,
-            "has_sweet": 1,
+            "variety_tier": 3,
+            "note_count": 5,
+            "has_fruit": 1,
+            "has_aroma": 1,
+            "has_sweetness": 1,
             "has_nutty": 0,
             "has_earthy": 0,
-            "has_spicy": 0,
-            "has_bright": 1,
+            "has_spice": 0,
+            "has_acidity": 1,
             "has_body": 0,
-            "has_complex": 1,
+            "has_complexity": 1,
         },
         {
-            "name": "Colombian washed, chocolate+caramel",
+            "name": "Colombian washed, sweetness+nutty",
             "origin_tier": 2,
             "roast_ord": 3,
             "is_natural": 0,
             "is_honey": 0,
-            "has_fruity": 0,
-            "has_floral": 0,
-            "has_sweet": 1,
+            "variety_tier": 1,
+            "note_count": 3,
+            "has_fruit": 0,
+            "has_aroma": 0,
+            "has_sweetness": 1,
             "has_nutty": 1,
             "has_earthy": 0,
-            "has_spicy": 0,
-            "has_bright": 0,
+            "has_spice": 0,
+            "has_acidity": 0,
             "has_body": 1,
-            "has_complex": 0,
+            "has_complexity": 0,
         },
         {
             "name": "Vietnamese dark, no notes",
@@ -430,38 +537,42 @@ def main():
             "roast_ord": 5,
             "is_natural": 0,
             "is_honey": 0,
-            "has_fruity": 0,
-            "has_floral": 0,
-            "has_sweet": 0,
+            "variety_tier": 1,
+            "note_count": 0,
+            "has_fruit": 0,
+            "has_aroma": 0,
+            "has_sweetness": 0,
             "has_nutty": 0,
             "has_earthy": 0,
-            "has_spicy": 0,
-            "has_bright": 0,
+            "has_spice": 0,
+            "has_acidity": 0,
             "has_body": 0,
-            "has_complex": 0,
+            "has_complexity": 0,
         },
         {
-            "name": "Kenyan natural, berry+bright",
+            "name": "Kenyan natural, berry+acidity",
             "origin_tier": 3,
             "roast_ord": 2,
             "is_natural": 1,
             "is_honey": 0,
-            "has_fruity": 1,
-            "has_floral": 0,
-            "has_sweet": 0,
+            "variety_tier": 2,
+            "note_count": 3,
+            "has_fruit": 1,
+            "has_aroma": 0,
+            "has_sweetness": 0,
             "has_nutty": 0,
             "has_earthy": 0,
-            "has_spicy": 0,
-            "has_bright": 1,
+            "has_spice": 0,
+            "has_acidity": 1,
             "has_body": 0,
-            "has_complex": 0,
+            "has_complexity": 0,
         },
     ]
     for check in checks:
         label = check.pop("name")
         X_check = np.array([[check[c] for c in feature_cols]])
-        pred = float(np.clip(best_model.predict(X_check)[0], 80, 100))
-        print(f"  {label:<45} → {pred:.1f}")
+        pred = float(best_model.predict(X_check)[0])
+        print(f"  {label:<50} → {pred:.1f}")
 
     # Save artifacts
     model_path = MODELS_DIR / "scraper_model.pkl"
