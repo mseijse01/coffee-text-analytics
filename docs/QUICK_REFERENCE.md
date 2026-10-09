@@ -1,21 +1,23 @@
 # Coffee Text Analytics - Quick Reference
 
 **Last Updated**: 2026-04-20
-**Project Status**: ✅ **Portfolio-Ready** — XGBoost R²=0.9453, 100% thesis compliance
+**Project Status**: Research code accompanying the thesis. Authoritative result: XGBoost R²=0.683 on all text features (`docs/thesis.md`). Results were not regenerated after the April 2026 refactor.
 
 ---
 
-## Model Performance Summary
+## Model Performance Summary (exploratory validation, not thesis results)
 
-| Model | R² | RMSE | MAE | Status |
-|-------|-----|------|-----|--------|
-| **XGBoost** | **0.9453** | **0.4103** | **0.2152** | ⭐ Best |
-| Ridge | 0.9259 | 0.4775 | 0.3801 | Excellent |
-| LASSO | 0.8897 | 0.5825 | 0.4623 | Strong |
-| Random Forest | 0.8675 | 0.6386 | 0.3590 | Good |
-| Linear | 0.8173 | 0.7497 | 0.6101 | Baseline |
+Source: `validate_15_percent_methodology.py`, 364 rows, run dated 2025-05-30, split not recorded; local MLflow run, not in this repo. Different protocol from the thesis, so not comparable. See the README results table.
 
-**MNIR (Interpretability Analysis):**
+| Model | R² | RMSE | MAE |
+|-------|-----|------|-----|
+| XGBoost | 0.9453 | 0.4103 | 0.2152 |
+| Ridge | 0.9259 | 0.4775 | 0.3801 |
+| LASSO | 0.8897 | 0.5825 | 0.4623 |
+| Random Forest | 0.8675 | 0.6386 | 0.3590 |
+| Linear | 0.8173 | 0.7497 | 0.6101 |
+
+**MNIR (source not verified; not the thesis MNIR results, which are acidity 0.95, body 0.94):**
 - Acidity: R² = 0.9389
 - Aftertaste: R² = 0.8420
 - Body: R² = 0.7966
@@ -26,7 +28,7 @@
 
 ## Quick Start
 
-### Validate Thesis Methodology (4 minutes)
+### Exploratory 15% Validation (4 minutes)
 ```bash
 python validate_15_percent_methodology.py
 ```
@@ -50,19 +52,19 @@ python main.py --steps visualize       # Visualization only
 
 ## Research Methodology
 
-**Data Source**: CoffeeReview.com, ~6,400 reviews (2,440 used after filtering)
+**Data Source**: CoffeeReview.com, ~6,400 reviews (2,440 used after filtering) (unverified)
 
 **Target Variable**: Coffee rating (80–100 scale)
 
-**Train/Test Split**: 70/30 stratified by rating bins
+**Train/Test Split**: 70/30 stratified by rating bins (unverified)
 
 ### Feature Engineering Pipeline
 
-**Raw Features**: ~3,840 total
+**Raw Features**: ~3,840 total (unverified)
 
-**Selected Features**: 279 (92.7% dimensionality reduction via LASSO)
+**Selected Features**: 279 (92.7% dimensionality reduction via LASSO) (unverified)
 
-**Feature Types**:
+**Feature Types** (counts unverified):
 1. **TF-IDF Vectorization** (600 features) — Unigrams, bigrams, trigrams
 2. **BERT Embeddings** (2,304 features) — DistilBERT 768-dim semantic representations
 3. **GloVe Embeddings** (900 features) — Pre-trained 300-dim word vectors
@@ -106,7 +108,7 @@ data/raw/coffee_clean.csv
 - Caching system for expensive operations (especially BERT)
 
 **Model Training** (`src/models/`)
-- 6 regression models: Linear, Ridge, LASSO, Random Forest, XGBoost, MNIR
+- 7 regression models in the training registry (Linear, Ridge, LASSO, Random Forest, XGBoost, SVR, Decision Tree), plus MNIR trained separately
 - Optuna-based hyperparameter optimization (TPE algorithm)
 - SHAP analysis for feature importance
 
@@ -149,7 +151,7 @@ make test  # Run lightweight test suite
 
 ### Test Suites
 - **Fast tests**: `make test-safe` (default, ~30 sec)
-- **Full tests**: `make test-full` (all 16 files, ~2 min)
+- **Full tests**: `make test-full` (all 16 files, ~30 min, heavy RAM)
 - **Specific file**: `make test-one FILE=tests/test_data_processing.py`
 
 ### Code Quality
@@ -160,7 +162,6 @@ make test  # Run lightweight test suite
 
 ### Coverage
 - Target: 18%+ (fast tests)
-- Full pipeline coverage: ~96.7%
 
 ---
 

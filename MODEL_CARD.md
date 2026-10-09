@@ -36,9 +36,8 @@ This model predicts coffee quality ratings (80–100 scale) from consumer review
 **Target:** Coffee rating (80–100 scale, continuous)  
 
 **Data Split:**
-- Training: 70% (1,708 samples)
-- Testing: 30% (732 samples)
-- **Stratification:** By rating bins to ensure representative splits
+- Thesis: 70/30 stratified by rating bins (`docs/thesis.md`); sample size not stated.
+- The earlier "1,708 train / 732 test" counts did **not** correspond to the exploratory run in the Performance table below, which used 364 rows. They are unverified and have been removed.
 
 ---
 
@@ -77,20 +76,17 @@ This model predicts coffee quality ratings (80–100 scale) from consumer review
 
 ## Performance
 
-**Evaluation Metrics (30% Test Set):**
+**Reported results, with provenance.** Rows are not comparable unless noted.
 
-| Model | R² | RMSE | MAE |
-|-------|-----|------|-----|
-| **XGBoost** | **0.9453** | **0.4103** | **0.2152** |
-| Ridge | 0.9259 | 0.4775 | 0.3801 |
-| LASSO | 0.8897 | 0.5825 | 0.4623 |
-| Random Forest | 0.8675 | 0.6386 | 0.3590 |
-| Linear Regression | 0.8173 | 0.7497 | 0.6101 |
+| Result | Pipeline | Sample / split | Date | Source |
+|---|---|---|---|---|
+| **XGBoost R² 0.683** (all text features); **0.992** (flavor features) | Thesis | n not stated; 70/30 stratified | May 2025 | `docs/thesis.md` |
+| MNIR: acidity R² 0.95, body R² 0.94 | Thesis | Not stated | May 2025 | `docs/thesis.md` |
+| XGBoost R² 0.682 | MLflow `coffee-text-analytics-thesis` | Not recorded | 2025-05-29/30 | Local MLflow runs (not in repo) |
+| *Exploratory validation:* XGBoost 0.9453 (RMSE 0.4103, MAE 0.2152), Ridge 0.9259, LASSO 0.8897, RF 0.8675, Linear 0.8173 | `validate_15_percent_methodology.py` | 364 rows; split not recorded | 2025-05-30 | Local MLflow run (not in repo) |
+| XGBoost 0.662, SVR 0.936, Ridge 0.936, LASSO 0.918, Linear 0.860, RF 0.555, DT −0.025 | Probably `main.py` (inferred) | Sample size and split not recorded | 2026-04-26 | `output/comprehensive_model_evaluation.txt` |
 
-**Performance Interpretation:**
-- R² = 0.9453: Model explains 94.5% of variance in coffee ratings
-- RMSE = 0.41: Average prediction error ±0.41 points on 80–100 scale
-- MAE = 0.22: Median absolute error of 0.22 points (very accurate)
+The thesis numbers are authoritative. The exploratory 15%-sample figures use a different protocol and are not a better result. The main.py path fits feature extractors and LASSO on all rows before the split, so held-out scores may be optimistic. Results were not regenerated after the April 2026 refactor.
 
 **Supporting Model:**
 - **MNIR (Multinomial Inverse Regression):** Included for interpretability analysis of sensory attributes (acidity, body, aroma, aftertaste, flavor) — not optimized for prediction performance.
@@ -160,7 +156,7 @@ python main.py --steps features train --models xgboost
 
 ### Validation
 ```bash
-# Verify thesis compliance (15% sample, ~4 min)
+# Exploratory 15% sample check (~4 min); does not reproduce thesis results
 python validate_15_percent_methodology.py
 ```
 
@@ -174,5 +170,5 @@ python validate_15_percent_methodology.py
 
 ---
 
-**Last Updated:** 2026-04-20  
+**Last Updated:** 2026-04-20 (results table revised; numbers not re-run)
 **Maintained By:** Marcelo Seijas

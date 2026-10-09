@@ -4,10 +4,9 @@ A comprehensive text analytics and predictive modeling framework for analyzing c
 
 ## Current Status
 
-**Phase 2.2 Complete** - Ready for scaling or advanced research
-**Latest Results**: XGBoost R²=0.9453, Ridge R²=0.9259
-**Thesis Compliance**: 100% methodology alignment achieved
-**Quick Start**: `python validate_15_percent_methodology.py` (4-minute validation)
+**Status**: Research code accompanying the thesis. Results were not regenerated after the April 2026 refactor (see [Known Limitations](#known-limitations)).
+**Authoritative results**: those reported in `docs/thesis.md` (see the results table under Key Findings).
+**Quick Start**: `python validate_15_percent_methodology.py` runs a fast exploratory check on a 15% sample (~4 min). It is not comparable to the thesis results.
 
 ## Research Overview
 
@@ -61,19 +60,19 @@ This implementation follows the exact methodology described in the thesis:
 
 ### Model Performance Results
 
-**Current Validation Results (15% Sample):**
+Each row states where the number comes from. Rows are not comparable to each other unless noted.
 
-```
-Model           R²       RMSE     MAE      Status
---------------------------------------------------
-XGBoost         0.9453   0.4103   0.2152   Best
-Ridge           0.9259   0.4775   0.3801   Excellent
-LASSO           0.8897   0.5825   0.4623   Strong
-Random Forest   0.8675   0.6386   0.3590   Good
-Linear          0.8173   0.7497   0.6101   Baseline
-```
+| Result | Pipeline | Sample / split | Date | Source |
+|---|---|---|---|---|
+| **XGBoost R² 0.683** (all text features); **0.992** (flavor features) | Thesis | n not stated; 70/30 stratified | May 2025 | `docs/thesis.md` (Predictive Model Performance) |
+| MNIR: acidity R² 0.95, body R² 0.94 | Thesis | Not stated | May 2025 | `docs/thesis.md` (Key Findings from MNIR) |
+| XGBoost R² 0.682 | MLflow experiment `coffee-text-analytics-thesis` | Not recorded | 2025-05-29/30 | Local MLflow runs, not in this repo |
+| *Exploratory validation:* XGBoost 0.9453 (RMSE 0.4103, MAE 0.2152), Ridge 0.9259, LASSO 0.8897, RF 0.8675, Linear 0.8173 | `validate_15_percent_methodology.py` | 364 rows (15%); split not recorded | 2025-05-30 | Local MLflow run, not in this repo |
+| XGBoost 0.662, SVR 0.936, Ridge 0.936, LASSO 0.918, Linear 0.860, RF 0.555, DT −0.025 | Probably `main.py` (inferred) | Sample size and split not recorded | 2026-04-26 | `output/comprehensive_model_evaluation.txt` (generated file) |
 
-**MNIR Analysis Results:**
+The exploratory 15%-sample numbers use a different protocol (combined features, small sample) and should not be read as a better result than the thesis.
+
+**MNIR table below: source not verified.** These values do not appear in the local MLflow metrics; they are copied from earlier status documents. They are not the thesis MNIR results.
 ```
 Sensory Attribute    R²       MSE      Performance
 --------------------------------------------------
@@ -142,18 +141,16 @@ This project uses a **two-tier dependency strategy**:
 
 ### Quick Start - 15% Validation (Recommended)
 
-**Fastest way to validate thesis methodology (4 minutes):**
+**Fastest exploratory check (4 minutes):**
 ```bash
 python validate_15_percent_methodology.py
 ```
 
-This gives you complete thesis validation with XGBoost R²=0.9453, all models + MNIR analysis.
+This runs the exploratory 15%-sample validation (all models + MNIR). It does not reproduce the thesis results.
 
 ### Quick Reference
-- **Current Achievement**: 100% thesis methodology compliance
-- **Best Model**: XGBoost (R²=0.9453)
-- **Feature Selection**: 279 selected from 3,840 text features (92.7% reduction)
-- **MNIR Performance**: Acidity R²=0.9389, Body R²=0.7966
+- **Thesis headline**: XGBoost R²=0.683 (all text features), see the results table above
+- **Feature Selection**: 279 selected from 3,840 text features (92.7% reduction) (unverified)
 - **Infrastructure**: MLflow + Optuna + SHAP analysis ready
 
 ### Advanced Usage Options
@@ -315,18 +312,24 @@ python run_tests.py
 ```
 
 **Test Coverage:**
-- 96.7% pass rate - Robust and stable codebase
 - Data processing tests - Polars/Pandas integration validated
 - Integration tests - End-to-end pipeline validation
 - Performance tests - Memory and speed optimization
-- Thesis compliance validation - 15% methodology validator proven
+- Exploratory 15% validation script (not thesis-comparable)
 
 ### Code Quality
 - Component-based design - Modular, extensible architecture
 - Zero import conflicts - Clean dependency management
 - MLflow + Optuna integration - Enhanced experiment tracking
 - Professional documentation - Academic-grade documentation
-- Thesis methodology compliance - 100% validation achieved
+- Thesis methodology - implemented following `docs/thesis.md`; results not regenerated or re-verified since the April 2026 refactor (see Known Limitations)
+
+## Known Limitations
+
+- **Possible optimistic held-out scores in the `main.py` path.** The feature extractors (`src/pipeline/features.py:56`, TF-IDF, topics, sentiment, categorical encoder) and LASSO with its scaler (`src/pipeline/selection.py:64`) are fit on all rows before the train/test split in `src/pipeline/training.py:90`. LASSO uses the target, so test-set scores may be optimistic.
+- **Results not regenerated.** The code was refactored in April 2026. Reported numbers were not re-run afterwards, and the code was not re-verified against them.
+- **Validation scripts are not thesis-comparable.** They pass combined features (including sensory attributes) to all models; see `CLAUDE.md`.
+- **MLflow runs are local.** `mlruns/` is no longer tracked in git, so run-based numbers cannot be checked from this repository.
 
 ## Important Notes
 

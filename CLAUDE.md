@@ -107,7 +107,7 @@ python scripts/generate_docs.py
 
 ### Other Utilities
 ```bash
-python validate_15_percent_methodology.py              # Thesis compliance validation (~4 min)
+python validate_15_percent_methodology.py              # Exploratory 15% validation (~4 min); not thesis-comparable
 python validate_15_percent_methodology.py --sample_size=50  # 50% sample
 python validate_15_percent_and_save.py                 # Validate on 15% sample + save model artifacts
 python validate_30_percent_and_save.py                 # Validate on 30% sample + save model artifacts
@@ -153,7 +153,7 @@ This is a **research ML pipeline** for analyzing consumer coffee reviews (Coffee
 - **`config/`** — Environment-aware configuration system (dev/prod/test/cicd). Use `python -m config.cli` to inspect.
 - **`data/`** — Data loading and preprocessing. Uses **Polars** as the primary DataFrame library; Pandas is used only as a sklearn compatibility layer.
 - **`features/`** — Modular feature extractors (TF-IDF, BERT/DistilBERT embeddings, LDA/NMF topic models, sentiment). `feature_manager.py` orchestrates all extractors; `feature_selector.py` (LASSO-based) reduces ~3,840 features down to ~279.
-- **`models/`** — Six regression models: Linear, Ridge, LASSO, RandomForest, XGBoost, MNIR (Multinomial Inverse Regression). `evaluator.py` handles metrics and SHAP analysis.
+- **`models/`** — Seven regression models in the training registry (Linear, Ridge, LASSO, RandomForest, XGBoost, SVR, DecisionTree), plus MNIR (Multinomial Inverse Regression) trained separately. `evaluator.py` handles metrics and SHAP analysis.
 - **`experiment/`** — MLflow + Optuna integration. MLflow uses a PostgreSQL backend + MinIO S3 storage.
 - **`utils/`** — Caching system for expensive feature extraction, SHAP utilities, performance profiling.
 - **`visualization/`** — Plotly/Matplotlib/Seaborn output for figures saved to `output/`.
@@ -163,8 +163,8 @@ This is a **research ML pipeline** for analyzing consumer coffee reviews (Coffee
 - **Type safety**: The 5 core files (`loader.py`, `preprocessing.py`, `feature_manager.py`, `regressors.py`, `evaluator.py`) are fully type-annotated and checked with mypy in CI. This is a gradual migration strategy—non-core modules are not yet annotated.
 - **Caching**: Feature extraction (especially BERT) is expensive. The `cache/` directory stores extracted features as serialized files. Delete cache to force re-extraction (`make clean-cache`).
 - **Polars-first**: Data processing uses Polars for performance; only converts to Pandas at sklearn boundaries.
-- **Thesis compliance**: The 15% sample validation script exists specifically to verify the research methodology matches thesis requirements. Don't break this workflow.
-- **Best model**: XGBoost achieves R²=0.9453. MNIR is included for research/interpretability (not performance).
+- **15% validation script**: A fast exploratory check on a 15% sample. It uses a different protocol from the thesis, so don't treat its output as thesis compliance. Don't break this workflow.
+- **Results**: The authoritative result is the thesis (`docs/thesis.md`): XGBoost R²=0.683 on all text features. The 0.9453 figure is from the exploratory 15% validation (364 rows, 2025-05-30) and is not the best-model result. Results were not regenerated after the April 2026 refactor. See the README results table. MNIR is included for research/interpretability (not performance).
 
 ⚠️ **LASSO Feature Selection Architecture Issue** (2026-04-21, documented)
 - **Status**: Known issue, analysis complete (see `docs/ARCHITECTURE_ISSUE_LASSO_FEATURE_SELECTION.md`)
@@ -190,7 +190,7 @@ There are two paths to generate model artifacts — they serve different purpose
 - Use these when you need artifacts quickly and don't need thesis-comparable metrics
 
 ### CI Pipeline Behavior
-- **Main CI job** (`test`): only runs `tests/test_data_processing.py` (fast, keeps CI under 10 min). Coverage threshold: 15%.
+- **Main CI job** (`test`): only runs `tests/test_data_processing.py` (fast, keeps CI under 10 min). Coverage threshold: 18%.
 - **Integration tests**: run only on push to `main`, not on PRs.
 - **mypy**: checks only the 5 core files listed above.
 
