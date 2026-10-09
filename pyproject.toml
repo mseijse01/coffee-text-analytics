@@ -7,7 +7,7 @@ name = "coffee-text-analytics"
 version = "1.0.0"
 description = "Text analytics and ML pipeline for predicting coffee review ratings"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11,<3.12"
 license = {text = "MIT"}
 authors = [
     {name = "Marcelo Seijas", email = "marcelo.seijas@erasmusuniversity.nl"},
@@ -20,8 +20,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Text Processing :: Linguistic",
@@ -69,7 +67,7 @@ coffee-analytics = "main:main"
 
 [tool.black]
 line-length = 88
-target-version = ["py39", "py310", "py311"]
+target-version = ["py311"]
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -96,7 +94,7 @@ skip_gitignore = true
 known_first_party = ["src"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false

@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python dependencies
 RUN pip install --no-cache-dir \
-    mlflow[extras]>=2.0.0 \
+    mlflow[extras]==2.22.0 \
     psycopg2-binary \
     boto3 \
     minio \
@@ -32,4 +32,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # Default command (overridden in docker-compose)
-CMD ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000"] 
+CMD ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000"]
