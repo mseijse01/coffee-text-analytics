@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
 ## Environment
 
 Virtual environment is at `~/.virtualenvs/coffee-analytics/`. The Makefile uses this path directly — use `make` targets instead of calling `python` directly when possible, or activate with `source ~/.virtualenvs/coffee-analytics/bin/activate`.
