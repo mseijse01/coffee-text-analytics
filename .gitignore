@@ -230,3 +230,4 @@ transformers_cache/
 # Keep directory structure with .gitkeep files
 !.gitkeep
 !*/.gitkeep
+output/shap_analysis/*.png
