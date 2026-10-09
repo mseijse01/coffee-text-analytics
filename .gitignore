@@ -231,3 +231,4 @@ transformers_cache/
 !.gitkeep
 !*/.gitkeep
 output/shap_analysis/*.png
+data/raw/coffee_clean.csv
