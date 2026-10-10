@@ -560,7 +560,8 @@ class CoffeeModelEvaluator(BaseEvaluator):
         report.append("")
 
         # Header
-        models = list(next(iter(summary_metrics.values())).keys())
+        first_metrics: Any = next(iter(summary_metrics.values()))
+        models = list(first_metrics.keys())
         header = (
             f"{'Model':<15} {'R²':<8} {'RMSE':<8} {'MAE':<8} {'MSE':<8} {'MAPE':<8}"
         )
@@ -835,7 +836,11 @@ class CoffeeModelEvaluator(BaseEvaluator):
             logger.warning("No features to plot in plot_feature_importance")
             return plt.figure()
 
-        features, importances = zip(*top_features)
+        pairs: Any = top_features
+
+        features = [f for f, _ in pairs]
+
+        importances = [i for _, i in pairs]
 
         # Create plot
         fig, ax = plt.subplots(figsize=(10, 8))

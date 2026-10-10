@@ -1,5 +1,5 @@
 # Coffee Text Analytics — FastAPI serving container
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 LABEL maintainer="Marcelo Seijas <marcelo.seijas@erasmusuniversity.nl>"
 LABEL description="Coffee Analytics: FastAPI model serving"
@@ -10,8 +10,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y gcc g++ curl && rm -rf /var/lib/apt/lists/*
 RUN pip install --upgrade pip setuptools wheel
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-lock.txt .
+RUN pip install --no-cache-dir -r requirements-lock.txt
 
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 
