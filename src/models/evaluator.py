@@ -836,9 +836,11 @@ class CoffeeModelEvaluator(BaseEvaluator):
             logger.warning("No features to plot in plot_feature_importance")
             return plt.figure()
 
-        features = [f for f, _ in top_features]
+        pairs: Any = top_features
 
-        importances = [i for _, i in top_features]
+        features = [f for f, _ in pairs]
+
+        importances = [i for _, i in pairs]
 
         # Create plot
         fig, ax = plt.subplots(figsize=(10, 8))
