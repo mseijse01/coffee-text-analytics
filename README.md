@@ -401,7 +401,7 @@ We welcome contributions that extend the thesis methodology:
 
 ## License & Citation
 
-This project is part of an academic thesis and is provided for educational and research purposes.
+The code is released under the [MIT License](LICENSE). The license covers the code only, not the CoffeeReview.com review data, which is not included in this repository.
 
 ### Citation
 
