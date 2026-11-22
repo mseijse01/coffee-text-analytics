@@ -232,3 +232,6 @@ transformers_cache/
 !*/.gitkeep
 output/shap_analysis/*.png
 data/raw/coffee_clean.csv
+
+# Generated test coverage output
+coverage_report.txt

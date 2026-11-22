@@ -15,6 +15,7 @@ import logging
 import time
 from typing import Any, Callable, Dict, List, Optional
 
+import numpy as np
 import optuna
 
 # Production MLflow integration

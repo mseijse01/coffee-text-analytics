@@ -1,12 +1,12 @@
-# Coffee Text Analytics: A Data-Driven Approach
+# Coffee Text Analytics
 
-A comprehensive text analytics and predictive modeling framework for analyzing consumer coffee reviews. This project implements the methodology described in the thesis **"Leveraging Text Analytics and Predictive Modeling to Analyze Consumer Coffee Reviews: A Data-Driven Approach"** by Marcelo Seijas, Erasmus University Rotterdam.
+Predicting specialty-coffee ratings from the language of expert reviews. This is the research code for my MSc thesis at Erasmus University Rotterdam, **"Leveraging Text Analytics and Predictive Modeling to Analyze Consumer Coffee Reviews: A Data-Driven Approach"**.
 
-## Current Status
+**Headline result:** using text features alone (TF-IDF, DistilBERT and GloVe embeddings, LDA/NMF topics, sentiment), XGBoost explains **R² 0.683** of the variance in ratings, after LASSO reduces 3,840 text features to 279. Multinomial Inverse Regression links review language to sensory attributes (acidity R² 0.95, body R² 0.94).
 
-**Status**: Research code accompanying the thesis. Results were not regenerated after the April 2026 refactor (see [Known Limitations](#known-limitations)).
-**Authoritative results**: those reported in `docs/thesis.md` (see the results table under Key Findings).
-**Quick Start**: `python validate_15_percent_methodology.py` runs a fast exploratory check on a 15% sample (~4 min). It is not comparable to the thesis results.
+**Stack:** Python · Polars · scikit-learn · XGBoost · Hugging Face Transformers · gensim · MLflow + Optuna · FastAPI · Docker · GitHub Actions
+
+> Results are those reported in the thesis (`docs/thesis.md`). The code was refactored in April 2026, and the numbers have not been re-run since. See [Known Limitations](#known-limitations).
 
 ## Research Overview
 
@@ -318,11 +318,10 @@ python run_tests.py
 - Exploratory 15% validation script (not thesis-comparable)
 
 ### Code Quality
-- Component-based design - Modular, extensible architecture
-- Zero import conflicts - Clean dependency management
-- MLflow + Optuna integration - Enhanced experiment tracking
-- Professional documentation - Academic-grade documentation
-- Thesis methodology - implemented following `docs/thesis.md`; results not regenerated or re-verified since the April 2026 refactor (see Known Limitations)
+- CI on every pull request (GitHub Actions, Python 3.10–3.11)
+- black, isort and mypy (on the five core modules) enforced via pre-commit
+- Centralized exception hierarchy (`src/exceptions.py`)
+- Experiment tracking with MLflow; hyperparameter search with Optuna
 
 ## Known Limitations
 
@@ -359,15 +358,12 @@ python main.py --steps all
 
 ## Documentation
 
-### Current Documentation
-- **CURRENT_STATUS.md**: Up-to-date project status and achievements
-- **STRATEGIC_IMPLEMENTATION_PLAN.md**: Master plan with progress
-- **docs/thesis.md**: Complete thesis document
-- **docs/findings.md**: Research findings and insights
-- **docs/methodology.md**: Detailed research methodology
-
-### Historical Archive
-- **docs/archive/**: Complete development history for reference
+- **[docs/thesis.md](docs/thesis.md)**: the full thesis (methodology, results, discussion)
+- **[MODEL_CARD.md](MODEL_CARD.md)**: intended use, data, metrics and limitations of the trained models
+- **[docs/API_CONTRACT.md](docs/API_CONTRACT.md)**: contract for the feature selector and serving layer
+- **[docs/FEATURE_SELECTION_GUIDE.md](docs/FEATURE_SELECTION_GUIDE.md)**: how LASSO feature selection works in the pipeline
+- **[docs/SERVING_LAYER_EXECUTION_GUIDE.md](docs/SERVING_LAYER_EXECUTION_GUIDE.md)**: running the FastAPI prediction service
+- **[CLAUDE.md](CLAUDE.md)**: commands and architecture notes used when developing with Claude Code
 
 ## Clean Output Directories
 
@@ -405,7 +401,7 @@ We welcome contributions that extend the thesis methodology:
 
 ## License & Citation
 
-This project is part of an academic thesis and is provided for educational and research purposes.
+The code is released under the [MIT License](LICENSE). The license covers the code only, not the CoffeeReview.com review data, which is not included in this repository.
 
 ### Citation
 
