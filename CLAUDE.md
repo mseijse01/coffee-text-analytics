@@ -190,7 +190,7 @@ There are two paths to generate model artifacts — they serve different purpose
 - Use these when you need artifacts quickly and don't need thesis-comparable metrics
 
 ### CI Pipeline Behavior
-- **Main CI job** (`test`): only runs `tests/test_data_processing.py` (fast, keeps CI under 10 min). Coverage threshold: 18%.
+- **Main CI job** (`test`, Python 3.10 + 3.11): runs `tests/test_data_processing.py` plus the quick suite (`test_mnir.py`, `test_mnir_focused_unit.py`, `test_cache_focused_unit.py`). Coverage floor: 10% (this subset measures ~12%).
 - **Integration tests**: run only on push to `main`, not on PRs.
 - **mypy**: checks only the 5 core files listed above.
 
