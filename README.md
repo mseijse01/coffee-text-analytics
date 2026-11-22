@@ -318,7 +318,7 @@ python run_tests.py
 - Exploratory 15% validation script (not thesis-comparable)
 
 ### Code Quality
-- CI on every pull request (GitHub Actions, Python 3.9–3.11)
+- CI on every pull request (GitHub Actions, Python 3.10–3.11)
 - black, isort and mypy (on the five core modules) enforced via pre-commit
 - Centralized exception hierarchy (`src/exceptions.py`)
 - Experiment tracking with MLflow; hyperparameter search with Optuna
